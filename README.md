@@ -1,0 +1,1 @@
+This project implements a GUI for displaying rd-plots of encoded video sequences. 
