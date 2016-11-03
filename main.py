@@ -1,5 +1,6 @@
-from PyQt4.uic import loadUiType
-from PyQt4 import QtGui
+from PyQt5.uic import loadUiType
+from PyQt5 import QtGui
+from PyQt5 import QtWidgets
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt4agg import (
@@ -22,7 +23,7 @@ class Main(QMainWindow, Ui_MainWindow):
         fig = Figure()
         # self.addmpl(fig)
 
-        self.plotAreaVerticalLayout = QtGui.QVBoxLayout()
+        self.plotAreaVerticalLayout = QtWidgets.QVBoxLayout()
         self.plotsFrame.setLayout(self.plotAreaVerticalLayout)
 
         # add a widget for previewing plots, they can then be added to the actual plot
@@ -221,7 +222,8 @@ class Sequence():
 
 if __name__ == '__main__':
     import sys
-    from PyQt4 import QtGui
+    from PyQt5 import QtGui
+    from PyQt5 import QtWidgets
 
     #
     # fig1 = Figure()
@@ -238,7 +240,8 @@ if __name__ == '__main__':
     # ax1f3 = fig3.add_subplot(111)
     # ax1f3.pcolormesh(np.random.rand(20,20))
 
-    app = QtGui.QApplication(sys.argv)
+    # app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     main = Main()
     # main.addfig('One plot', fig1)
     # main.addfig('Two plots', fig2)
