@@ -14,11 +14,11 @@ Functionalties (which will be developed)
 - simulation folder comparison mode: select different directories. list only displays the directories. selector to choose which sequence to look at
 
 
-Installation using virtual env and pycharm (not working yet, problem with pyqt4)
+Installation using virtual env and pycharm
 - Open the project folder in pycharm
--> File -> Settings -> Project: rd-plot-gui -> Project Interpreter -> Settings symbol -> Create VirtualEnv (Use python 3.x as base interpreter)
--> open terminal -> cd project folder -> source ~/path-to-the-virtual-env/bin/activate
--> pip install --upgrade pip
--> pip install -r requirements.txt
+- -> File -> Settings -> Project: rd-plot-gui -> Project Interpreter -> Settings symbol -> Create VirtualEnv (Use python 3.x as base interpreter)
+- -> open terminal -> cd project folder -> source ~/path-to-the-virtual-env/bin/activate
+- -> pip install --upgrade pip
+- -> pip install -r requirements.txt
 
 Now you should be able to run the project from the virtual env
