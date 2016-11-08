@@ -3,7 +3,10 @@ from PyQt5 import QtGui
 from PyQt5 import QtWidgets
 
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_qt4agg import (
+# from matplotlib.backends.backend_qt4agg import (
+#     FigureCanvasQTAgg as FigureCanvas,
+#     NavigationToolbar2QT as NavigationToolbar)
+from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar)
 from glob import  glob
@@ -20,7 +23,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.fig_dict = {}
 
-        fig = Figure()
+        # fig = Figure()
         # self.addmpl(fig)
 
         self.plotAreaVerticalLayout = QtWidgets.QVBoxLayout()
@@ -59,14 +62,14 @@ class Main(QMainWindow, Ui_MainWindow):
         self.sequenceListWidget.addItem(name)
 
     def add_sequence(self): # todo: put his logic in its own widget and class, should belong to a listSequencesWidget
-        self.filename = QtGui.QFileDialog.getOpenFileNames(
+        self.filename = QtWidgets.QFileDialog.getOpenFileNames(
             self,
             "Open Sequence Encoder Log",
             "/home/ient/Software/rd-plot-gui/examplLogs",
             "Enocder Logs (*.log)")
 
         # extract folder and filename
-        [directory, file_name] = self.filename[0].rsplit('/',1)
+        [directory, file_name] = self.filename[0][0].rsplit('/',1)
         # extract the part of the filename that files for different QPs share.
         sequence_name_common = file_name.rsplit('_QP',1)[0]
         sequence_files = glob(directory + '/' + sequence_name_common + '*')
@@ -134,6 +137,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.toolbar = NavigationToolbar(self.canvas,
                                          self.plotAreaWidget, coordinates=True)
         self.verticalLayout.addWidget(self.toolbar)
+        pass
 
     # This is the alternate toolbar placement. Susbstitute the three lines above
     # for these lines to see the different look.
@@ -225,7 +229,7 @@ if __name__ == '__main__':
     from PyQt5 import QtGui
     from PyQt5 import QtWidgets
 
-    #
+
     # fig1 = Figure()
     # ax1f1 = fig1.add_subplot(111)
     # ax1f1.plot(np.random.rand(5))
