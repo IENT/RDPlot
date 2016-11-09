@@ -113,11 +113,22 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         # np
         rate = []
         psnr = []
+        psnrrate = []
         for qp in sequence.qp_vals:
-            rate.append(sequence.summary_data['SUMMARY']['Bitrate'][str(qp)])
-            psnr.append(sequence.summary_data['SUMMARY']['YUV-PSNR'][str(qp)])
+            #rate.append(sequence.summary_data['SUMMARY']['Bitrate'][str(qp)])
+            #psnr.append(sequence.summary_data['SUMMARY']['YUV-PSNR'][str(qp)])
+            thres = [sequence.summary_data['SUMMARY']['Bitrate'][str(qp)],
+                     sequence.summary_data['SUMMARY']['YUV-PSNR'][str(qp)]]
+            psnrrate.append(thres)
 
-        self.rmmpl()
+        # sort psnrrate2
+        def getKey(item):
+            return item[0]
+        psnrrate.sort(key=getKey)
+        # extract information for rate and psnr
+        for x in range(0, len(psnrrate)):
+            rate.append(psnrrate[x][0])
+            psnr.append(psnrrate[x][1])
 
         fig = Figure()
         axis = fig.add_subplot(111)
