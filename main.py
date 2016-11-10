@@ -9,14 +9,15 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar)
-from glob import  glob
+from glob import glob
 import re
 import collections
 import numpy as np
 
 Ui_MainWindow, QMainWindow = loadUiType('mainWindow.ui')
 Ui_PlotWidget, QWidget = loadUiType('plotWidget.ui')
-        
+
+
 class Main(QMainWindow, Ui_MainWindow):
     def __init__(self, ):
         super(Main, self).__init__()
@@ -33,17 +34,17 @@ class Main(QMainWindow, Ui_MainWindow):
         self.plotPreview = PlotWidget()
         self.plotAreaVerticalLayout.addWidget(self.plotPreview)
         # container for all plots
-        self.plotWidgets = []
-        newPlot = PlotWidget()
-        self.plotWidgets.append(newPlot)
-        self.plotAreaVerticalLayout.addWidget(newPlot)
+        # self.plotWidgets = []
+        # newPlot = PlotWidget()
+        # self.plotWidgets.append(newPlot)
+        # self.plotAreaVerticalLayout.addWidget(newPlot)
 
         # store the sequences
         self.sequences = {}
 
         # set up signals and slots
-        #self.sequenceListWidget.itemClicked.connect(self.plotPreview.change_plot)
-        self.sequenceListWidget.itemClicked.connect(self.update_preview)
+        # self.sequenceListWidget.itemClicked.connect(self.plotPreview.change_plot)
+        self.sequenceListWidget.currentItemChanged.connect(self.update_preview)
         self.addSequenceButton.clicked.connect(self.add_sequence)
         self.addPlotButton.clicked.connect(self.addAnotherPlot)
 
@@ -61,7 +62,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.fig_dict[name] = fig
         self.sequenceListWidget.addItem(name)
 
-    def add_sequence(self): # todo: put his logic in its own widget and class, should belong to a listSequencesWidget
+    def add_sequence(self):  # todo: put his logic in its own widget and class, should belong to a listSequencesWidget
         self.filename = QtWidgets.QFileDialog.getOpenFileNames(
             self,
             "Open Sequence Encoder Log",
@@ -69,14 +70,16 @@ class Main(QMainWindow, Ui_MainWindow):
             "Enocder Logs (*.log)")
 
         # extract folder and filename
-        [directory, file_name] = self.filename[0][0].rsplit('/',1)
+        [directory, file_name] = self.filename[0][0].rsplit('/', 1)
         # extract the part of the filename that files for different QPs share.
-        sequence_name_common = file_name.rsplit('_QP',1)[0]
+        sequence_name_common = file_name.rsplit('_QP', 1)[0]
         sequence_files = glob(directory + '/' + sequence_name_common + '*')
         sequence = Sequence(sequence_name_common, sequence_files)
 
         self.sequences[sequence.name] = sequence
         self.sequenceListWidget.addItem(sequence.name)
+        debug = self.sequenceListWidget.count()
+        self.sequenceListWidget.setCurrentItem(self.sequenceListWidget.item(self.sequenceListWidget.count()-1))
 
         pass
 
@@ -86,14 +89,15 @@ class Main(QMainWindow, Ui_MainWindow):
         self.plotPreview.change_plot(sequence)
 
 
-
 class NestedDict(dict):
     """
     Provides the nested dict used to store all the sequence data.
     """
+
     def __getitem__(self, key):
         if key in self: return self.get(key)
         return self.setdefault(key, NestedDict())
+
 
 class PlotWidget(QWidget, Ui_PlotWidget):
     def __init__(self, ):
@@ -120,14 +124,13 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
         fig = Figure()
         axis = fig.add_subplot(111)
-        axis.plot(rate,psnr)
+        axis.plot(rate, psnr)
 
         self.addmpl(fig)
 
     def addfig(self, name, fig):
         self.fig_dict[name] = fig
         self.sequenceListWidget.addItem(name)
-
 
     def addmpl(self, fig):
         self.canvas = FigureCanvas(fig)
@@ -151,7 +154,6 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.toolbar.close()
 
 
-
 class Graph():
     """"
     Hold all information on a single plot of a sequence.
@@ -166,17 +168,17 @@ class Sequence():
     The appropriate encoder logs are processed once, extracting all relevant information.
     Offers methods for extracting the information from the logs.
     """
+
     def __init__(self, sequence_name_common, sequence_files):
         self.log_files = {}
         self.name = ""
         self.qp_vals = []
-        self.sequence_files = {} # will fill this with the list sequence_files with qp as key after they are extracted
+        self.sequence_files = {}  # will fill this with the list sequence_files with qp as key after they are extracted
         self.summary_data = NestedDict()
 
         self.name = sequence_name_common
         self.extract_qp_vals(sequence_files)
         self.extract_rd_vals()
-
 
     def extract_qp_vals(self, sequence_files):
         for sequence_file in sequence_files:
@@ -186,9 +188,9 @@ class Sequence():
                 self.qp_vals.append(qp_val)
                 self.sequence_files[qp_val] = sequence_file
             else:
-                print('No match for QP value in sequence name') # todo: notify user, exception?
+                print('No match for QP value in sequence name')  # todo: notify user, exception?
 
-        self.qp_vals.sort()
+        self.qp_vals.sort(reverse=True)
 
     def extract_rd_vals(self):
         """
@@ -196,7 +198,7 @@ class Sequence():
         Care was taken to avoid coding explicit names, like 'Y-PSRN', 'YUV-PSNR', etc...
         """
         for (qp, file) in self.sequence_files.items():
-            with open(file,'r') as log_file:
+            with open(file, 'r') as log_file:
                 log_text = log_file.read()  # reads the whole text file
                 summaries_qp = re.findall(r"""  ^(\w*)-*.*$ # catch summary line
                                \s* # catch newline and space
@@ -215,7 +217,7 @@ class Sequence():
                     names = [name.strip() for name in names]  # remove leading and trailing space
                     vals = [float(val) for val in vals]  # convert to numbers
 
-                    name_val_dict = dict(zip(names,vals))  # pack both together in a dict
+                    name_val_dict = dict(zip(names, vals))  # pack both together in a dict
                     # print(summary_type)
 
                     # now pack everything together
@@ -223,12 +225,10 @@ class Sequence():
                         self.summary_data[summary_type][name][qp] = name_val_dict[name]
 
 
-
 if __name__ == '__main__':
     import sys
     from PyQt5 import QtGui
     from PyQt5 import QtWidgets
-
 
     # fig1 = Figure()
     # ax1f1 = fig1.add_subplot(111)
@@ -252,4 +252,3 @@ if __name__ == '__main__':
     # main.addfig('Pcolormesh', fig3)
     main.show()
     sys.exit(app.exec_())
-
