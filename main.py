@@ -10,7 +10,7 @@ from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar)
 from glob import  glob
-import  re
+import re
 import collections
 import numpy as np
 
@@ -115,20 +115,8 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         psnr = []
         psnrrate = []
         for qp in sequence.qp_vals:
-            #rate.append(sequence.summary_data['SUMMARY']['Bitrate'][str(qp)])
-            #psnr.append(sequence.summary_data['SUMMARY']['YUV-PSNR'][str(qp)])
-            thres = [sequence.summary_data['SUMMARY']['Bitrate'][str(qp)],
-                     sequence.summary_data['SUMMARY']['YUV-PSNR'][str(qp)]]
-            psnrrate.append(thres)
-
-        # sort psnrrate2
-        def getKey(item):
-            return item[0]
-        psnrrate.sort(key=getKey)
-        # extract information for rate and psnr
-        for x in range(0, len(psnrrate)):
-            rate.append(psnrrate[x][0])
-            psnr.append(psnrrate[x][1])
+            rate.append(sequence.summary_data['SUMMARY']['Bitrate'][str(qp)])
+            psnr.append(sequence.summary_data['SUMMARY']['YUV-PSNR'][str(qp)])
 
         fig = Figure()
         axis = fig.add_subplot(111)
@@ -200,6 +188,7 @@ class Sequence():
             else:
                 print('No match for QP value in sequence name') # todo: notify user, exception?
 
+        self.qp_vals.sort()
 
     def extract_rd_vals(self):
         """
@@ -223,10 +212,10 @@ class Sequence():
                     names = summary[1:7]
                     vals = summary[7:]
 
-                    names = [name.strip() for name in names] # remove leading and trailing space
+                    names = [name.strip() for name in names]  # remove leading and trailing space
                     vals = [float(val) for val in vals]  # convert to numbers
 
-                    name_val_dict = dict(zip(names,vals)) # pack both together in a dict
+                    name_val_dict = dict(zip(names,vals))  # pack both together in a dict
                     # print(summary_type)
 
                     # now pack everything together
