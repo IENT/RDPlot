@@ -63,14 +63,20 @@ class Main(QMainWindow, Ui_MainWindow):
         self.sequenceListWidget.addItem(name)
 
     def add_sequence(self):  # todo: put his logic in its own widget and class, should belong to a listSequencesWidget
-        self.filename = QtWidgets.QFileDialog.getOpenFileNames(
-            self,
-            "Open Sequence Encoder Log",
-            "/home/ient/Software/rd-plot-gui/examplLogs",
-            "Enocder Logs (*.log)")
-
         # extract folder and filename
-        [directory, file_name] = self.filename[0][0].rsplit('/', 1)
+        while 1:
+            try:
+                self.filename = QtWidgets.QFileDialog.getOpenFileNames(
+                    self,
+                    "Open Sequence Encoder Log",
+                    "/home/ient/Software/rd-plot-gui/examplLogs",
+                    "Enocder Logs (*.log)")
+                [directory, file_name] = self.filename[0][0].rsplit('/', 1)
+            except:
+                raise IndexError
+            else:
+                print("successfully added sequence")
+                break
         # extract the part of the filename that files for different QPs share.
         sequence_name_common = file_name.rsplit('_QP', 1)[0]
         sequence_files = glob(directory + '/' + sequence_name_common + '*')
@@ -78,7 +84,6 @@ class Main(QMainWindow, Ui_MainWindow):
 
         self.sequences[sequence.name] = sequence
         self.sequenceListWidget.addItem(sequence.name)
-        debug = self.sequenceListWidget.count()
         self.sequenceListWidget.setCurrentItem(self.sequenceListWidget.item(self.sequenceListWidget.count()-1))
 
         pass
@@ -126,11 +131,27 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         axis = fig.add_subplot(111)
         axis.plot(rate, psnr)
 
-        self.addmpl(fig)
+        self.updatempl(fig)
 
     def addfig(self, name, fig):
         self.fig_dict[name] = fig
         self.sequenceListWidget.addItem(name)
+
+    def updatempl(self, fig):
+        self.verticalLayout.removeWidget(self.canvas)
+        self.canvas.close()
+        self.verticalLayout.removeWidget(self.toolbar)
+        self.toolbar.close()
+        self.canvas = FigureCanvas(fig)
+        self.verticalLayout.addWidget(self.canvas)
+        self.canvas.draw()
+        self.toolbar = NavigationToolbar(self.canvas,
+                                         self.plotAreaWidget, coordinates=True)
+        self.verticalLayout.addWidget(self.toolbar)
+        # canvas = FigureCanvas(fig)
+        # self.verticalLayout.replaceWidget(self.canvas, canvas)
+        pass
+
 
     def addmpl(self, fig):
         self.canvas = FigureCanvas(fig)
