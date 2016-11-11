@@ -72,8 +72,8 @@ class Main(QMainWindow, Ui_MainWindow):
                     "/home/ient/Software/rd-plot-gui/examplLogs",
                     "Enocder Logs (*.log)")
                 [directory, file_name] = self.filename[0][0].rsplit('/', 1)
-            except:
-                raise IndexError
+            except IndexError:
+                None
             else:
                 print("successfully added sequence")
                 break
