@@ -47,6 +47,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.sequenceListWidget.currentItemChanged.connect(self.update_preview)
         self.addSequenceButton.clicked.connect(self.add_sequence)
         self.addPlotButton.clicked.connect(self.addAnotherPlot)
+        self.comboBox.currentIndexChanged.connect(self.update_YUVMod)
 
     def addAnotherPlot(self):
         newPlot = PlotWidget()
@@ -77,9 +78,11 @@ class Main(QMainWindow, Ui_MainWindow):
             else:
                 print("successfully added sequence")
                 break
+
         # extract the part of the filename that files for different QPs share.
         sequence_name_common = file_name.rsplit('_QP', 1)[0]
         sequence_files = glob(directory + '/' + sequence_name_common + '*')
+        sequence_files.sort(reverse=True)  # Sort the filenames in descending order
         sequence = Sequence(sequence_name_common, sequence_files)
 
         self.sequences[sequence.name] = sequence
@@ -92,6 +95,16 @@ class Main(QMainWindow, Ui_MainWindow):
         sequence_name = item.text()
         sequence = self.sequences[sequence_name]
         self.plotPreview.change_plot(sequence)
+
+    def update_YUVMod(self, index):
+        index_name = self.comboBox.itemText(index)
+        self.plotPreview.change_YUVMod(index_name)
+        sequence_item = self.sequenceListWidget.currentItem()
+        if sequence_item is not None:
+            sequence_name = sequence_item.text()
+            sequence = self.sequences[sequence_name]
+            self.plotPreview.change_plot(sequence)
+
 
 
 class NestedDict(dict):
@@ -114,18 +127,20 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
         fig = Figure()
         self.addmpl(fig)
+        self.YUVMod = 'YUV-PSNR'
+
+    def change_YUVMod(self, mod):
+        self.YUVMod = mod
 
     def change_plot(self, sequence):
         qp_vals = [int(qp) for qp in sequence.qp_vals]
-        qp_vals.sort()
-        qp_vals.reverse()
         # np
         rate = []
         psnr = []
         psnrrate = []
         for qp in sequence.qp_vals:
             rate.append(sequence.summary_data['SUMMARY']['Bitrate'][str(qp)])
-            psnr.append(sequence.summary_data['SUMMARY']['YUV-PSNR'][str(qp)])
+            psnr.append(sequence.summary_data['SUMMARY'][self.YUVMod][str(qp)])
 
         fig = Figure()
         axis = fig.add_subplot(111)
@@ -211,12 +226,10 @@ class Sequence():
             else:
                 print('No match for QP value in sequence name')  # todo: notify user, exception?
 
-        self.qp_vals.sort(reverse=True)
-
     def extract_rd_vals(self):
         """
         This functions find all data matching the Regex format specified below and stores it in dicts in the sequence.
-        Care was taken to avoid coding explicit names, like 'Y-PSRN', 'YUV-PSNR', etc...
+        Care was taken to avoid coding explicit names, like 'Y-PSNR', 'YUV-PSNR', etc...
         """
         for (qp, file) in self.sequence_files.items():
             with open(file, 'r') as log_file:
