@@ -126,26 +126,6 @@
     <layout class="QVBoxLayout" name="verticalLayout_3">
      <item>
       <widget class="QComboBox" name="comboBox">
-       <item>
-        <property name="text">
-         <string>YUV-PSNR</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Y-PSNR</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>U-PSNR</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>V-PSNR</string>
-        </property>
-       </item>
       </widget>
      </item>
     </layout>
