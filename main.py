@@ -44,24 +44,24 @@ class Main(QMainWindow, Ui_MainWindow):
 
         # set up signals and slots
         # self.sequenceListWidget.itemClicked.connect(self.plotPreview.change_plot)
-        self.sequenceListWidget.currentItemChanged.connect(self.update_preview)
+        self.sequenceListWidget.currentItemChanged.connect(self.update_plot)
         self.addSequenceButton.clicked.connect(self.add_sequence)
         self.addPlotButton.clicked.connect(self.addAnotherPlot)
-        self.comboBox.currentIndexChanged.connect(self.update_YUVMod)
+        self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
 
     def addAnotherPlot(self):
         newPlot = PlotWidget()
         self.plotWidgets.append(newPlot)
         self.plotAreaVerticalLayout.addWidget(newPlot)
 
-    def preview_plot(self, item):
-        text = item.text()
-        self.rmmpl()
-        self.addmpl(self.fig_dict[text])
+    # def preview_plot(self, item):
+    #     text = item.text()
+    #     self.rmmpl()
+    #     self.addmpl(self.fig_dict[text])
 
-    def addfig(self, name, fig):
-        self.fig_dict[name] = fig
-        self.sequenceListWidget.addItem(name)
+    # def addfig(self, name, fig):
+    #     self.fig_dict[name] = fig
+    #     self.sequenceListWidget.addItem(name)
 
     def add_sequence(self):  # todo: put his logic in its own widget and class, should belong to a listSequencesWidget
         # extract folder and filename
@@ -82,7 +82,6 @@ class Main(QMainWindow, Ui_MainWindow):
         # extract the part of the filename that files for different QPs share.
         sequence_name_common = file_name.rsplit('_QP', 1)[0]
         sequence_files = glob(directory + '/' + sequence_name_common + '*')
-        sequence_files.sort(reverse=True)  # Sort the filenames in descending order
         sequence = Sequence(sequence_name_common, sequence_files)
 
         self.sequences[sequence.name] = sequence
@@ -91,19 +90,41 @@ class Main(QMainWindow, Ui_MainWindow):
 
         pass
 
-    def update_preview(self, item):
+    def update_plot(self, item):
         sequence_name = item.text()
         sequence = self.sequences[sequence_name]
-        self.plotPreview.change_plot(sequence)
 
-    def update_YUVMod(self, index):
+        # get currently chosen plot variable
+        former_variable = self.comboBox.currentText()
+
+        # update availabe variables available for this sequence
+        # add found plot variables to combo box
+        all_variable_names = set() # set because we don't want duplicates
+        for (summary, variable_dicts) in sequence.summary_data.items():
+            # all_variable_names.add(variable_dicts.keys())
+            for variable_name in variable_dicts.keys():
+                all_variable_names.add(variable_name)
+        self.comboBox.clear()
+        self.comboBox.addItems(all_variable_names)
+
+        # use same variable as with last plot
+        if former_variable in all_variable_names:
+            self.comboBox.setCurrentText(former_variable)
+        else:
+            pass # set some smart default here?
+
+        self.plotPreview.change_plot(sequence,former_variable)
+
+    def update_plot_variable(self, index):
         index_name = self.comboBox.itemText(index)
-        self.plotPreview.change_YUVMod(index_name)
+        if not index_name:
+            return
+        # self.plotPreview.change_YUVMod(index_name)
         sequence_item = self.sequenceListWidget.currentItem()
         if sequence_item is not None:
             sequence_name = sequence_item.text()
             sequence = self.sequences[sequence_name]
-            self.plotPreview.change_plot(sequence)
+            self.plotPreview.change_plot(sequence,index_name)
 
 
 
@@ -127,24 +148,22 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
         fig = Figure()
         self.addmpl(fig)
-        self.YUVMod = 'YUV-PSNR'
+        # self.YUVMod = 'YUV-PSNR'
 
-    def change_YUVMod(self, mod):
-        self.YUVMod = mod
+    # def change_YUVMod(self, mod):
+    #     self.YUVMod = mod
 
-    def change_plot(self, sequence):
+    def change_plot(self, sequence, variable):
         qp_vals = [int(qp) for qp in sequence.qp_vals]
         # np
-        rate = []
-        psnr = []
-        psnrrate = []
-        for qp in sequence.qp_vals:
-            rate.append(sequence.summary_data['SUMMARY']['Bitrate'][str(qp)])
-            psnr.append(sequence.summary_data['SUMMARY'][self.YUVMod][str(qp)])
+        if not variable:
+            return
+        rate = sequence.summary_data['SUMMARY']['Bitrate']
+        plot_variable = sequence.summary_data['SUMMARY'][variable]
 
         fig = Figure()
         axis = fig.add_subplot(111)
-        axis.plot(rate, psnr)
+        axis.plot(rate, plot_variable)
 
         self.updatempl(fig)
 
@@ -210,7 +229,7 @@ class Sequence():
         self.name = ""
         self.qp_vals = []
         self.sequence_files = {}  # will fill this with the list sequence_files with qp as key after they are extracted
-        self.summary_data = NestedDict()
+        self.summary_data = {}
 
         self.name = sequence_name_common
         self.extract_qp_vals(sequence_files)
@@ -225,13 +244,16 @@ class Sequence():
                 self.sequence_files[qp_val] = sequence_file
             else:
                 print('No match for QP value in sequence name')  # todo: notify user, exception?
+        self.qp_vals.sort(reverse=True)
 
     def extract_rd_vals(self):
         """
         This functions find all data matching the Regex format specified below and stores it in dicts in the sequence.
         Care was taken to avoid coding explicit names, like 'Y-PSNR', 'YUV-PSNR', etc...
         """
-        for (qp, file) in self.sequence_files.items():
+        for qp in self.qp_vals:
+            file = self.sequence_files[qp]
+        # for (qp, file) in self.sequence_files.items():
             with open(file, 'r') as log_file:
                 log_text = log_file.read()  # reads the whole text file
                 summaries_qp = re.findall(r"""  ^(\w*)-*.*$ # catch summary line
@@ -245,6 +267,8 @@ class Sequence():
 
                 for summary in summaries_qp:
                     summary_type = summary[0]
+                    if summary_type not in self.summary_data:  # create upon first access
+                        self.summary_data[summary_type] = {}
                     names = summary[1:7]
                     vals = summary[7:]
 
@@ -256,7 +280,9 @@ class Sequence():
 
                     # now pack everything together
                     for name in names:
-                        self.summary_data[summary_type][name][qp] = name_val_dict[name]
+                        if name not in self.summary_data[summary_type]: # create upon first access
+                            self.summary_data[summary_type][name] = []
+                        self.summary_data[summary_type][name].append(name_val_dict[name])
 
 
 if __name__ == '__main__':
