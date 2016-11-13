@@ -48,6 +48,8 @@ class Main(QMainWindow, Ui_MainWindow):
         self.addSequenceButton.clicked.connect(self.add_sequence)
         self.addPlotButton.clicked.connect(self.addAnotherPlot)
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
+        self.summaryPlotButton.toggled.connect(self.update_plot_type)
+        self.temporalPlotButton.toggled.connect(self.update_plot_type)
 
     def addAnotherPlot(self):
         newPlot = PlotWidget()
@@ -63,6 +65,8 @@ class Main(QMainWindow, Ui_MainWindow):
     #     self.fig_dict[name] = fig
     #     self.sequenceListWidget.addItem(name)
 
+    #def add_sequences_in_directory(self):
+
     def add_sequence(self):  # todo: put his logic in its own widget and class, should belong to a listSequencesWidget
         # extract folder and filename
         while 1:
@@ -74,7 +78,7 @@ class Main(QMainWindow, Ui_MainWindow):
                     "Enocder Logs (*.log)")
                 [directory, file_name] = self.filename[0][0].rsplit('/', 1)
             except IndexError:
-                None
+                return
             else:
                 print("successfully added sequence")
                 break
@@ -91,29 +95,54 @@ class Main(QMainWindow, Ui_MainWindow):
         pass
 
     def update_plot(self, item):
+        # updates the plot with a new figure.
         sequence_name = item.text()
         sequence = self.sequences[sequence_name]
 
         # get currently chosen plot variable
         former_variable = self.comboBox.currentText()
 
-        # update availabe variables available for this sequence
+        # update available variables available for this sequence
+        # determine the plottype
         # add found plot variables to combo box
-        all_variable_names = set() # set because we don't want duplicates
-        for (summary, variable_dicts) in sequence.summary_data.items():
+        all_variable_names = set()  # set because we don't want duplicates
+        if self.summaryPlotButton.isChecked():
+            plot_data = sequence.summary_data.items()
+        else:
+            plot_data = sequence.temporal_data.items()
+
+        for (summary, variable_dicts) in plot_data:
             # all_variable_names.add(variable_dicts.keys())
             for variable_name in variable_dicts.keys():
                 all_variable_names.add(variable_name)
         self.comboBox.clear()
         self.comboBox.addItems(all_variable_names)
 
-        # use same variable as with last plot
-        if former_variable in all_variable_names:
-            self.comboBox.setCurrentText(former_variable)
+        # use same variable as with last plot if possible
+        new_variable = ''
+        if former_variable in all_variable_names:       # todo: set some smarter defaults here? Problem is the recursive calling
+            new_variable = former_variable
+            #self.comboBox.setCurrentText(new_variable)
         else:
-            pass # set some smart default here?
+            if 'YUV-PSNR' in all_variable_names:
+                #new_variable = 'YUV-PSNR'
+                #self.comboBox.setCurrentText(new_variable)
+                pass
+            elif 'Y-PSNR' in all_variable_names:
+                #new_variable = 'Y-PSNR'
+                #self.comboBox.setCurrentText(new_variable)
+                pass
+            else:
+                #self.comboBox.setCurrentIndex(0)
+                pass
 
-        self.plotPreview.change_plot(sequence,former_variable)
+        self.plotPreview.change_plot(sequence, new_variable, self.summaryPlotButton.isChecked())
+
+    def update_plot_type(self, checked):
+        currentItem = self.sequenceListWidget.currentItem()
+        if currentItem is None:
+            return
+        self.update_plot(self.sequenceListWidget.currentItem())
 
     def update_plot_variable(self, index):
         index_name = self.comboBox.itemText(index)
@@ -124,7 +153,7 @@ class Main(QMainWindow, Ui_MainWindow):
         if sequence_item is not None:
             sequence_name = sequence_item.text()
             sequence = self.sequences[sequence_name]
-            self.plotPreview.change_plot(sequence,index_name)
+            self.plotPreview.change_plot(sequence, index_name, self.summaryPlotButton.isChecked())
 
 
 
@@ -153,17 +182,26 @@ class PlotWidget(QWidget, Ui_PlotWidget):
     # def change_YUVMod(self, mod):
     #     self.YUVMod = mod
 
-    def change_plot(self, sequence, variable):
+    def change_plot(self, sequence, variable, plotTypeSummary):
         qp_vals = [int(qp) for qp in sequence.qp_vals]
-        # np
         if not variable:
             return
-        rate = sequence.summary_data['SUMMARY']['Bitrate']
-        plot_variable = sequence.summary_data['SUMMARY'][variable]
 
-        fig = Figure()
-        axis = fig.add_subplot(111)
-        axis.plot(rate, plot_variable)
+        if plotTypeSummary:
+            # np
+            rate = sequence.summary_data['SUMMARY']['Bitrate']
+            plot_variable = sequence.summary_data['SUMMARY'][variable]
+
+            fig = Figure()
+            axis = fig.add_subplot(111)
+            axis.plot(rate, plot_variable)
+        else:
+            fig = Figure()
+            axis = fig.add_subplot(111)
+            for i in range(0, len(qp_vals)):
+                #framevalues = sequence.temporal_data[qp_vals[i]]['Frame']
+                axis.plot(sequence.temporal_data[str(qp_vals[i])]['Frame'],
+                          sequence.temporal_data[str(qp_vals[i])][variable])
 
         self.updatempl(fig)
 
@@ -230,10 +268,12 @@ class Sequence():
         self.qp_vals = []
         self.sequence_files = {}  # will fill this with the list sequence_files with qp as key after they are extracted
         self.summary_data = {}
+        self.temporal_data = {}
 
         self.name = sequence_name_common
         self.extract_qp_vals(sequence_files)
         self.extract_rd_vals()
+        self.extract_temporal_vals()
 
     def extract_qp_vals(self, sequence_files):
         for sequence_file in sequence_files:
@@ -245,6 +285,37 @@ class Sequence():
             else:
                 print('No match for QP value in sequence name')  # todo: notify user, exception?
         self.qp_vals.sort(reverse=True)
+
+    def extract_temporal_vals(self):
+        #this function extracts temporal values
+        for qp in self.qp_vals:
+            file = self.sequence_files[qp]
+        # for (qp, file) in self.sequence_files.items():
+            with open(file, 'r') as log_file:
+                log_text = log_file.read()  # reads the whole text file
+                summaries_qp = re.findall(r"""
+                    POC \s+ (\d+) \s+ .+ \s+ \d+ \s+ . \s+ (.-\D+) ,  #Slice
+                    \s .+ \) \s+ (\d+) \s+ (.+) \s+ \[ (\D+) \s+ (\d+.\d+) \s+ #Y PSNR
+                    \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # U PSNR
+                    \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # v PSNR
+                    """, log_text, re.M + re.X)
+                frames = []
+                yPsnr = []
+                uPsnr = []
+                vPsnr = []
+                #slice = []
+                rate = []
+                for i in range(0, len(summaries_qp)):
+                    frames.append(summaries_qp[i][0])
+                    #slice.append(summaries_qp[i][1])
+                    rate.append(summaries_qp[i][2])
+                    yPsnr.append(summaries_qp[i][5])
+                    uPsnr.append(summaries_qp[i][7])
+                    vPsnr.append(summaries_qp[i][9])
+                tempdata = {'Frame': frames, 'Bitrate': rate,
+                        'Y-PSNR': yPsnr, 'U-PSNR': uPsnr, 'V-PSNR': vPsnr}
+                self.temporal_data[qp] = tempdata
+        print(self.temporal_data)
 
     def extract_rd_vals(self):
         """
