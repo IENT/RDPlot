@@ -312,7 +312,7 @@ class Sequence():
                     yPsnr.append(summaries_qp[i][5])
                     uPsnr.append(summaries_qp[i][7])
                     vPsnr.append(summaries_qp[i][9])
-                tempdata = {'Frame': frames, 'Bitrate': rate,
+                tempdata = {'Frame': frames, 'Bits': rate,
                         'Y-PSNR': yPsnr, 'U-PSNR': uPsnr, 'V-PSNR': vPsnr}
                 self.temporal_data[qp] = tempdata
         print(self.temporal_data)
