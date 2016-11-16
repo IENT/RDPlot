@@ -315,7 +315,6 @@ class Sequence():
                 tempdata = {'Frame': frames, 'Bits': rate,
                         'Y-PSNR': yPsnr, 'U-PSNR': uPsnr, 'V-PSNR': vPsnr}
                 self.temporal_data[qp] = tempdata
-        print(self.temporal_data)
 
     def extract_rd_vals(self):
         """
