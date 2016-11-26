@@ -49,7 +49,6 @@ class Main(QMainWindow, Ui_MainWindow):
         self.addPlotButton.clicked.connect(self.addAnotherPlot)
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
         self.summaryPlotButton.toggled.connect(self.update_plot_type)
-        self.temporalPlotButton.toggled.connect(self.update_plot_type)
 
     def addAnotherPlot(self):
         newPlot = PlotWidget()
@@ -136,7 +135,7 @@ class Main(QMainWindow, Ui_MainWindow):
                 #self.comboBox.setCurrentIndex(0)
                 pass
 
-        self.plotPreview.change_plot(sequence, new_variable, self.summaryPlotButton.isChecked())
+        #self.plotPreview.change_plot(sequence, new_variable, self.summaryPlotButton.isChecked())
 
     def update_plot_type(self, checked):
         currentItem = self.sequenceListWidget.currentItem()
