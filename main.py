@@ -216,7 +216,6 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.toolbar.close()
         self.canvas = FigureCanvas(fig)
         self.verticalLayout.addWidget(self.canvas)
-        self.canvas.draw()
         self.toolbar = NavigationToolbar(self.canvas,
                                          self.plotAreaWidget, coordinates=True)
         self.verticalLayout.addWidget(self.toolbar)
@@ -228,7 +227,6 @@ class PlotWidget(QWidget, Ui_PlotWidget):
     def addmpl(self, fig):
         self.canvas = FigureCanvas(fig)
         self.verticalLayout.addWidget(self.canvas)
-        self.canvas.draw()
         self.toolbar = NavigationToolbar(self.canvas,
                                          self.plotAreaWidget, coordinates=True)
         self.verticalLayout.addWidget(self.toolbar)
