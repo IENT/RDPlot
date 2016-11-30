@@ -68,6 +68,7 @@ class Main(QMainWindow, Ui_MainWindow):
 
     def add_sequence(self):  # todo: put his logic in its own widget and class, should belong to a listSequencesWidget
         # extract folder and filename
+        self.addSequenceButton.clicked.disconnect(self.add_sequence)
         while 1:
             try:
                 self.filename = QtWidgets.QFileDialog.getOpenFileNames(
@@ -91,10 +92,12 @@ class Main(QMainWindow, Ui_MainWindow):
         self.sequenceListWidget.addItem(sequence.name)
         self.sequenceListWidget.setCurrentItem(self.sequenceListWidget.item(self.sequenceListWidget.count()-1))
 
+        self.addSequenceButton.clicked.connect(self.add_sequence)
         pass
 
     def update_plot(self, item):
         # updates the plot with a new figure.
+        self.sequenceListWidget.currentItemChanged.disconnect(self.update_plot)
         sequence_name = item.text()
         sequence = self.sequences[sequence_name]
 
@@ -104,7 +107,7 @@ class Main(QMainWindow, Ui_MainWindow):
         # update available variables available for this sequence
         # determine the plottype
         # add found plot variables to combo box
-        all_variable_names = set()  # set because we don't want duplicates
+        all_variable_names = []  # set because we don't want duplicates
         if self.summaryPlotButton.isChecked():
             plot_data = sequence.summary_data.items()
         else:
@@ -113,37 +116,42 @@ class Main(QMainWindow, Ui_MainWindow):
         for (summary, variable_dicts) in plot_data:
             # all_variable_names.add(variable_dicts.keys())
             for variable_name in variable_dicts.keys():
-                all_variable_names.add(variable_name)
+                all_variable_names.append(variable_name)
+            break
+        all_variable_names.sort()
+        self.comboBox.currentIndexChanged.disconnect(self.update_plot_variable)
         self.comboBox.clear()
         self.comboBox.addItems(all_variable_names)
-
+        self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
         # use same variable as with last plot if possible
-        new_variable = ''
         if former_variable in all_variable_names:       # todo: set some smarter defaults here? Problem is the recursive calling
             new_variable = former_variable
-            #self.comboBox.setCurrentText(new_variable)
+            self.comboBox.setCurrentText(new_variable)
         else:
             if 'YUV-PSNR' in all_variable_names:
-                #new_variable = 'YUV-PSNR'
-                #self.comboBox.setCurrentText(new_variable)
+                new_variable = 'YUV-PSNR'
+                self.comboBox.setCurrentText(new_variable)
                 pass
             elif 'Y-PSNR' in all_variable_names:
-                #new_variable = 'Y-PSNR'
-                #self.comboBox.setCurrentText(new_variable)
+                new_variable = 'Y-PSNR'
+                self.comboBox.setCurrentText(new_variable)
                 pass
             else:
-                #self.comboBox.setCurrentIndex(0)
+                self.comboBox.setCurrentIndex(0)
                 pass
-
+        self.sequenceListWidget.currentItemChanged.connect(self.update_plot)
         #self.plotPreview.change_plot(sequence, new_variable, self.summaryPlotButton.isChecked())
 
     def update_plot_type(self, checked):
+        self.summaryPlotButton.toggled.disconnect(self.update_plot_type)
         currentItem = self.sequenceListWidget.currentItem()
         if currentItem is None:
             return
         self.update_plot(self.sequenceListWidget.currentItem())
+        self.summaryPlotButton.toggled.connect(self.update_plot_type)
 
     def update_plot_variable(self, index):
+        self.comboBox.currentIndexChanged.disconnect(self.update_plot_variable)
         index_name = self.comboBox.itemText(index)
         if not index_name:
             return
@@ -153,6 +161,7 @@ class Main(QMainWindow, Ui_MainWindow):
             sequence_name = sequence_item.text()
             sequence = self.sequences[sequence_name]
             self.plotPreview.change_plot(sequence, index_name, self.summaryPlotButton.isChecked())
+        self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
 
 
 
