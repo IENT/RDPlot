@@ -80,25 +80,6 @@ class Sequence():
                                (\s*\d*\.\d*)(\s*\d*\.\d*)(\s*\d*\.\d*)(\s*\d*\.\d*)(\s*\d*\.\d*) # catch the fractional number (rate, PSNRs)
                           """, log_text, re.M + re.X)
 
-                tempData = re.findall(r""" Total \s Frames \D+
-                        (\d+) \s+ \D \s+ (\S+) \s+ (\S+) # Y-PSNR
-                        \s+ (\S+) \s+ (\S+) \s+ (\S+) # YUV-PSNR
-                        """, log_text, re.M + re.X)
-                frames = []
-                bitrate = []
-                yPsnr = []
-                uPsnr = []
-                vPsnr = []
-                yuvPsnr = []
-
-                for i in range(0, len(tempData)):
-                    frames.append(tempData[i][0])
-                    bitrate.append(tempData[i][1])
-                    yPsnr.append(tempData[i][2])
-                    uPsnr.append(tempData[i][3])
-                    vPsnr.append(tempData[i][4])
-                    yuvPsnr.append(tempData[i][5])
-
                 for summary in summaries_qp:
                     summary_type = summary[0]
                     if summary_type not in self.summary_data:  # create upon first access
