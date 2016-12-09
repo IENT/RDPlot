@@ -1,5 +1,9 @@
 import re
 
+import glob
+from os.path import basename, dirname, abspath, join, sep, normpath
+from glob import glob
+
 
 class Sequence():
     """"Keeps all information on a sequence.
@@ -99,6 +103,11 @@ class Sequence():
                             self.summary_data[summary_type][name] = []
                         self.summary_data[summary_type][name].append(name_val_dict[name])
         
+class EncLogParserError(Exception):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        
 class EncData():
     def __init__(self, summary=None, temporal=None):
         if summary is None:
@@ -107,18 +116,16 @@ class EncData():
                 
         if temporal is None:
             temporal = []
-        self.temporal = semporal
+        self.temporal = temporal
 
 class EncLog():
     def __init__(self, path):
         #Path is unique identifier
-        self.path = path
-        #Additional identifiers
-        #TODO dummy, should be properties, parsing should happen here
-        self.sequence = ""
-        self.config = ""
-        self.qp = ""
+        self.path = abspath(path)
         
+        #Parse file path and set additional identifiers
+        self.parse_path()
+
         #Encoder log data which exist as summary and temporal data
         self.yuvPsnr = EncData()
         self.yPsnr = EncData()
@@ -129,6 +136,10 @@ class EncLog():
         self.bitrateS = []
         self.bitsT = []
         self.sliceT = []
+        self.frames = []
+        
+        #Parse the specified encoder log file
+        self.parse_file()
         
         # # the I represents I Slices Summary
         # self.yuvPsnrI = -1
@@ -150,6 +161,59 @@ class EncLog():
         # self.uPsnrB = -1
         # self.vPsnrB = -1
         # self.bitrateB = -1
+
+    @classmethod
+    def parse_directory(cls, directory_path):
+        """Parse a directory for all encoder log files in subfolder "log" and 
+           return generator yielding :class: `EncLog`s"""
+        #TODO join vs sep and glob pattern?
+        paths = glob(join(directory_path, 'log') + sep + '*_enc.log')
+        
+        return (EncLog(p) for p in paths)
+
+    @classmethod
+    def parse_directory_for_sequence(cls, sequence_file_path):
+        """Parse a directory for encoder logs of a specific sequence given one
+           encoder log of this sequence returning a generator yielding parsed
+           encoder :class: `EncLog`s"""
+        filename = basename(sequence_file_path)
+        directory = dirname(sequence_file_path)
+        sequence = filename.rsplit('_QP', 1)[0]
+        
+        #Search for other encoder logs in directory and parse them
+        paths = glob(directory + sep + sequence + '*')
+        
+        return (EncLog(p) for p in paths)
+
+    def parse_path(self):
+        #TODO this can be done nicer, and more complete ie. checking additional
+        #things
+        try:
+            directories = normpath(self.path).split(sep)[0 : -2]
+            filename    = basename(self.path)
+        except IndexError:
+            raise EncLogParserError(
+                "Path {} can not be splitted into directories and filename"
+                .format(filename, path)
+            )
+        
+        self.sequence = filename.rsplit('_QP', 1)[0]
+
+        # extract config/simulation directory
+        self.config = directories[-1]
+
+        m = re.search(r'_QP(\d*)_', filename)
+        if m:
+            self.qp = m.group(1)
+        else:
+            raise EncLogParserError(
+                "Basename {} of path {} does not contain a valid qp value"
+                .format(filename, self.path)
+            )
+        
+    def parse_file(self):
+        self.extract_temporal_values(self.path)
+        self.extract_summary_values(self.path)
 
     def extract_temporal_values(self, sequenceName):
         #this function extracts temporal values
@@ -190,6 +254,15 @@ class EncLog():
     def __eq__(self, enc_log):
         return self.path == enc_log.path
         
+    def __str__(self):
+        return str((
+            "Encoder Log of sequence '{}' from config '{}' with qp '{}'"
+            " at path {}"
+       ).format(self.sequence, self.config, self.qp, self.path))
+        
+    def __repr__(self):
+        return str(self)
+        
 class EncLogCollection():
     """Collection of :class: `model.EncLog`s. The class implements different
        access/iteration/etc. methods. Additionally it implements parsing the
@@ -208,25 +281,35 @@ class EncLogCollection():
     def add(self, enc_log):
         """Adds :param: `enc_log` to the collection or replaces it if it is
            already in the collection."""
-        self._flat[enc_log.path] = enc_log
-            
         #Eventually the tree has to be extended if new sequences are added ie.
         #additionaly dictionaries have to be inserted before the encoder log can
         #be appended
         if enc_log.sequence not in self._tree:
             self._tree[enc_log.sequence] = {}
-        else if enc_log.config not in self._tree[enc_log.sequence]:
-            self._tree[enc_log.config] = {}
+        if enc_log.config not in self._tree[enc_log.sequence]:
+            self._tree[enc_log.sequence][enc_log.config] = {}
 
-        self._tree[enc_log.sequence][enc_log.config][enc_log.qp]
-    
+        #TODO Tree access is not unique in
+        #filesystem. This prevents an encoder log overwriting another one with
+        #same sequence, config and qp but on a different location. The question
+        #is, if this should be the case?
+        if enc_log.qp in self._tree[enc_log.sequence][enc_log.config]:
+            old_enc_log = self._tree[enc_log.sequence][enc_log.config][enc_log.qp]
+            if old_enc_log != enc_log:
+                raise Exception((
+                    "Ambigious encoder logs: Encoder log at {} and {} have the"
+                    " same sequence '{}', dir '{}' and qp '{}', but different"
+                    " absolute paths."
+                ).format(old_enc_log.path, enc_log.path, enc_log.sequence, 
+                         enc_log.config, enc_log.qp))
+                
+        self._tree[enc_log.sequence][enc_log.config][enc_log.qp] = enc_log
+        self._flat[enc_log.path] = enc_log
     def update(self, enc_logs):
         """Adds all elements in the iterable :param: `enc_logs` to the
            collection"""
         for enc_log in enc_logs:
-            if enc_log in self:
-                raise ReloadError()
-            self.set_enc_log(enc_log)
+            self.add(enc_log)
     
     def __getitem__(self, first_key, second_key=None, third_key=None):
         """Try accessing by using sequence, config and id or path."""
@@ -246,10 +329,10 @@ class EncLogCollection():
             raise KeyError((
                 "Could neither interpret (first_key={}, second_key={},"
                 " {third_key={}) as (sequence, config, qp) nor (path, _, _)"
-            ).format(first_key, second_key, third_key)))
+            ).format(first_key, second_key, third_key))
     
     def __iter__(self):
-        iter(self._flat)
+        return iter(self._flat)
         
     def __contains__(self, enc_log):
         return enc_log.path in self._flat
