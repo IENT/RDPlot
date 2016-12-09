@@ -98,17 +98,38 @@ class Sequence():
                         if name not in self.summary_data[summary_type]: # create upon first access
                             self.summary_data[summary_type][name] = []
                         self.summary_data[summary_type][name].append(name_val_dict[name])
+        
+class EncData():
+    def __init__(self, summary=None, temporal=None):
+        if summary is None:
+            summary = []
+        self.summary = summary
+                
+        if temporal is None:
+            temporal = []
+        self.temporal = semporal
 
-class ParsedFile:
-    def __init__(self):
-        self.frames
-        # the S represents summary, in this order: general summary, I,P,B summaries
-        self.yuvPsnrS = []
-        self.yPsnrS = []
-        self.uPsnrS = []
-        self.vPsnrS = []
+class EncLog():
+    def __init__(self, path):
+        #Path is unique identifier
+        self.path = path
+        #Additional identifiers
+        #TODO dummy, should be properties, parsing should happen here
+        self.sequence = ""
+        self.config = ""
+        self.qp = ""
+        
+        #Encoder log data which exist as summary and temporal data
+        self.yuvPsnr = EncData()
+        self.yPsnr = EncData()
+        self.uPsnr = EncData()
+        self.vPsnr = EncData()
+        
+        #Encoder log data specific to temporal (T) or summary (S) 'domain'
         self.bitrateS = []
-
+        self.bitsT = []
+        self.sliceT = []
+        
         # # the I represents I Slices Summary
         # self.yuvPsnrI = -1
         # self.yPsnrI = -1
@@ -130,13 +151,6 @@ class ParsedFile:
         # self.vPsnrB = -1
         # self.bitrateB = -1
 
-        # the T represents temporal Data
-        self.yPsnrT = []
-        self.uPsnrT = []
-        self.vPsnrT = []
-        self.bitsT = []
-        self.sliceT = []
-
     def extract_temporal_values(self, sequenceName):
         #this function extracts temporal values
         with open(sequenceName, 'r') as log_file:
@@ -151,9 +165,9 @@ class ParsedFile:
             for i in range(0, len(tempData)):
                 self.sliceT.append(tempData[i][1])
                 self.bitsT.append(tempData[i][2])
-                self.yPsnrT.append(tempData[i][5])
-                self.uPsnrT.append(tempData[i][7])
-                self.vPsnrT.append(tempData[i][9])
+                self.yPsnr.temporal.append(tempData[i][5])
+                self.uPsnr.temporal.append(tempData[i][7])
+                self.vPsnr.temporal.append(tempData[i][9])
 
 
     def extract_summary_values(self, sequenceName):
@@ -168,7 +182,83 @@ class ParsedFile:
             for i in range(0, len(tempData)):
                 self.frames.append(tempData[i][0])
                 self.bitrateS.append(tempData[i][1])
-                self.yPsnrS.append(tempData[i][2])
-                self.uPsnrS.append(tempData[i][3])
-                self.vPsnrS.append(tempData[i][4])
-                self.yuvPsnrS.append(tempData[i][5])
+                self.yPsnr.summary.append(tempData[i][2])
+                self.uPsnr.summary.append(tempData[i][3])
+                self.vPsnr.summary.append(tempData[i][4])
+                self.yuvPsnr.summary.append(tempData[i][5])
+
+    def __eq__(self, enc_log):
+        return self.path == enc_log.path
+        
+class EncLogCollection():
+    """Collection of :class: `model.EncLog`s. The class implements different
+       access/iteration/etc. methods. Additionally it implements parsing the
+       file system for certain encoder logs eg. all encoder logs of one sequence
+       in different folders."""
+    def __init__(self, enc_logs=None):
+        #References to the encoder logs are stored in a flat dictionary using
+        #the path/unique identifier as key and a tree using sequence, config and 
+        #qp as key
+        self._flat = {} 
+        self._tree = {}
+        if enc_logs is None:
+            enc_logs = []
+        self.update(enc_logs)
+    
+    def add(self, enc_log):
+        """Adds :param: `enc_log` to the collection or replaces it if it is
+           already in the collection."""
+        self._flat[enc_log.path] = enc_log
+            
+        #Eventually the tree has to be extended if new sequences are added ie.
+        #additionaly dictionaries have to be inserted before the encoder log can
+        #be appended
+        if enc_log.sequence not in self._tree:
+            self._tree[enc_log.sequence] = {}
+        else if enc_log.config not in self._tree[enc_log.sequence]:
+            self._tree[enc_log.config] = {}
+
+        self._tree[enc_log.sequence][enc_log.config][enc_log.qp]
+    
+    def update(self, enc_logs):
+        """Adds all elements in the iterable :param: `enc_logs` to the
+           collection"""
+        for enc_log in enc_logs:
+            if enc_log in self:
+                raise ReloadError()
+            self.set_enc_log(enc_log)
+    
+    def __getitem__(self, first_key, second_key=None, third_key=None):
+        """Try accessing by using sequence, config and id or path."""
+        #TODO This is kind of the pythonic way, but probably very inefficient in
+        #case of linear indecies
+        
+        try:
+            #Interpret keys as sequence, config and qp
+            return self._tree[first_key][second_key][third_key]
+        except KeyError:
+            pass
+            
+        try:
+            #Interpret first_key as path ie. unique identifier
+            return self._flat[first_key]
+        except KeyError:
+            raise KeyError((
+                "Could neither interpret (first_key={}, second_key={},"
+                " {third_key={}) as (sequence, config, qp) nor (path, _, _)"
+            ).format(first_key, second_key, third_key)))
+    
+    def __iter__(self):
+        iter(self._flat)
+        
+    def __contains__(self, enc_log):
+        return enc_log.path in self._flat
+    
+    def __len__(self):
+        return len(self._flat)
+    
+    def __str__(self):
+        return str(list(self))
+        
+    def __repr__(self):
+        return str(self)
