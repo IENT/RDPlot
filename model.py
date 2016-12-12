@@ -181,7 +181,9 @@ class EncLog():
         sequence = filename.rsplit('_QP', 1)[0]
         
         #Search for other encoder logs in directory and parse them
-        paths = glob(directory + sep + sequence + '*')
+        #TODO hardcoded file ending, needed to prevent ambiguous occurence
+        #exceptions due to *.csv or other files being parsed
+        paths = glob(directory + sep + sequence + '*_enc.log')
         
         return (EncLog(p) for p in paths)
 
@@ -233,7 +235,6 @@ class EncLog():
                 self.uPsnr.temporal.append(tempData[i][7])
                 self.vPsnr.temporal.append(tempData[i][9])
 
-
     def extract_summary_values(self, sequenceName):
         # this function extracts temporal values
         with open(sequenceName, 'r') as log_file:
@@ -250,6 +251,15 @@ class EncLog():
                 self.uPsnr.summary.append(tempData[i][3])
                 self.vPsnr.summary.append(tempData[i][4])
                 self.yuvPsnr.summary.append(tempData[i][5])
+
+    @property
+    def temporal_data(self):
+        """Create a dictionary containing variable names and corresponding
+           temporal values"""
+        #TODO This is probably more a view function
+        return {'Frame': self.frames, 'Bits': self.bitsT, 
+                'Y-PSNR': self.yPsnr.temporal, 'U-PSNR': self.uPsnr.temporal, 
+                'V-PSNR': self.vPsnr.temporal}
 
     def __eq__(self, enc_log):
         return self.path == enc_log.path
@@ -305,11 +315,22 @@ class EncLogCollection():
                 
         self._tree[enc_log.sequence][enc_log.config][enc_log.qp] = enc_log
         self._flat[enc_log.path] = enc_log
+    
     def update(self, enc_logs):
         """Adds all elements in the iterable :param: `enc_logs` to the
            collection"""
         for enc_log in enc_logs:
             self.add(enc_log)
+    
+    def get_enc_logs_of_sequence(self, sequence):
+        #TODO specialiced method, probably this should be replaced by clever
+        #element access
+        encLogs = []
+        for config in self._tree[sequence].values():
+            for encLog in config.values():
+                encLogs.append(encLog)
+        return encLogs
+    
     
     def __getitem__(self, first_key, second_key=None, third_key=None):
         """Try accessing by using sequence, config and id or path."""

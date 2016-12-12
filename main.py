@@ -13,8 +13,10 @@ from glob import glob
 import re
 import collections
 import numpy as np
+from os.path import join
 
-from model import Sequence
+from model import EncLog, EncLogCollection
+
 
 Ui_MainWindow, QMainWindow = loadUiType('mainWindow.ui')
 Ui_PlotWidget, QWidget = loadUiType('plotWidget.ui')
@@ -42,7 +44,7 @@ class Main(QMainWindow, Ui_MainWindow):
         # self.plotAreaVerticalLayout.addWidget(newPlot)
 
         # store the sequences
-        self.sequences = {}
+        self.encLogCollection = EncLogCollection()
 
         # set up signals and slots
         # self.sequenceListWidget.itemClicked.connect(self.plotPreview.change_plot)
@@ -85,13 +87,12 @@ class Main(QMainWindow, Ui_MainWindow):
                 print("successfully added sequence")
                 break
 
-        # extract the part of the filename that files for different QPs share.
-        sequence_name_common = file_name.rsplit('_QP', 1)[0]
-        sequence_files = glob(directory + '/' + sequence_name_common + '*')
-        sequence = Sequence(sequence_name_common, sequence_files)
-
-        self.sequences[sequence.name] = sequence
-        self.sequenceListWidget.addItem(sequence.name)
+        path = join(directory, file_name)
+        encLogs = list( EncLog.parse_directory_for_sequence( path ) )
+        self.encLogCollection.update(encLogs)
+        
+        self.sequenceListWidget.addItem(encLogs[0].sequence)
+        # TODO implement reloading
         self.sequenceListWidget.setCurrentItem(self.sequenceListWidget.item(self.sequenceListWidget.count()-1))
 
         self.addSequenceButton.clicked.connect(self.add_sequence)
@@ -101,7 +102,8 @@ class Main(QMainWindow, Ui_MainWindow):
         # updates the plot with a new figure.
         self.sequenceListWidget.currentItemChanged.disconnect(self.update_plot)
         sequence_name = item.text()
-        sequence = self.sequences[sequence_name]
+        #TODO correct access
+        encLogs = self.encLogCollection.get_enc_logs_of_sequence(sequence_name)
 
         # get currently chosen plot variable
         former_variable = self.comboBox.currentText()
@@ -111,11 +113,13 @@ class Main(QMainWindow, Ui_MainWindow):
         # add found plot variables to combo box
         all_variable_names = []  # set because we don't want duplicates
         if self.summaryPlotButton.isChecked():
-            plot_data = sequence.summary_data.items()
-        else:
-            plot_data = sequence.temporal_data.items()
+#            plot_data = [encLog.summary_data for encLog in encLogs]
+#TODO implement this
+#            plot_data = sequence.summary_data.items()
+#        else:
+            plot_data = (encLog.temporal_data for encLog in encLogs)
 
-        for (summary, variable_dicts) in plot_data:
+        for variable_dicts in plot_data:
             # all_variable_names.add(variable_dicts.keys())
             for variable_name in variable_dicts.keys():
                 all_variable_names.append(variable_name)
