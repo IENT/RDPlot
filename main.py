@@ -103,7 +103,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.sequenceListWidget.currentItemChanged.disconnect(self.update_plot)
         sequence_name = item.text()
         #TODO correct access
-        encLogs = self.encLogCollection.get_enc_logs_of_sequence(sequence_name)
+        encLogs = list(self.encLogCollection.get_enc_logs_of_sequence(sequence_name))
 
         # get currently chosen plot variable
         former_variable = self.comboBox.currentText()
@@ -113,15 +113,13 @@ class Main(QMainWindow, Ui_MainWindow):
         # add found plot variables to combo box
         all_variable_names = []  # set because we don't want duplicates
         if self.summaryPlotButton.isChecked():
-#            plot_data = [encLog.summary_data for encLog in encLogs]
-#TODO implement this
-#            plot_data = sequence.summary_data.items()
-#        else:
-            plot_data = (encLog.temporal_data for encLog in encLogs)
+            plot_data = list(encLogs)[0].summary_data
+        else:
+            plot_data = list(encLogs)[0].temporal_data
 
-        for variable_dicts in plot_data:
+        for a in plot_data:
             # all_variable_names.add(variable_dicts.keys())
-            for variable_name in variable_dicts.keys():
+            for variable_name in plot_data[a].keys():
                 all_variable_names.append(variable_name)
             break
         all_variable_names.sort()
@@ -146,7 +144,7 @@ class Main(QMainWindow, Ui_MainWindow):
                 self.comboBox.setCurrentIndex(0)
                 pass
         self.sequenceListWidget.currentItemChanged.connect(self.update_plot)
-        #self.plotPreview.change_plot(sequence, new_variable, self.summaryPlotButton.isChecked())
+        self.plotPreview.change_plot(self.encLogCollection.get_enc_logs_of_sequence(sequence_name), new_variable, self.summaryPlotButton.isChecked())
 
     def update_plot_type(self, checked):
         self.summaryPlotButton.toggled.disconnect(self.update_plot_type)
@@ -165,8 +163,7 @@ class Main(QMainWindow, Ui_MainWindow):
         sequence_item = self.sequenceListWidget.currentItem()
         if sequence_item is not None:
             sequence_name = sequence_item.text()
-            sequence = self.sequences[sequence_name]
-            self.plotPreview.change_plot(sequence, index_name, self.summaryPlotButton.isChecked())
+            self.plotPreview.change_plot(self.encLogCollection.get_enc_logs_of_sequence(sequence_name), index_name, self.summaryPlotButton.isChecked())
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
 
 
@@ -196,15 +193,14 @@ class PlotWidget(QWidget, Ui_PlotWidget):
     # def change_YUVMod(self, mod):
     #     self.YUVMod = mod
 
-    def change_plot(self, sequence, variable, plotTypeSummary):
-        qp_vals = [int(qp) for qp in sequence.qp_vals]
+    def change_plot(self, encLogs, variable, plotTypeSummary):
         if not variable:
             return
 
         if plotTypeSummary:
             # np
-            rate = sequence.summary_data['SUMMARY']['Bitrate']
-            plot_variable = sequence.summary_data['SUMMARY'][variable]
+            rate          = encLogs[0].summary_data['SUMMARY']['Bitrate']
+            plot_variable = encLogs[0].summary_data['SUMMARY'][variable]
 
             fig = Figure()
             axis = fig.add_subplot(111)
@@ -212,10 +208,11 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         else:
             fig = Figure()
             axis = fig.add_subplot(111)
-            for i in range(0, len(qp_vals)):
+            for encLog in encLogs:
                 #framevalues = sequence.temporal_data[qp_vals[i]]['Frame']
-                axis.plot(sequence.temporal_data[str(qp_vals[i])]['Frame'],
-                          sequence.temporal_data[str(qp_vals[i])][variable])
+                for (name, data) in encLog.temporal_data[encLog.qp].items():
+                    #TODO t axis, at the moment we have no frames
+                    axis.plot(data)
 
         self.updatempl(fig)
 
