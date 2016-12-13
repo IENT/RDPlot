@@ -8,17 +8,6 @@ class EncLogParserError(Exception):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-
-class EncData():
-    def __init__(self, summary=None, temporal=None):
-        if summary is None:
-            summary = []
-        self.summary = summary
-
-        if temporal is None:
-            temporal = []
-        self.temporal = temporal
-
 class EncLog():
     def __init__(self, path):
         #Path is unique identifier
