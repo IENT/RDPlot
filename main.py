@@ -15,7 +15,7 @@ import collections
 import numpy as np
 from os.path import join
 
-from model import EncLog, EncLogCollection
+from model import EncLog, EncLogCollection, summary_data_from_enc_logs
 
 
 Ui_MainWindow, QMainWindow = loadUiType('mainWindow.ui')
@@ -113,7 +113,7 @@ class Main(QMainWindow, Ui_MainWindow):
         # add found plot variables to combo box
         all_variable_names = []  # set because we don't want duplicates
         if self.summaryPlotButton.isChecked():
-            plot_data = list(encLogs)[0].summary_data
+            plot_data = summary_data_from_enc_logs(encLogs)
         else:
             plot_data = list(encLogs)[0].temporal_data
 

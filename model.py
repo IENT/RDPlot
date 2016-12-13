@@ -4,6 +4,23 @@ import glob
 from os.path import basename, dirname, abspath, join, sep, normpath
 from glob import glob
 
+
+def summary_data_from_enc_logs(encLogs):
+    """Create a dictionary containing the summary data by combining
+       different encLogs."""
+    #{'Summary' : {'Y-PSNR' : [...], 'PSNR' : ...}, 'I' : ...}
+    output = {}
+    for encLog in encLogs:
+        for (name1, dict1) in encLog.summary_data.items():
+            if name1 not in output:
+                output[name1] = {}
+            for (name2, list2) in dict1.items():
+                if name2 not in output[name1]:
+                    output[name1][name2] = []
+                output[name1][name2].extend(list2)
+    return output
+
+
 class EncLogParserError(Exception):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
