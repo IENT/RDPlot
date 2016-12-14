@@ -218,25 +218,9 @@ class EncLogCollection():
                 encLogs.append(encLog)
         return encLogs
 
-    def __getitem__(self, first_key, second_key=None, third_key=None):
-        """Try accessing by using sequence, config and id or path."""
-        #TODO This is kind of the pythonic way, but probably very inefficient in
-        #case of linear indecies
-
-        try:
-            #Interpret keys as sequence, config and qp
-            return self._tree[first_key][second_key][third_key]
-        except KeyError:
-            pass
-
-        try:
-            #Interpret first_key as path ie. unique identifier
-            return self._flat[first_key]
-        except KeyError:
-            raise KeyError((
-                "Could neither interpret (first_key={}, second_key={},"
-                " {third_key={}) as (sequence, config, qp) nor (path, _, _)"
-            ).format(first_key, second_key, third_key))
+    def __getitem__(self, path):
+        """Access element by path ie. unique identifier"""
+        return self._flat[path]
 
     def __iter__(self):
         return iter(self._flat)
