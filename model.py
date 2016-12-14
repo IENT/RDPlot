@@ -212,11 +212,8 @@ class EncLogCollection():
             self.add(enc_log)
 
     def get_by_sequence(self, sequence):
-        encLogs = []
-        for config in self._tree[sequence].values():
-            for encLog in config.values():
-                encLogs.append(encLog)
-        return encLogs
+        #Access a sequence in the EncLog tree and flatten the remaining tree
+        return list( self._tree[sequence].values().values() )
 
     def __getitem__(self, path):
         """Access element by path ie. unique identifier"""
