@@ -12,6 +12,8 @@ from model import EncLog, EncLogCollection
 PATH = "../simulation_examples"
 CONFIGS = listdir(PATH)
 
+SEQUENCE = ("HM16.7-Orig-skateboarding_vr"
+            "_3072x2048_60_encoder+randomaccess+main_FTBE600_IBD8_IBD8")
 
 def parse_configs():
     for config in CONFIGS:
@@ -28,3 +30,5 @@ def test_enc_log_collection():
     log_collection = EncLogCollection(logs[1:3])
     log_collection.add(logs[4])
     log_collection.update(logs)
+
+    enc_logs = log_collection.get_by_sequence(SEQUENCE)

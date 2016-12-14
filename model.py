@@ -163,6 +163,8 @@ class EncLog():
         return str(self)
 
 class EncLogCollection():
+    _max_tree_depth = 3
+
     """Collection of :class: `model.EncLog`s. The class implements different
        access/iteration/etc. methods. Additionally it implements parsing the
        file system for certain encoder logs eg. all encoder logs of one sequence
@@ -211,9 +213,22 @@ class EncLogCollection():
         for enc_log in enc_logs:
             self.add(enc_log)
 
+    @classmethod
+    def _flatten_dict_tree(cls, parent, depth=0):
+        """Helper function to create a flatted list from a dictionary tree."""
+        if depth >= cls._max_tree_depth:
+            raise Exception("Maximal tree depth exceeded")
+        if isinstance(parent, EncLog):
+            return [parent]
+
+        enc_logs = []
+        for child in parent.values():
+            enc_logs.extend( cls._flatten_dict_tree(child, depth = depth + 1) )
+        return enc_logs
+
     def get_by_sequence(self, sequence):
         #Access a sequence in the EncLog tree and flatten the remaining tree
-        return list( self._tree[sequence].values().values() )
+        return self._flatten_dict_tree( self._tree[sequence] )
 
     def __getitem__(self, path):
         """Access element by path ie. unique identifier"""

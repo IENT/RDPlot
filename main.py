@@ -163,7 +163,7 @@ class Main(QMainWindow, Ui_MainWindow):
         sequence_item = self.sequenceListWidget.currentItem()
         if sequence_item is not None:
             sequence_name = sequence_item.text()
-            self.plotPreview.change_plot(self.encLogCollection.get_enc_logs_of_sequence(sequence_name), index_name, self.summaryPlotButton.isChecked())
+            self.plotPreview.change_plot(self.encLogCollection.get_by_sequence(sequence_name), index_name, self.summaryPlotButton.isChecked())
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
 
 
