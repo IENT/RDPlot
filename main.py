@@ -103,7 +103,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.sequenceListWidget.currentItemChanged.disconnect(self.update_plot)
         sequence_name = item.text()
         #TODO correct access
-        encLogs = list(self.encLogCollection.get_enc_logs_of_sequence(sequence_name))
+        encLogs = list(self.encLogCollection.get_by_sequence(sequence_name))
 
         # get currently chosen plot variable
         former_variable = self.comboBox.currentText()
@@ -144,7 +144,7 @@ class Main(QMainWindow, Ui_MainWindow):
                 self.comboBox.setCurrentIndex(0)
                 pass
         self.sequenceListWidget.currentItemChanged.connect(self.update_plot)
-        self.plotPreview.change_plot(self.encLogCollection.get_enc_logs_of_sequence(sequence_name), new_variable, self.summaryPlotButton.isChecked())
+        self.plotPreview.change_plot(self.encLogCollection.get_by_sequence(sequence_name), new_variable, self.summaryPlotButton.isChecked())
 
     def update_plot_type(self, checked):
         self.summaryPlotButton.toggled.disconnect(self.update_plot_type)

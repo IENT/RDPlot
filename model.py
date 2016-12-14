@@ -211,15 +211,12 @@ class EncLogCollection():
         for enc_log in enc_logs:
             self.add(enc_log)
 
-    def get_enc_logs_of_sequence(self, sequence):
-        #TODO specialiced method, probably this should be replaced by clever
-        #element access
+    def get_by_sequence(self, sequence):
         encLogs = []
         for config in self._tree[sequence].values():
             for encLog in config.values():
                 encLogs.append(encLog)
         return encLogs
-
 
     def __getitem__(self, first_key, second_key=None, third_key=None):
         """Try accessing by using sequence, config and id or path."""
