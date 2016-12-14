@@ -31,12 +31,12 @@ class EncLog():
         self.path = abspath(path)
 
         #Parse file path and set additional identifiers
-        self.parse_path()
+        self.sequence, self.config, self.qp = self._parse_path(self.path)
 
         #Dictionaries holding the parsed values
         #TODO select parsing functions depending on codec type,
-        self.summary_data  = self.parse_summary_data()
-        self.temporal_data = self.parse_temporal_data()
+        self.summary_data  = self._parse_summary_data(self.path)
+        self.temporal_data = {self.qp : self._parse_temporal_data(self.path)}
 
     @classmethod
     def parse_directory(cls, directory_path):
@@ -63,36 +63,38 @@ class EncLog():
 
         return (EncLog(p) for p in paths)
 
-    def parse_path(self):
+    @staticmethod
+    def _parse_path(path):
         #TODO this can be done nicer, and more complete ie. checking additional
         #things
         try:
-            directories = normpath(self.path).split(sep)[0 : -2]
-            filename    = basename(self.path)
+            directories = normpath(path).split(sep)[0 : -2]
+            filename    = basename(path)
         except IndexError:
             raise EncLogParserError(
                 "Path {} can not be splitted into directories and filename"
                 .format(filename, path)
             )
 
-        self.sequence = filename.rsplit('_QP', 1)[0]
+        sequence = filename.rsplit('_QP', 1)[0]
 
         # extract config/simulation directory
-        self.config = directories[-1]
+        config = directories[-1]
 
         m = re.search(r'_QP(\d*)_', filename)
         if m:
-            self.qp = m.group(1)
+            qp = m.group(1)
         else:
             raise EncLogParserError(
                 "Basename {} of path {} does not contain a valid qp value"
-                .format(filename, self.path)
+                .format(filename, path)
             )
+        return (sequence, config, qp)
 
-    #TODO make this static?
-    def parse_temporal_data(self):
+    @staticmethod
+    def _parse_temporal_data(path):
         #this function extracts temporal values
-        with open(self.path, 'r') as log_file:
+        with open(path, 'r') as log_file:
             log_text = log_file.read()  # reads the whole text file
             tempData = re.findall(r"""
                 POC \s+ (\d+) \s+ .+ \s+ \d+ \s+ . \s+ (.-\D+) ,  #Slice
@@ -111,10 +113,11 @@ class EncLog():
                 #TODO slices and frames?
                 for (index, name) in names.items():
                     data[name].append(tempData[i][index])
-            return {self.qp : data}
+            return data
 
-    def parse_summary_data(self):
-        with open(self.path, 'r') as log_file:
+    @staticmethod
+    def _parse_summary_data(path):
+        with open(path, 'r') as log_file:
             log_text = log_file.read()  # reads the whole text file
             summaries = re.findall(r"""  ^(\w*)-*.*$ # catch summary line
                            \s* # catch newline and space
