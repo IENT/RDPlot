@@ -15,7 +15,8 @@ import collections
 import numpy as np
 from os.path import join
 
-from model import EncLog, EncLogCollection, summary_data_from_enc_logs
+from model import (EncLog, EncLogCollection, summary_data_from_enc_logs,
+                   sort_dict_of_lists_by_key)
 
 
 Ui_MainWindow, QMainWindow = loadUiType('mainWindow.ui')
@@ -103,7 +104,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.sequenceListWidget.currentItemChanged.disconnect(self.update_plot)
         sequence_name = item.text()
         #TODO correct access
-        encLogs = list(self.encLogCollection.get_by_sequence(sequence_name))
+        encLogs = self.encLogCollection.get_by_sequence(sequence_name)
 
         # get currently chosen plot variable
         former_variable = self.comboBox.currentText()
@@ -196,11 +197,12 @@ class PlotWidget(QWidget, Ui_PlotWidget):
     def change_plot(self, encLogs, variable, plotTypeSummary):
         if not variable:
             return
-
         if plotTypeSummary:
             # np
-            rate          = encLogs[0].summary_data['SUMMARY']['Bitrate']
-            plot_variable = encLogs[0].summary_data['SUMMARY'][variable]
+            summary_data = summary_data_from_enc_logs(encLogs)['SUMMARY']
+            summary_data = sort_dict_of_lists_by_key(summary_data, 'Bitrate')
+            rate          = summary_data['Bitrate']
+            plot_variable = summary_data[variable]
 
             fig = Figure()
             axis = fig.add_subplot(111)
@@ -209,10 +211,10 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             fig = Figure()
             axis = fig.add_subplot(111)
             for encLog in encLogs:
-                #framevalues = sequence.temporal_data[qp_vals[i]]['Frame']
-                for (name, data) in encLog.temporal_data[encLog.qp].items():
-                    #TODO t axis, at the moment we have no frames
-                    axis.plot(data)
+                #TODO frames are not consecutive eg. [8, 4, 2, 6, 10, 4, ...]
+                # frames = encLog.temporal_data[encLog.qp]['Frames']
+                values = encLog.temporal_data[encLog.qp][variable]
+                axis.plot(values)
 
         self.updatempl(fig)
 

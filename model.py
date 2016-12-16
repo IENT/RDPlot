@@ -117,7 +117,8 @@ class EncLog():
 
             #Association between index of data in tempData and corresponding
             #output key. Output shape definition is in one place.
-            names = {2 : 'Bits', 5 : 'Y-PSNR', 7 : 'U-PSNR', 9 : 'V-PSNR'}
+            names = {0 : 'Frames', 2 : 'Bits', 5 : 'Y-PSNR', 7 : 'U-PSNR',
+                     9 : 'V-PSNR'}
 
             #Define output data dict and fill it with parsed values
             data = {name : [] for (index, name) in names.items()}
