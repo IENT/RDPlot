@@ -20,6 +20,18 @@ def summary_data_from_enc_logs(encLogs):
                 output[name1][name2].extend(list2)
     return output
 
+def sort_dict_of_lists_by_key(dictionary, sorting_key):
+    """Take a dictionary with equal length lists as items and sort all list
+       according to one list identified by sorting_key"""
+    sorting_list = dictionary[sorting_key]
+    sorted_dictionary = {sorting_key : sorted(sorting_list)}
+    for (key, item) in dictionary.items():
+        if key != sorting_key:
+            sorted_pairs = sorted(zip(sorting_list, item),
+                                  key=lambda zipped: zipped[0])
+            sorted_dictionary[key] = list(zip(*sorted_pairs))[1]
+    return sorted_dictionary
+
 
 class EncLogParserError(Exception):
     def __init__(self, *args, **kwargs):
