@@ -207,6 +207,9 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             fig = Figure()
             axis = fig.add_subplot(111)
             axis.plot(rate, plot_variable)
+            # axis.set_title('Summary Data')
+            axis.set_xlabel('Bitrate')
+            axis.set_ylabel(variable)
         else:
             fig = Figure()
             axis = fig.add_subplot(111)
@@ -215,6 +218,9 @@ class PlotWidget(QWidget, Ui_PlotWidget):
                 # frames = encLog.temporal_data[encLog.qp]['Frames']
                 values = encLog.temporal_data[encLog.qp][variable]
                 axis.plot(values)
+                # axis.set_title('Temporal Data')
+                axis.set_xlabel('Bitrate')
+                axis.set_ylabel(variable)
 
         self.updatempl(fig)
 
