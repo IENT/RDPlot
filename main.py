@@ -127,7 +127,6 @@ class Main(QMainWindow, Ui_MainWindow):
         self.comboBox.currentIndexChanged.disconnect(self.update_plot_variable)
         self.comboBox.clear()
         self.comboBox.addItems(all_variable_names)
-        self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
         # use same variable as with last plot if possible
         if former_variable in all_variable_names:       # todo: set some smarter defaults here? Problem is the recursive calling
             new_variable = former_variable
@@ -144,6 +143,7 @@ class Main(QMainWindow, Ui_MainWindow):
             else:
                 self.comboBox.setCurrentIndex(0)
                 pass
+        self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
         self.sequenceListWidget.currentItemChanged.connect(self.update_plot)
         self.plotPreview.change_plot(self.encLogCollection.get_by_sequence(sequence_name), new_variable, self.summaryPlotButton.isChecked())
 
@@ -214,8 +214,8 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             fig = Figure()
             axis = fig.add_subplot(111)
             for encLog in encLogs:
-                #TODO frames are not consecutive eg. [8, 4, 2, 6, 10, 4, ...]
-                # frames = encLog.temporal_data[encLog.qp]['Frames']
+                #TODO frames are not consecutive eg. [8, 4, 2, 6, 10, 4, ...] in HEVC
+                frames = encLog.temporal_data[encLog.qp]['Frames']
                 values = encLog.temporal_data[encLog.qp][variable]
                 axis.plot(values)
                 # axis.set_title('Temporal Data')
