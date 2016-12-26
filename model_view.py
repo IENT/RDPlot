@@ -1,3 +1,7 @@
+class ModelViewError(Exception):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
 class Model:
     def __init__():
         self._observers = []
@@ -8,14 +12,18 @@ class Model:
     
     def _add_observer(observer):
         if observer in self.observer:
-            #TODO usefull exception
-            raise Exception()
+            raise ModelViewError((
+                "View {} is already observing model {} and thus,"
+                " can not be added as observer"
+            ).format(observer, model))
         self._observers.append(observer)
             
     def _remove_observer(observer):
         if observer not in self._observers:
-            #TODO usefull exception
-            raise Exception()
+            raise ModelViewError((
+                "View {} is not observing model {} and thus,"
+                " can not be removed as observer"
+            ).format(observer, model))
         self._observers.remove(observer)
         
 class View:
