@@ -17,19 +17,12 @@ from os.path import join
 
 from model import (EncLog, EncLogCollectionModel, summary_data_from_enc_logs,
                    sort_dict_of_lists_by_key)
-from model_view import DictTreeView
+from model_view import (DictTreeView, get_child_items_from_item,
+                        get_top_level_items_from_tree_widget, EncLogTreeView)
 
 
 Ui_MainWindow, QMainWindow = loadUiType('mainWindow.ui')
 Ui_PlotWidget, QWidget = loadUiType('plotWidget.ui')
-
-
-def get_top_level_items_from_tree_widget(tree_widget):
-    for index in range(0, tree_widget.topLevelItemCount()):
-        yield tree_widget.topLevelItem(index)
-
-def get_child_items_from_item(item):
-    return (item.child(index) for index in range(0, item.childCount()))
 
 
 class Main(QMainWindow, Ui_MainWindow):
@@ -69,6 +62,7 @@ class Main(QMainWindow, Ui_MainWindow):
         # set up signals and slots
         # self.sequenceListWidget.itemClicked.connect(self.plotPreview.change_plot)
         self.sequenceTreeWidget.itemSelectionChanged.connect(self.update_plot)
+
         self.addSequenceButton.clicked.connect(self.add_sequence)
         # self.addPlotButton.clicked.connect(self.addAnotherPlot)
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
@@ -188,9 +182,9 @@ class Main(QMainWindow, Ui_MainWindow):
                 pass
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
         # self.sequenceListWidget.currentItemChanged.connect(self.update_plot)
-        self.plotPreview.change_plot(encLogs, new_variable, self.summaryPlotButton.isChecked())
-
         self.sequenceTreeWidget.itemSelectionChanged.connect(self.update_plot)
+
+        self.plotPreview.change_plot(encLogs, new_variable, self.summaryPlotButton.isChecked())
 
     def update_plot_type(self, checked):
         self.summaryPlotButton.toggled.disconnect(self.update_plot_type)
@@ -199,6 +193,9 @@ class Main(QMainWindow, Ui_MainWindow):
             return
         self.update_plot(self.sequenceListWidget.currentItem())
         self.summaryPlotButton.toggled.connect(self.update_plot_type)
+        if len(self.sequenceTreeWidget.selectedItems()) == 0:
+            return
+        self.update_plot()
 
     def update_plot_variable(self, index):
         self.comboBox.currentIndexChanged.disconnect(self.update_plot_variable)

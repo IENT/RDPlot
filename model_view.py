@@ -1,6 +1,14 @@
 from PyQt5 import QtWidgets
 
 
+def get_top_level_items_from_tree_widget(tree_widget):
+    for index in range(0, tree_widget.topLevelItemCount()):
+        yield tree_widget.topLevelItem(index)
+
+def get_child_items_from_item(item):
+    return (item.child(index) for index in range(0, item.childCount()))
+
+
 class ModelViewError(Exception):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -66,3 +74,23 @@ class DictTreeView(View):
             for key in dict_tree:
                 child = QtWidgets.QTreeWidgetItem(parent, [key])
                 self._update_tree_widget(dict_tree[key], child)
+
+    def get_items_by_depth(self, depth):
+        output = []
+        for item in get_top_level_items_from_tree_widget(self.widget):
+            # Note, that the top level equals depth zero, thus, the next level
+            # has depth 1
+            output.extend(self._get_items_by_depth_rec(item, 1, depth))
+        return output
+
+    @classmethod
+    def _get_items_by_depth_rec(cls, parent, depth_count, depth):
+        if depth_count >= depth:
+            return [parent]
+
+        output = []
+        for item in get_child_items_from_item(parent):
+            output.extend(
+                cls._get_items_by_depth_rec(item, depth_count + 1, depth)
+            )
+        return output
