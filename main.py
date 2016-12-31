@@ -24,8 +24,12 @@ Ui_MainWindow, QMainWindow = loadUiType('mainWindow.ui')
 Ui_PlotWidget, QWidget = loadUiType('plotWidget.ui')
 
 
-def get_children_from_item(item):
-        return (item.child(index) for index in range(0, item.childCount()))
+def get_top_level_items_from_tree_widget(tree_widget):
+    for index in range(0, tree_widget.topLevelItemCount()):
+        yield tree_widget.topLevelItem(index)
+
+def get_child_items_from_item(item):
+    return (item.child(index) for index in range(0, item.childCount()))
 
 
 class Main(QMainWindow, Ui_MainWindow):
@@ -56,7 +60,7 @@ class Main(QMainWindow, Ui_MainWindow):
 
         # set up signals and slots
         # self.sequenceListWidget.itemClicked.connect(self.plotPreview.change_plot)
-        self.sequenceTreeWidget.currentItemChanged.connect(self.update_plot)
+        self.sequenceTreeWidget.itemSelectionChanged.connect(self.update_plot)
         self.addSequenceButton.clicked.connect(self.add_sequence)
         self.addPlotButton.clicked.connect(self.addAnotherPlot)
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
@@ -106,12 +110,19 @@ class Main(QMainWindow, Ui_MainWindow):
         self.addSequenceButton.clicked.connect(self.add_sequence)
         pass
 
-    def update_plot(self, item):
+    def update_item_selection(self, parent, is_selected):
+        for child in get_child_items_from_item(parent):
+            if is_selected == True:
+                child.setSelected(True)
+            self.update_item_selection(child, is_selected or child.isSelected())
+
+    def update_plot(self):
         # updates the plot with a new figure.
-        self.sequenceListWidget.currentItemChanged.disconnect(self.update_plot)
-        sequence_name = item.text()
-        #TODO correct access
-        encLogs = self.encLogCollectionModel.get_by_sequence(sequence_name)
+        self.sequenceTreeWidget.itemSelectionChanged.disconnect(self.update_plot)
+
+        # Reselect items: All children of selected items are selected
+        for item in get_top_level_items_from_tree_widget(self.sequenceTreeWidget):
+            self.update_item_selection(item, item.isSelected())
 
         # get currently chosen plot variable
         former_variable = self.comboBox.currentText()
@@ -151,8 +162,9 @@ class Main(QMainWindow, Ui_MainWindow):
                 self.comboBox.setCurrentIndex(0)
                 pass
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
-        self.sequenceListWidget.currentItemChanged.connect(self.update_plot)
         self.plotPreview.change_plot(self.encLogCollectionModel.get_by_sequence(sequence_name), new_variable, self.summaryPlotButton.isChecked())
+
+        self.sequenceTreeWidget.itemSelectionChanged.connect(self.update_plot)
 
     def update_plot_type(self, checked):
         self.summaryPlotButton.toggled.disconnect(self.update_plot_type)
