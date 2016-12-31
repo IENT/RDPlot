@@ -48,7 +48,10 @@ class Main(QMainWindow, Ui_MainWindow):
 
         # store the sequences
         self.encLogCollectionModel = EncLogCollectionModel()
-        self.tree_view = EncLogTreeView(self.sequenceTreeWidget)
+        self.tree_view = EncLogTreeView(
+            self.sequenceTreeWidget,
+            is_qp_expansion_enabled = False,
+        )
         self.tree_view.model = self.encLogCollectionModel
 
 

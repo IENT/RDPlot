@@ -96,9 +96,9 @@ class DictTreeView(View):
         return output
 
 class EncLogTreeView(DictTreeView):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._is_qp_expansion_enabled = False
+    def __init__(self, widget, model=None, is_qp_expansion_enabled=False):
+        super().__init__(widget, model)
+        self.is_qp_expansion_enabled = is_qp_expansion_enabled
 
         self.widget.itemSelectionChanged.connect(self._update_selection)
 
@@ -120,9 +120,9 @@ class EncLogTreeView(DictTreeView):
         #TODO alter selection
         for qp_items in self.get_items_by_depth(2):
             qp_items.setChildIndicatorPolicy(
-                QtWidgets.QTreeWidgetItem.DontShowIndicator
+                QtWidgets.QTreeWidgetItem.DontShowIndicatorWhenChildless
                 if self._is_qp_expansion_enabled
-                else QtWidgets.QTreeWidgetItem.DontShowIndicatorWhenChildless
+                else QtWidgets.QTreeWidgetItem.DontShowIndicator
             )
 
     def _update_selection(self):
