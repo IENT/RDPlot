@@ -45,7 +45,7 @@ class View:
         self._model = model
 
     @property
-    def model():
+    def model(self):
         return self._model
 
     @model.setter
