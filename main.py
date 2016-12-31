@@ -48,7 +48,7 @@ class Main(QMainWindow, Ui_MainWindow):
 
         # store the sequences
         self.encLogCollectionModel = EncLogCollectionModel()
-        self.tree_view = DictTreeView(self.sequenceTreeWidget)
+        self.tree_view = EncLogTreeView(self.sequenceTreeWidget)
         self.tree_view.model = self.encLogCollectionModel
 
 
@@ -188,10 +188,9 @@ class Main(QMainWindow, Ui_MainWindow):
 
     def update_plot_type(self, checked):
         self.summaryPlotButton.toggled.disconnect(self.update_plot_type)
-        currentItem = self.sequenceListWidget.currentItem()
-        if currentItem is None:
-            return
-        self.update_plot(self.sequenceListWidget.currentItem())
+
+        self.tree_view.is_qp_expansion_enabled = checked
+
         self.summaryPlotButton.toggled.connect(self.update_plot_type)
         if len(self.sequenceTreeWidget.selectedItems()) == 0:
             return

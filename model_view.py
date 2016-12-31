@@ -94,3 +94,31 @@ class DictTreeView(View):
                 cls._get_items_by_depth_rec(item, depth_count + 1, depth)
             )
         return output
+
+class EncLogTreeView(DictTreeView):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._is_qp_expansion_enabled = False
+
+    def _update_view(self, dict_tree):
+        super()._update_view(dict_tree)
+        # Alter the qp items of the tree
+        self._update_qp_expansion()
+
+    @property
+    def is_qp_expansion_enabled(self):
+        return self._is_qp_expansion_enabled
+
+    @is_qp_expansion_enabled.setter
+    def is_qp_expansion_enabled(self, is_enabled):
+        self._is_qp_expansion_enabled = is_enabled
+        self._update_qp_expansion()
+
+    def _update_qp_expansion(self):
+        #TODO alter selection
+        for qp_items in self.get_items_by_depth(2):
+            qp_items.setChildIndicatorPolicy(
+                QtWidgets.QTreeWidgetItem.DontShowIndicator
+                if self._is_qp_expansion_enabled
+                else QtWidgets.QTreeWidgetItem.DontShowIndicatorWhenChildless
+            )
