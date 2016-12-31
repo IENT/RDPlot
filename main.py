@@ -62,6 +62,9 @@ class Main(QMainWindow, Ui_MainWindow):
         self.encLogCollectionModel.update(
             EncLog.parse_directory('../simulation_examples/HEVC/')
         )
+        self.encLogCollectionModel.update(
+            EncLog.parse_directory('../simulation_examples_back/hm360Lib/')
+        )
 
         # set up signals and slots
         # self.sequenceListWidget.itemClicked.connect(self.plotPreview.change_plot)
