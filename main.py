@@ -112,19 +112,9 @@ class Main(QMainWindow, Ui_MainWindow):
         self.addSequenceButton.clicked.connect(self.add_sequence)
         pass
 
-    def update_item_selection(self, parent, is_selected):
-        for child in get_child_items_from_item(parent):
-            if is_selected == True:
-                child.setSelected(True)
-            self.update_item_selection(child, is_selected or child.isSelected())
-
     def update_plot(self):
         # updates the plot with a new figure.
         self.sequenceTreeWidget.itemSelectionChanged.disconnect(self.update_plot)
-
-        # Reselect items: All children of selected items are selected
-        for item in get_top_level_items_from_tree_widget(self.sequenceTreeWidget):
-            self.update_item_selection(item, item.isSelected())
 
         #Get all enc_logs specified by the selection tree
         encLogs = []

@@ -100,6 +100,8 @@ class EncLogTreeView(DictTreeView):
         super().__init__(*args, **kwargs)
         self._is_qp_expansion_enabled = False
 
+        self.widget.itemSelectionChanged.connect(self._update_selection)
+
     def _update_view(self, dict_tree):
         super()._update_view(dict_tree)
         # Alter the qp items of the tree
@@ -122,3 +124,15 @@ class EncLogTreeView(DictTreeView):
                 if self._is_qp_expansion_enabled
                 else QtWidgets.QTreeWidgetItem.DontShowIndicatorWhenChildless
             )
+
+    def _update_selection(self):
+        # Reselect items: All children of selected items are selected
+        for item in get_top_level_items_from_tree_widget(self.widget):
+            self._select_children_rec(item, item.isSelected())
+
+    def _select_children_rec(self, parent, is_selected):
+        for child in get_child_items_from_item(parent):
+            if is_selected == True:
+                child.setSelected(True)
+            self._select_children_rec(child, is_selected or child.isSelected())
+
