@@ -258,6 +258,9 @@ class EncLogCollectionModel(Model):
         #Access a sequence in the EncLog tree and flatten the remaining tree
         return self._flatten_dict_tree( self._tree[sequence] )
 
+    def get_by_tree_keys(self, sequence, config, qp):
+        return self._tree[sequence][config][qp]
+
     def __getitem__(self, path):
         """Access element by path ie. unique identifier"""
         return self._flat[path]

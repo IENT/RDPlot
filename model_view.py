@@ -136,3 +136,17 @@ class EncLogTreeView(DictTreeView):
                 child.setSelected(True)
             self._select_children_rec(child, is_selected or child.isSelected())
 
+    def get_selected_enc_log_keys(self):
+        #Get all enc_logs specified by the selection tree
+        keys = []
+        for sequence_item in get_top_level_items_from_tree_widget(self.widget):
+            for config_item in get_child_items_from_item(sequence_item):
+                for qp_item in get_child_items_from_item(config_item):
+                    # Note, that this is valid, as if a parent item is checked
+                    # all sub items are also selected
+                    if qp_item.isSelected() == True:
+                        sequence = sequence_item.text(0)
+                        config = config_item.text(0)
+                        qp = qp_item.text(0)
+                        keys.append( (sequence, config, qp) )
+        return keys

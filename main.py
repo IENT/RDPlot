@@ -116,19 +116,9 @@ class Main(QMainWindow, Ui_MainWindow):
         # updates the plot with a new figure.
         self.sequenceTreeWidget.itemSelectionChanged.disconnect(self.update_plot)
 
-        #Get all enc_logs specified by the selection tree
         encLogs = []
-        for sequence_item in get_top_level_items_from_tree_widget(self.sequenceTreeWidget):
-            for config_item in get_child_items_from_item(sequence_item):
-                for qp_item in get_child_items_from_item(config_item):
-                    if qp_item.isSelected() == True:
-                        sequence = sequence_item.text(0)
-                        config = config_item.text(0)
-                        qp = qp_item.text(0)
-                        encLogs.append(
-                            #TODO Replace by secure access
-                            self.encLogCollectionModel._tree[sequence][config][qp]
-                        )
+        for (sequence, config, qp) in self.tree_view.get_selected_enc_log_keys():
+            encLogs.append(self.encLogCollectionModel.get_by_tree_keys(sequence, config, qp))
 
         # get currently chosen plot variable
         former_variable = self.comboBox.currentText()
