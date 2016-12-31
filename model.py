@@ -13,13 +13,16 @@ def summary_data_from_enc_logs(encLogs):
     #{'Summary' : {'Y-PSNR' : [...], 'PSNR' : ...}, 'I' : ...}
     output = {}
     for encLog in encLogs:
+        seqconf = encLog.sequence + ' ' + encLog.config
+        if seqconf not in output:
+            output[seqconf] = {}
         for (name1, dict1) in encLog.summary_data.items():
-            if name1 not in output:
-                output[name1] = {}
+            if name1 not in output[seqconf]:
+                output[seqconf][name1] = {}
             for (name2, list2) in dict1.items():
-                if name2 not in output[name1]:
-                    output[name1][name2] = []
-                output[name1][name2].extend(list2)
+                if name2 not in output[seqconf][name1]:
+                    output[seqconf][name1][name2] = []
+                output[seqconf][name1][name2].extend(list2)
     return output
 
 def sort_dict_of_lists_by_key(dictionary, sorting_key):

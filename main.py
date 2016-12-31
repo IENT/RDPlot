@@ -129,6 +129,20 @@ class Main(QMainWindow, Ui_MainWindow):
         for item in get_top_level_items_from_tree_widget(self.sequenceTreeWidget):
             self.update_item_selection(item, item.isSelected())
 
+        #Get all enc_logs specified by the selection tree
+        encLogs = []
+        for sequence_item in get_top_level_items_from_tree_widget(self.sequenceTreeWidget):
+            for config_item in get_child_items_from_item(sequence_item):
+                for qp_item in get_child_items_from_item(config_item):
+                    if qp_item.isSelected() == True:
+                        sequence = sequence_item.text(0)
+                        config = config_item.text(0)
+                        qp = qp_item.text(0)
+                        encLogs.append(
+                            #TODO Replace by secure access
+                            self.encLogCollectionModel._tree[sequence][config][qp]
+                        )
+
         # get currently chosen plot variable
         former_variable = self.comboBox.currentText()
 
@@ -139,12 +153,15 @@ class Main(QMainWindow, Ui_MainWindow):
         if self.summaryPlotButton.isChecked():
             plot_data = summary_data_from_enc_logs(encLogs)
         else:
+            #TODO Combine data
             plot_data = list(encLogs)[0].temporal_data
 
-        for a in plot_data:
-            # all_variable_names.add(variable_dicts.keys())
-            for variable_name in plot_data[a].keys():
-                all_variable_names.append(variable_name)
+        for seqconf in plot_data:
+            for a in plot_data[seqconf]:
+                # all_variable_names.add(variable_dicts.keys())
+                for variable_name in plot_data[seqconf][a].keys():
+                    all_variable_names.append(variable_name)
+                break
             break
         all_variable_names.sort()
         self.comboBox.currentIndexChanged.disconnect(self.update_plot_variable)
@@ -167,7 +184,8 @@ class Main(QMainWindow, Ui_MainWindow):
                 self.comboBox.setCurrentIndex(0)
                 pass
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
-        self.plotPreview.change_plot(self.encLogCollectionModel.get_by_sequence(sequence_name), new_variable, self.summaryPlotButton.isChecked())
+        # self.sequenceListWidget.currentItemChanged.connect(self.update_plot)
+        self.plotPreview.change_plot(encLogs, new_variable, self.summaryPlotButton.isChecked())
 
         self.sequenceTreeWidget.itemSelectionChanged.connect(self.update_plot)
 
@@ -221,17 +239,19 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             return
         if plotTypeSummary:
             # np
-            summary_data = summary_data_from_enc_logs(encLogs)['SUMMARY']
-            summary_data = sort_dict_of_lists_by_key(summary_data, 'Bitrate')
-            rate          = summary_data['Bitrate']
-            plot_variable = summary_data[variable]
-
             fig = Figure()
             axis = fig.add_subplot(111)
-            axis.plot(rate, plot_variable)
-            # axis.set_title('Summary Data')
-            axis.set_xlabel('Bitrate')
-            axis.set_ylabel(variable)
+
+            summary_data = summary_data_from_enc_logs(encLogs)
+            for seqconf in summary_data:
+                summary = summary_data[seqconf]['SUMMARY']
+                summary = sort_dict_of_lists_by_key(summary, 'Bitrate')
+                rate          = summary['Bitrate']
+                plot_variable = summary[variable]
+
+                axis.plot(rate, plot_variable)
+                axis.set_xlabel('Bitrate')
+                axis.set_ylabel(variable)
         else:
             fig = Figure()
             axis = fig.add_subplot(111)
