@@ -114,13 +114,17 @@ class Main(QMainWindow, Ui_MainWindow):
         self.addSequenceButton.clicked.connect(self.add_sequence)
         pass
 
+    def get_selected_enc_logs(self):
+        encLogs = []
+        for (sequence, config, qp) in self.tree_view.get_selected_enc_log_keys():
+            encLogs.append(self.encLogCollectionModel.get_by_tree_keys(sequence, config, qp))
+        return encLogs
+
     def update_plot(self):
         # updates the plot with a new figure.
         self.sequenceTreeWidget.itemSelectionChanged.disconnect(self.update_plot)
 
-        encLogs = []
-        for (sequence, config, qp) in self.tree_view.get_selected_enc_log_keys():
-            encLogs.append(self.encLogCollectionModel.get_by_tree_keys(sequence, config, qp))
+        encLogs = self.get_selected_enc_logs()
 
         # get currently chosen plot variable
         former_variable = self.comboBox.currentText()
@@ -184,10 +188,12 @@ class Main(QMainWindow, Ui_MainWindow):
         if not index_name:
             return
         # self.plotPreview.change_YUVMod(index_name)
-        sequence_item = self.sequenceListWidget.currentItem()
-        if sequence_item is not None:
-            sequence_name = sequence_item.text()
-            self.plotPreview.change_plot(self.encLogCollectionModel.get_by_sequence(sequence_name), index_name, self.summaryPlotButton.isChecked())
+        if len( self.sequenceTreeWidget.selectedItems() ) != 0:
+            self.plotPreview.change_plot(
+                self.get_selected_enc_logs(),
+                index_name,
+                self.summaryPlotButton.isChecked(),
+            )
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
 
 class NestedDict(dict):
@@ -247,9 +253,10 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
         self.updatempl(fig)
 
-    def addfig(self, name, fig):
-        self.fig_dict[name] = fig
-        self.sequenceListWidget.addItem(name)
+    # TODO Remove this? It will not work with the tree widget
+    # def addfig(self, name, fig):
+    #     self.fig_dict[name] = fig
+    #     self.sequenceTreeWidget.addItem(name)
 
     def updatempl(self, fig):
         self.verticalLayout.removeWidget(self.canvas)
