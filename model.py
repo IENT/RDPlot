@@ -4,6 +4,8 @@ import glob
 from os.path import basename, dirname, abspath, join, sep, normpath
 from glob import glob
 
+from model_view import Model
+
 
 def summary_data_from_enc_logs(encLogs):
     """Create a dictionary containing the summary data by combining
@@ -175,22 +177,22 @@ class EncLog():
     def __repr__(self):
         return str(self)
 
-class EncLogCollection():
+class EncLogCollectionModel(Model):
     _max_tree_depth = 3
 
     """Collection of :class: `model.EncLog`s. The class implements different
        access/iteration/etc. methods. Additionally it implements parsing the
        file system for certain encoder logs eg. all encoder logs of one sequence
        in different folders."""
-    def __init__(self, enc_logs=None):
+    def __init__(self, views=None, enc_logs=None):
+        super().__init__(views)
         #References to the encoder logs are stored in a flat dictionary using
         #the path/unique identifier as key and a tree using sequence, config and
         #qp as key
         self._flat = {}
         self._tree = {}
-        if enc_logs is None:
-            enc_logs = []
-        self.update(enc_logs)
+        if enc_logs is not None:
+            self.update(enc_logs)
 
     def add(self, enc_log):
         """Adds :param: `enc_log` to the collection or replaces it if it is
@@ -219,6 +221,8 @@ class EncLogCollection():
 
         self._tree[enc_log.sequence][enc_log.config][enc_log.qp] = enc_log
         self._flat[enc_log.path] = enc_log
+
+        self._update_views(self._tree)
 
     def update(self, enc_logs):
         """Adds all elements in the iterable :param: `enc_logs` to the

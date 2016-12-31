@@ -15,8 +15,9 @@ import collections
 import numpy as np
 from os.path import join
 
-from model import (EncLog, EncLogCollection, summary_data_from_enc_logs,
+from model import (EncLog, EncLogCollectionModel, summary_data_from_enc_logs,
                    sort_dict_of_lists_by_key)
+from model_view import DictTreeView
 
 
 Ui_MainWindow, QMainWindow = loadUiType('mainWindow.ui')
@@ -49,7 +50,9 @@ class Main(QMainWindow, Ui_MainWindow):
         # self.plotAreaVerticalLayout.addWidget(newPlot)
 
         # store the sequences
-        self.encLogCollection = EncLogCollection()
+        self.encLogCollectionModel = EncLogCollectionModel()
+        self.tree_view = DictTreeView(self.sequenceTreeWidget)
+        self.tree_view.model = self.encLogCollectionModel
 
         # set up signals and slots
         # self.sequenceListWidget.itemClicked.connect(self.plotPreview.change_plot)
@@ -94,10 +97,10 @@ class Main(QMainWindow, Ui_MainWindow):
 
         path = join(directory, file_name)
         encLogs = list( EncLog.parse_directory_for_sequence( path ) )
-        self.encLogCollection.update(encLogs)
+        self.encLogCollectionModel.update(encLogs)
 
-        for enc_log in encLogs:
-            self.add_enc_log(encLog)
+        # for enc_log in encLogs:
+        #     self.add_enc_log(enc_log)
         # self.sequenceTreeWidget.setCurrentItem(self.sequenceTreeWidget.item(self.sequenceTreeWidget.count()-1))
 
         self.addSequenceButton.clicked.connect(self.add_sequence)
@@ -127,7 +130,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.sequenceListWidget.currentItemChanged.disconnect(self.update_plot)
         sequence_name = item.text()
         #TODO correct access
-        encLogs = self.encLogCollection.get_by_sequence(sequence_name)
+        encLogs = self.encLogCollectionModel.get_by_sequence(sequence_name)
 
         # get currently chosen plot variable
         former_variable = self.comboBox.currentText()
@@ -168,7 +171,7 @@ class Main(QMainWindow, Ui_MainWindow):
                 pass
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
         self.sequenceListWidget.currentItemChanged.connect(self.update_plot)
-        self.plotPreview.change_plot(self.encLogCollection.get_by_sequence(sequence_name), new_variable, self.summaryPlotButton.isChecked())
+        self.plotPreview.change_plot(self.encLogCollectionModel.get_by_sequence(sequence_name), new_variable, self.summaryPlotButton.isChecked())
 
     def update_plot_type(self, checked):
         self.summaryPlotButton.toggled.disconnect(self.update_plot_type)
@@ -187,7 +190,7 @@ class Main(QMainWindow, Ui_MainWindow):
         sequence_item = self.sequenceListWidget.currentItem()
         if sequence_item is not None:
             sequence_name = sequence_item.text()
-            self.plotPreview.change_plot(self.encLogCollection.get_by_sequence(sequence_name), index_name, self.summaryPlotButton.isChecked())
+            self.plotPreview.change_plot(self.encLogCollectionModel.get_by_sequence(sequence_name), index_name, self.summaryPlotButton.isChecked())
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
 
 class NestedDict(dict):
