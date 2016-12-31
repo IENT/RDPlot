@@ -23,6 +23,10 @@ Ui_MainWindow, QMainWindow = loadUiType('mainWindow.ui')
 Ui_PlotWidget, QWidget = loadUiType('plotWidget.ui')
 
 
+def get_children_from_item(item):
+        return (item.child(index) for index in range(0, item.childCount()))
+
+
 class Main(QMainWindow, Ui_MainWindow):
     def __init__(self, ):
         super(Main, self).__init__()
