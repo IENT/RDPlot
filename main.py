@@ -53,7 +53,7 @@ class Main(QMainWindow, Ui_MainWindow):
 
         # set up signals and slots
         # self.sequenceListWidget.itemClicked.connect(self.plotPreview.change_plot)
-        self.sequenceListWidget.currentItemChanged.connect(self.update_plot)
+        self.sequenceTreeWidget.currentItemChanged.connect(self.update_plot)
         self.addSequenceButton.clicked.connect(self.add_sequence)
         self.addPlotButton.clicked.connect(self.addAnotherPlot)
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
@@ -95,10 +95,10 @@ class Main(QMainWindow, Ui_MainWindow):
         path = join(directory, file_name)
         encLogs = list( EncLog.parse_directory_for_sequence( path ) )
         self.encLogCollection.update(encLogs)
-        
-        self.sequenceListWidget.addItem(encLogs[0].sequence)
-        # TODO implement reloading
-        self.sequenceListWidget.setCurrentItem(self.sequenceListWidget.item(self.sequenceListWidget.count()-1))
+
+        for enc_log in encLogs:
+            self.add_enc_log(encLog)
+        # self.sequenceTreeWidget.setCurrentItem(self.sequenceTreeWidget.item(self.sequenceTreeWidget.count()-1))
 
         self.addSequenceButton.clicked.connect(self.add_sequence)
         pass
@@ -170,8 +170,6 @@ class Main(QMainWindow, Ui_MainWindow):
             sequence_name = sequence_item.text()
             self.plotPreview.change_plot(self.encLogCollection.get_by_sequence(sequence_name), index_name, self.summaryPlotButton.isChecked())
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
-
-
 
 class NestedDict(dict):
     """
