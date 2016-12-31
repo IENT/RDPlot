@@ -58,6 +58,11 @@ class Main(QMainWindow, Ui_MainWindow):
         self.tree_view = DictTreeView(self.sequenceTreeWidget)
         self.tree_view.model = self.encLogCollectionModel
 
+
+        self.encLogCollectionModel.update(
+            EncLog.parse_directory('../simulation_examples/HEVC/')
+        )
+
         # set up signals and slots
         # self.sequenceListWidget.itemClicked.connect(self.plotPreview.change_plot)
         self.sequenceTreeWidget.itemSelectionChanged.connect(self.update_plot)
