@@ -106,25 +106,6 @@ class Main(QMainWindow, Ui_MainWindow):
         self.addSequenceButton.clicked.connect(self.add_sequence)
         pass
 
-    def add_enc_log(self, enc_log):
-        root = self.sequenceTreeWidget.root
-        sequence_item = None
-        for index in range(0, root.childCount()):
-            child = root.child(index)
-            if child.text == enc_log.sequence:
-                sequence_item = child
-
-        if sequence_item is None:
-            sequence_item = QtWidgets.QTreeWidgetItem(None, enc_log.sequence]);
-            self.sequenceTreeWidget.addTopLevelItem(sequence_item)
-
-        add_child(enc_log.sequence)
-
-        config_item = QtWidgets.QTreeWidgetItem(sequence_item, [encLogs[0].config])
-        for encLog in encLogs:
-            qp_item = QtWidgets.QTreeWidgetItem(config_item, [encLog.qp])
-
-
     def update_plot(self, item):
         # updates the plot with a new figure.
         self.sequenceListWidget.currentItemChanged.disconnect(self.update_plot)
