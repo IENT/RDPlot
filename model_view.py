@@ -53,6 +53,9 @@ class DictTreeView(View):
         self.widget = tree_widget
 
     def _update_view(self, dict_tree):
+        #TODO rerender the tree is ineffective
+        self.widget.clear()
+
         for key in dict_tree:
             child = QtWidgets.QTreeWidgetItem(None, [key])
             self.widget.addTopLevelItem(child)
