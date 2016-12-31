@@ -1,74 +1,65 @@
+from PyQt5 import QtWidgets
+
+
 class ModelViewError(Exception):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
 class Model:
-    def __init__():
-        self._observers = []
-        
-    def _update(self, *args, **kwargs):
-        for observer in self._observers:
-            observer._update(*args, **kwargs)
-    
-    def _add_observer(observer):
-        if observer in self.observer:
+    def __init__(self, views=None):
+        self._views = []
+        if views is not None:
+            for view in views:
+                self._add_view(view)
+
+    def _update_views(self, *args, **kwargs):
+        for view in self._views:
+            view._update_view(*args, **kwargs)
+
+    def _add_view(self, view):
+        if view in self._views:
             raise ModelViewError((
                 "View {} is already observing model {} and thus,"
-                " can not be added as observer"
-            ).format(observer, model))
-        self._observers.append(observer)
-            
-    def _remove_observer(observer):
-        if observer not in self._observers:
+                " can not be added as view"
+            ).format(view, model))
+        self._views.append(view)
+
+    def _remove_view(self, view):
+        if view not in self._views:
             raise ModelViewError((
                 "View {} is not observing model {} and thus,"
-                " can not be removed as observer"
-            ).format(observer, model))
-        self._observers.remove(observer)
-        
+                " can not be removed as view"
+            ).format(view, model))
+        self._views.remove(view)
+
 class View:
-    def __init__(model=None):
-        if model is not None:
-            self.model = model
-            
+    def __init__(self, model=None):
+        self._model = model
+
     @property
     def model():
-        return self.model
-    
+        return self._model
+
     @model.setter
-    def model(model):
+    def model(self, model):
         if self._model is not None:
-            self._model._remove_observer(self)
-        self._model = self._add_observer(self)
-        
-        
-class DictTreeModel(Model, dict)
-    def __init__(self, dict_tree=None):
-        super().__init__()
-        
-        #Initialize model by an existing dictionary tree
-        if dict_tree is not None:
-            self._copy_dict_tree(dict_tree)
-    
-    def _copy_dict_tree(self, item):
-        if isinstance(item, dict):
-            for key in item
-                self[key] = self.copy_dict_tree( item[key] )
-        return dict_tree
-            
-    def __setitem__(self, key, item):
-        self[key] = item
-        self._update()
-    
+            self._model._remove_view(self)
+        self._model = model
+        self._model._add_view(self)
+
 class DictTreeView(View):
     def __init__(self, tree_widget, model=None):
-        self.widget = tree_widget
         super().__init__(model)
+        self.widget = tree_widget
 
-    def _update():
-        self._update_tree_widget(self.model, self.widget.root)
-        
-    def _update_tree_widget(dict_tree, parent)
+    def _update_view(self, dict_tree):
         for key in dict_tree:
-            child = QtWidgets.QTreeWidgetItem(parent, [key])
-            self._update_tree(dict_tree[key], child)
+            child = QtWidgets.QTreeWidgetItem(None, [key])
+            self.widget.addTopLevelItem(child)
+            self._update_tree_widget(dict_tree[key], child)
+
+    def _update_tree_widget(self, dict_tree, parent):
+        if isinstance(dict_tree, dict) == True:
+            for key in dict_tree:
+                child = QtWidgets.QTreeWidgetItem(parent, [key])
+                self._update_tree_widget(dict_tree[key], child)
