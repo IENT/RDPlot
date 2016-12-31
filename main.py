@@ -171,7 +171,7 @@ class Main(QMainWindow, Ui_MainWindow):
     def update_plot_type(self, checked):
         self.summaryPlotButton.toggled.disconnect(self.update_plot_type)
 
-        self.tree_view.is_qp_expansion_enabled = checked
+        self.tree_view.is_qp_expansion_enabled = (not checked)
 
         self.summaryPlotButton.toggled.connect(self.update_plot_type)
         if len(self.sequenceTreeWidget.selectedItems()) == 0:
