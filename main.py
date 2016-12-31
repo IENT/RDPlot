@@ -67,7 +67,7 @@ class Main(QMainWindow, Ui_MainWindow):
         # self.sequenceListWidget.itemClicked.connect(self.plotPreview.change_plot)
         self.sequenceTreeWidget.itemSelectionChanged.connect(self.update_plot)
         self.addSequenceButton.clicked.connect(self.add_sequence)
-        self.addPlotButton.clicked.connect(self.addAnotherPlot)
+        # self.addPlotButton.clicked.connect(self.addAnotherPlot)
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
         self.summaryPlotButton.toggled.connect(self.update_plot_type)
 
