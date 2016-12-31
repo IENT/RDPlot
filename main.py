@@ -130,10 +130,9 @@ class Main(QMainWindow, Ui_MainWindow):
         # add found plot variables to combo box
         all_variable_names = []  # set because we don't want duplicates
         if self.summaryPlotButton.isChecked():
-            plot_data = summary_data_from_enc_logs(encLogs)
+                plot_data = summary_data_from_enc_logs(encLogs)
         else:
-            #TODO Combine data
-            plot_data = list(encLogs)[0].temporal_data
+            plot_data = {encLog.sequence + ' ' + encLog.config : encLog.temporal_data for encLog in encLogs}
 
         for seqconf in plot_data:
             for a in plot_data[seqconf]:
@@ -142,6 +141,7 @@ class Main(QMainWindow, Ui_MainWindow):
                     all_variable_names.append(variable_name)
                 break
             break
+
         all_variable_names.sort()
         self.comboBox.currentIndexChanged.disconnect(self.update_plot_variable)
         self.comboBox.clear()
