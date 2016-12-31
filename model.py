@@ -82,9 +82,8 @@ class EncLog():
 
     @staticmethod
     def _parse_path(path):
-        #TODO this can be done nicer, and more complete ie. checking additional
-        #things
         try:
+            # Assumes structure of .../<simulation_directory>/log/<basename>
             directories = normpath(path).split(sep)[0 : -2]
             filename    = basename(path)
         except IndexError:
@@ -93,10 +92,19 @@ class EncLog():
                 .format(filename, path)
             )
 
-        sequence = filename.rsplit('_QP', 1)[0]
+        try:
+            seperator = '-'
+            filename_splitted = filename.split('_QP')[0].split(seperator)
+            sequence = filename_splitted[-1]
+            config = seperator.join(filename_splitted[0 : -2])
+        except IndexError:
+            raise EncLogParserError((
+                "Filename {} can not be splitted into config until '{}' and"
+                " sequence between last '{}' and '_QP'"
+            ).format(filename, seperator, seperator))
 
-        # extract config/simulation directory
-        config = directories[-1]
+        # prepend simulation directory to config
+        config = directories[-1] + ' ' + config
 
         m = re.search(r'_QP(\d*)_', filename)
         if m:
