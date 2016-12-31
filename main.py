@@ -50,10 +50,9 @@ class Main(QMainWindow, Ui_MainWindow):
         self.encLogCollectionModel = EncLogCollectionModel()
         self.tree_view = EncLogTreeView(
             self.sequenceTreeWidget,
+            model = self.encLogCollectionModel,
             is_qp_expansion_enabled = False,
         )
-        self.tree_view.model = self.encLogCollectionModel
-
 
         self.encLogCollectionModel.update(
             EncLog.parse_directory('../simulation_examples/HEVC/')

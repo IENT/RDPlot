@@ -42,7 +42,10 @@ class Model:
 
 class View:
     def __init__(self, model=None):
-        self._model = model
+        # Initialize the 'private' property for the setter to work, and
+        # use setter afterwards invoking obeserver logic
+        self._model = None
+        self.model = model
 
     @property
     def model(self):
