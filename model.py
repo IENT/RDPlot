@@ -1,7 +1,8 @@
 import re
 
 import glob
-from os.path import basename, dirname, abspath, join, sep, normpath
+from os.path import (basename, dirname, abspath, join, sep, normpath, isdir,
+                     isfile)
 from glob import glob
 
 
@@ -84,6 +85,35 @@ class EncLog():
         #TODO select parsing functions depending on codec type,
         self.summary_data  = self._parse_summary_data(self.path)
         self.temporal_data = {self.qp : self._parse_temporal_data(self.path)}
+
+    @classmethod
+    def parse_url(cls, url):
+        """Parse a url and return either all encoder logs in the folder, all
+           logs in a subfolder log or all encoder logs with the same sequence as
+           the file."""
+        # Parse url as directory. Check for encoder log files in directory and
+        # in a possible 'log' subdirectory
+        if isdir(url) == True:
+            enc_logs = list( cls.parse_directory(url) )
+            if len(enc_logs) != 0:
+                return enc_logs
+
+            url_log = join(url, 'log')
+            if isdir( url_log ) == True:
+                enc_logs = list( cls.parse_directory(url) )
+                if len(enc_logs) != 0:
+                    return enc_logs
+
+        # Parse url as encoder log path. Search in same directory for encoder
+        # logs with same sequence
+        if isfile(url) == True:
+            enc_logs = list( cls.parse_directory_for_sequence(url) )
+            if len(enc_logs) != 0:
+                return enc_logs
+
+        # No parsing scheme succeeded
+        raise EncLogParserError( "Could not parse url {} for encoder logs"
+                                .format(url) )
 
     @classmethod
     def parse_directory(cls, directory_path):

@@ -76,7 +76,28 @@ class EncLogTreeView(DictTreeView):
         super().__init__(widget, model)
         self.is_qp_expansion_enabled = is_qp_expansion_enabled
 
+        # Implement parsing of files dropped to widget. Note, that the drag
+        # events have to be accepted and thus, need to be reimplemented,
+        # although, the elements of the view are not dragable
+        self.widget.dragEnterEvent = self.dragEnterEvent
+        self.widget.dragMoveEvent = self.dragMoveEvent
+        self.widget.dropEvent = self.dropEvent
+
         self.widget.itemSelectionChanged.connect(self._update_selection)
+
+    #TODO implementing this on the view and then overwriting the widget methods
+    # is not really nice and should be fixed
+    def dragEnterEvent(self, event):
+        # Consider only url/path events
+        if event.mimeData().hasUrls():
+            event.accept()
+
+    def dragMoveEvent(self, event):
+        event.accept()
+
+    def dropEvent(self, event):
+        for url in event.mimeData().urls():
+            self.model.update( model.EncLog.parse_url( url.path() ) )
 
     def _update_view(self, dict_tree):
         super()._update_view(dict_tree)
