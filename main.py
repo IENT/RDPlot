@@ -47,6 +47,14 @@ class Main(QMainWindow, Ui_MainWindow):
         # set up signals and slots
         self.sequenceTreeWidget.itemSelectionChanged.connect(self.update_plot)
 
+        # Connect signals of menues
+        self.actionOpen_File.triggered.connect(
+            self.encLogTreeView.add_encoder_log
+        )
+        self.actionOpen_Directory.triggered.connect(
+            self.encLogTreeView.add_folder
+        )
+
         # Connect signals of buttons
         self.addEncoderLogButton.clicked.connect(
             self.encLogTreeView.add_encoder_log
