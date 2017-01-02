@@ -44,13 +44,6 @@ class Main(QMainWindow, Ui_MainWindow):
             is_qp_expansion_enabled = False,
         )
 
-        self.encLogCollectionModel.update(
-            EncLog.parse_directory('../simulation_examples/HEVC/')
-        )
-        self.encLogCollectionModel.update(
-            EncLog.parse_directory('../simulation_examples_back/hm360Lib/')
-        )
-
         # set up signals and slots
         self.sequenceTreeWidget.itemSelectionChanged.connect(self.update_plot)
 
