@@ -15,7 +15,7 @@ if __name__ == '__main__':
         EncLog.parse_url('../simulation_examples/HEVC/')
     )
     main.encLogCollectionModel.update(
-        EncLog.parse_url('../simulation_examples_back/hm360Lib/')
+        EncLog.parse_url('../simulation_examples/hm360Lib/')
     )
 
     main.show()
