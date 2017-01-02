@@ -97,6 +97,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.comboBox.clear()
         self.comboBox.addItems(all_variable_names)
         # use same variable as with last plot if possible
+        skip = False
         if former_variable in all_variable_names:       # todo: set some smarter defaults here? Problem is the recursive calling
             new_variable = former_variable
             self.comboBox.setCurrentText(new_variable)
@@ -111,11 +112,13 @@ class Main(QMainWindow, Ui_MainWindow):
                 pass
             else:
                 self.comboBox.setCurrentIndex(0)
-                pass
+                skip = True
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
         self.sequenceTreeWidget.itemSelectionChanged.connect(self.update_plot)
 
-        self.plotPreview.change_plot(encLogs, new_variable, self.summaryPlotButton.isChecked())
+        # TODO implement handling of no correctly parsed data
+        if skip == False:
+            self.plotPreview.change_plot(encLogs, new_variable, self.summaryPlotButton.isChecked())
 
     # updates the plot if the type is changed
     def update_plot_type(self, checked):
