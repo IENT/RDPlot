@@ -58,10 +58,6 @@ class Main(QMainWindow, Ui_MainWindow):
             self.encLogTreeView.add_folder
         )
 
-        # Connect signals of buttons
-        self.addSequence.clicked.connect( self.encLogTreeView.add_sequence )
-        self.addFolder.clicked.connect(   self.encLogTreeView.add_folder   )
-
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
         self.summaryPlotButton.toggled.connect(self.update_plot_type)
 

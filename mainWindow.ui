@@ -99,20 +99,6 @@
          </column>
         </widget>
        </item>
-       <item>
-        <widget class="QPushButton" name="addSequence">
-         <property name="text">
-          <string>Add Sequence</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="addFolder">
-         <property name="text">
-          <string>Add Folder</string>
-         </property>
-        </widget>
-       </item>
       </layout>
      </widget>
     </item>
