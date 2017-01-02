@@ -51,20 +51,16 @@ class Main(QMainWindow, Ui_MainWindow):
         self.actionOpen_File.triggered.connect(
             self.encLogTreeView.add_encoder_log
         )
+        self.actionOpen_Sequence.triggered.connect(
+            self.encLogTreeView.add_sequence
+        )
         self.actionOpen_Directory.triggered.connect(
             self.encLogTreeView.add_folder
         )
 
         # Connect signals of buttons
-        self.addEncoderLogButton.clicked.connect(
-            self.encLogTreeView.add_encoder_log
-        )
-        self.addEncoderLogsOfSequenceButton.clicked.connect(
-            self.encLogTreeView.add_sequence
-        )
-        self.addEncoderLogsOfSimulationFolderButton.clicked.connect(
-            self.encLogTreeView.add_folder
-        )
+        self.addSequence.clicked.connect( self.encLogTreeView.add_sequence )
+        self.addFolder.clicked.connect(   self.encLogTreeView.add_folder   )
 
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
         self.summaryPlotButton.toggled.connect(self.update_plot_type)
