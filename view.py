@@ -186,6 +186,7 @@ class EncLogTreeView(DictTreeView):
         path = join(directory, file_name)
 
         self.model.add( model.EncLog( path ) )
+
     def add_sequence(self):
         directory, file_name = self._get_open_file_names()
         path = join(directory, file_name)
@@ -196,5 +197,7 @@ class EncLogTreeView(DictTreeView):
     def add_folder(self):
         path = self._get_folder()
 
+        #TODO this uses the parse_directory method, thus, does not automatically
+        # parse 'log'.subfolder. Should this be the case?
         encLogs = list( model.EncLog.parse_directory( path ) )
         self.model.update(encLogs)

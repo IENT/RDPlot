@@ -100,7 +100,7 @@ class EncLog():
 
             url_log = join(url, 'log')
             if isdir( url_log ) == True:
-                enc_logs = list( cls.parse_directory(url) )
+                enc_logs = list( cls.parse_directory(url_log) )
                 if len(enc_logs) != 0:
                     return enc_logs
 
@@ -117,10 +117,10 @@ class EncLog():
 
     @classmethod
     def parse_directory(cls, directory_path):
-        """Parse a directory for all encoder log files in subfolder "log" and
-           return generator yielding :class: `EncLog`s"""
+        """Parse a directory for all encoder log files and return generator
+           yielding :class: `EncLog`s"""
         #TODO join vs sep and glob pattern?
-        paths = glob(join(directory_path, 'log') + sep + '*_enc.log')
+        paths = glob(join(directory_path, '*_enc.log'))
 
         return (EncLog(p) for p in paths)
 

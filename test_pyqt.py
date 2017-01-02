@@ -12,10 +12,10 @@ if __name__ == '__main__':
     main = Main()
 
     main.encLogCollectionModel.update(
-        EncLog.parse_directory('../simulation_examples/HEVC/')
+        EncLog.parse_url('../simulation_examples/HEVC/')
     )
     main.encLogCollectionModel.update(
-        EncLog.parse_directory('../simulation_examples_back/hm360Lib/')
+        EncLog.parse_url('../simulation_examples_back/hm360Lib/')
     )
 
     main.show()
