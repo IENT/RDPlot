@@ -44,6 +44,8 @@ class Main(QMainWindow, Ui_MainWindow):
             is_qp_expansion_enabled = False,
         )
 
+        self.encoderLogListView.setModel(self.encLogCollectionModel.flat)
+
         # set up signals and slots
         self.sequenceTreeWidget.itemSelectionChanged.connect(self.update_plot)
 

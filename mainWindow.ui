@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_2">
     <item row="1" column="1" alignment="Qt::AlignBottom">
-     <widget class="QListView" name="listView"/>
+     <widget class="QListView" name="encoderLogListView"/>
     </item>
     <item row="0" column="1">
      <widget class="QFrame" name="plotsFrame">

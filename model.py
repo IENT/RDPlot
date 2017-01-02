@@ -1,9 +1,10 @@
 import re
-
-import glob
+from glob import glob
 from os.path import (basename, dirname, abspath, join, sep, normpath, isdir,
                      isfile)
-from glob import glob
+from collections import OrderedDict
+from PyQt5.QtCore import QAbstractListModel
+from PyQt5.Qt import Qt, QVariant, QModelIndex
 
 
 class ModelError(Exception):
@@ -248,6 +249,50 @@ class EncLog():
     def __repr__(self):
         return str(self)
 
+class OrderedDictModel(QAbstractListModel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(**kwargs)
+        self._dict = OrderedDict(*args, **kwargs)
+
+    def rowCount(self, parent):
+        return len(self._dict)
+
+    def data(self, qIndex, role):
+        if qIndex.isValid() and role == Qt.DisplayRole:
+            for index, (key, item) in enumerate(self._dict.items()):
+                if index == qIndex.row():
+                    return QVariant( key )
+        return QVariant()
+
+    def __setitem__(self, key, item):
+        length = len(self._dict)
+        for index, oldkey in enumerate(self._dict):
+            if oldkey == key:
+                length = index
+
+        self.beginInsertRows(QModelIndex(), length, length + 1)
+        self._dict[key] = item
+        self.endInsertRows()
+
+    def __getitem__(self, key):
+        return self._dict[key]
+
+    def __iter__(self):
+        return iter(self._dict)
+
+    def __contains__(self, key):
+        return key in self._dict
+
+    def __len__(self):
+        return len(self._dict)
+
+    def __str__(self):
+        return str(list(self._dict))
+
+    def __repr__(self):
+        return str(self)
+
+
 class EncLogCollectionModel(Model):
     _max_tree_depth = 3
 
@@ -256,11 +301,11 @@ class EncLogCollectionModel(Model):
        file system for certain encoder logs eg. all encoder logs of one sequence
        in different folders."""
     def __init__(self, views=None, enc_logs=None):
-        super().__init__(views)
+        super().__init__(views=views)
         #References to the encoder logs are stored in a flat dictionary using
         #the path/unique identifier as key and a tree using sequence, config and
         #qp as key
-        self._flat = {}
+        self.flat = OrderedDictModel()
         self._tree = {}
         if enc_logs is not None:
             self.update(enc_logs)
@@ -291,7 +336,7 @@ class EncLogCollectionModel(Model):
                          enc_log.config, enc_log.qp))
 
         self._tree[enc_log.sequence][enc_log.config][enc_log.qp] = enc_log
-        self._flat[enc_log.path] = enc_log
+        self.flat[enc_log.path] = enc_log
 
         self._update_views(self._tree)
 
@@ -323,20 +368,20 @@ class EncLogCollectionModel(Model):
 
     def __getitem__(self, path):
         """Access element by path ie. unique identifier"""
-        return self._flat[path]
+        return self.flat[path]
 
     def __iter__(self):
-        return iter(self._flat)
+        return iter(self.flat)
 
     def __contains__(self, enc_log):
-        return enc_log.path in self._flat
+        return enc_log.path in self.flat
 
     def __len__(self):
-        return len(self._flat)
+        return len(self.flat)
 
     def __str__(self):
         return str(list(self))
 
     def __repr__(self):
         return str(self)
-        
+
