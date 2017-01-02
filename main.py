@@ -16,8 +16,7 @@ import numpy as np
 
 from model import (EncLog, EncLogCollectionModel, summary_data_from_enc_logs,
                    sort_dict_of_lists_by_key)
-from model_view import (DictTreeView, get_child_items_from_item,
-                        get_top_level_items_from_tree_widget, EncLogTreeView)
+from view import (EncLogTreeView)
 
 
 Ui_MainWindow, QMainWindow = loadUiType('mainWindow.ui')
@@ -45,12 +44,12 @@ class Main(QMainWindow, Ui_MainWindow):
             is_qp_expansion_enabled = False,
         )
 
-        # self.encLogCollectionModel.update(
-        #     EncLog.parse_directory('../simulation_examples/HEVC/')
-        # )
-        # self.encLogCollectionModel.update(
-        #     EncLog.parse_directory('../simulation_examples_back/hm360Lib/')
-        # )
+        self.encLogCollectionModel.update(
+            EncLog.parse_directory('../simulation_examples/HEVC/')
+        )
+        self.encLogCollectionModel.update(
+            EncLog.parse_directory('../simulation_examples_back/hm360Lib/')
+        )
 
         # set up signals and slots
         self.sequenceTreeWidget.itemSelectionChanged.connect(self.update_plot)

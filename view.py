@@ -13,37 +13,6 @@ def get_child_items_from_item(item):
     return (item.child(index) for index in range(0, item.childCount()))
 
 
-class ModelViewError(Exception):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-class Model:
-    def __init__(self, views=None):
-        self._views = []
-        if views is not None:
-            for view in views:
-                self._add_view(view)
-
-    def _update_views(self, *args, **kwargs):
-        for view in self._views:
-            view._update_view(*args, **kwargs)
-
-    def _add_view(self, view):
-        if view in self._views:
-            raise ModelViewError((
-                "View {} is already observing model {} and thus,"
-                " can not be added as view"
-            ).format(view, model))
-        self._views.append(view)
-
-    def _remove_view(self, view):
-        if view not in self._views:
-            raise ModelViewError((
-                "View {} is not observing model {} and thus,"
-                " can not be removed as view"
-            ).format(view, model))
-        self._views.remove(view)
-
 class View:
     def __init__(self, model=None):
         # Initialize the 'private' property for the setter to work, and

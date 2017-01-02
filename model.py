@@ -4,7 +4,37 @@ import glob
 from os.path import basename, dirname, abspath, join, sep, normpath
 from glob import glob
 
-from model_view import Model
+
+class ModelError(Exception):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+class Model:
+    def __init__(self, views=None):
+        self._views = []
+        if views is not None:
+            for view in views:
+                self._add_view(view)
+
+    def _update_views(self, *args, **kwargs):
+        for view in self._views:
+            view._update_view(*args, **kwargs)
+
+    def _add_view(self, view):
+        if view in self._views:
+            raise ModelError((
+                "View {} is already observing model {} and thus,"
+                " can not be added as view"
+            ).format(view, model))
+        self._views.append(view)
+
+    def _remove_view(self, view):
+        if view not in self._views:
+            raise ModelError((
+                "View {} is not observing model {} and thus,"
+                " can not be removed as view"
+            ).format(view, model))
+        self._views.remove(view)
 
 
 def summary_data_from_enc_logs(encLogs):
