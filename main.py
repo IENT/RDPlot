@@ -13,7 +13,6 @@ from glob import glob
 import re
 import collections
 import numpy as np
-from os.path import join
 
 from model import (EncLog, EncLogCollectionModel, summary_data_from_enc_logs,
                    sort_dict_of_lists_by_key)
@@ -40,57 +39,39 @@ class Main(QMainWindow, Ui_MainWindow):
 
         # store the sequences
         self.encLogCollectionModel = EncLogCollectionModel()
-        self.tree_view = EncLogTreeView(
+        self.encLogTreeView = EncLogTreeView(
             self.sequenceTreeWidget,
             model = self.encLogCollectionModel,
             is_qp_expansion_enabled = False,
         )
 
-        self.encLogCollectionModel.update(
-            EncLog.parse_directory('../simulation_examples/HEVC/')
-        )
-        self.encLogCollectionModel.update(
-            EncLog.parse_directory('../simulation_examples_back/hm360Lib/')
-        )
+        # self.encLogCollectionModel.update(
+        #     EncLog.parse_directory('../simulation_examples/HEVC/')
+        # )
+        # self.encLogCollectionModel.update(
+        #     EncLog.parse_directory('../simulation_examples_back/hm360Lib/')
+        # )
 
         # set up signals and slots
         self.sequenceTreeWidget.itemSelectionChanged.connect(self.update_plot)
 
-        self.addSequenceButton.clicked.connect(self.add_sequence)
+        # Connect signals of buttons
+        self.addEncoderLogButton.clicked.connect(
+            self.encLogTreeView.add_encoder_log
+        )
+        self.addEncoderLogsOfSequenceButton.clicked.connect(
+            self.encLogTreeView.add_sequence
+        )
+        self.addEncoderLogsOfSimulationFolderButton.clicked.connect(
+            self.encLogTreeView.add_folder
+        )
+
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
         self.summaryPlotButton.toggled.connect(self.update_plot_type)
 
-    def add_sequence(self):  # todo: put his logic in its own widget and class, should belong to a listSequencesWidget
-        # extract folder and filename
-        self.addSequenceButton.clicked.disconnect(self.add_sequence)
-        while 1:
-            try:
-                self.filename = QtWidgets.QFileDialog.getOpenFileNames(
-                    self,
-                    "Open Sequence Encoder Log",
-                    "/home/ient/Software/rd-plot-gui/examplLogs",
-                    "Enocder Logs (*.log)")
-                [directory, file_name] = self.filename[0][0].rsplit('/', 1)
-            except IndexError:
-                return
-            else:
-                print("successfully added sequence")
-                break
-
-        path = join(directory, file_name)
-        encLogs = list( EncLog.parse_directory_for_sequence( path ) )
-        self.encLogCollectionModel.update(encLogs)
-
-        # for enc_log in encLogs:
-        #     self.add_enc_log(enc_log)
-        # self.sequenceTreeWidget.setCurrentItem(self.sequenceTreeWidget.item(self.sequenceTreeWidget.count()-1))
-
-        self.addSequenceButton.clicked.connect(self.add_sequence)
-        pass
-
     def get_selected_enc_logs(self):
         encLogs = []
-        for (sequence, config, qp) in self.tree_view.get_selected_enc_log_keys():
+        for (sequence, config, qp) in self.encLogTreeView.get_selected_enc_log_keys():
             encLogs.append(self.encLogCollectionModel.get_by_tree_keys(sequence, config, qp))
         return encLogs
 
@@ -146,7 +127,7 @@ class Main(QMainWindow, Ui_MainWindow):
 
     # updates the plot if the type is changed
     def update_plot_type(self, checked):
-        self.tree_view.is_qp_expansion_enabled = (not checked)
+        self.encLogTreeView.is_qp_expansion_enabled = (not checked)
 
         if len(self.sequenceTreeWidget.selectedItems()) == 0:
             return

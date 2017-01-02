@@ -1,5 +1,9 @@
 from PyQt5 import QtWidgets
 
+from os.path import join
+
+import model
+
 
 def get_top_level_items_from_tree_widget(tree_widget):
     for index in range(0, tree_widget.topLevelItemCount()):
@@ -153,3 +157,54 @@ class EncLogTreeView(DictTreeView):
                         qp = qp_item.text(0)
                         keys.append( (sequence, config, qp) )
         return keys
+
+    def _get_open_file_names(self):
+        # extract folder and filename
+        try:
+            result = QtWidgets.QFileDialog.getOpenFileNames(
+                self.widget,
+                "Open Sequence Encoder Log",
+                "/home/ient/Software/rd-plot-gui/examplLogs",
+                "Enocder Logs (*.log)")
+
+            [directory, file_name] = result[0][0].rsplit('/', 1)
+            return (directory, file_name)
+        except IndexError:
+            return
+        else:
+            #TODO usefull logging
+            print("successfully added sequence")
+            return
+
+    def _get_folder(self):
+        # extract folder and filename
+        try:
+            result = QtWidgets.QFileDialog.getExistingDirectory(
+                self.widget,
+                "Open Sequence Encoder Log",
+                "/home/ient/Software/rd-plot-gui/examplLogs")
+            return result
+        except IndexError:
+            return
+        else:
+            #TODO usefull logging
+            print("successfully added sequence")
+            return
+
+    def add_encoder_log(self):
+        directory, file_name = self._get_open_file_names()
+        path = join(directory, file_name)
+
+        self.model.add( model.EncLog( path ) )
+    def add_sequence(self):
+        directory, file_name = self._get_open_file_names()
+        path = join(directory, file_name)
+
+        encLogs = list( model.EncLog.parse_directory_for_sequence( path ) )
+        self.model.update(encLogs)
+
+    def add_folder(self):
+        path = self._get_folder()
+
+        encLogs = list( model.EncLog.parse_directory( path ) )
+        self.model.update(encLogs)
