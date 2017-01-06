@@ -168,11 +168,15 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         if not variable:
             return
 
+        # put a subplot into the figure and set the margins a little bit tighter than the defaults
+        # this is some workaround for PyQt similar to tight layout
         fig = Figure()
         axis = fig.add_subplot(111)
         fig.subplots_adjust(left=0.05, right=0.95,
                                     bottom=0.1, top=0.95,
                                     hspace=0.2, wspace=0.2)
+
+        # distinguish between summary plot and temporal plot
         if plotTypeSummary:
             summary_data = summary_data_from_enc_logs(encLogs)
             for seqconf in summary_data:
@@ -188,6 +192,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         else:
             for encLog in encLogs:
                 #TODO frames are not consecutive eg. [8, 4, 2, 6, 10, 4, ...] in HEVC
+                #TODO multiple subplots for different QPS
                 frames = encLog.temporal_data[encLog.qp]['Frames']
                 values = encLog.temporal_data[encLog.qp][variable]
                 axis.plot(values)
@@ -210,13 +215,17 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
     # adds a figure to the plotwidget
     def addmpl(self, fig):
+        # set backgroung to transparent
         fig.patch.set_alpha(0)
+        # set some properties for canvas and add it to the vertical layout.
+        # Most important is to turn the vertical stretch on as otherwise the plot is only scaled in x direction when rescaling the window
         self.canvas = FigureCanvas(fig)
         self.canvas.setParent(self.plotAreaWidget)
         policy = self.canvas.sizePolicy()
         policy.setVerticalStretch(1)
         self.canvas.setSizePolicy(policy)
         self.verticalLayout.addWidget(self.canvas)
+        # add the toolbar for the plot
         self.toolbar = NavigationToolbar(self.canvas,
                                          self.plotAreaWidget, coordinates=True)
         self.verticalLayout.addWidget(self.toolbar)
