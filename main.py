@@ -192,7 +192,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
                 values = encLog.temporal_data[encLog.qp][variable]
                 axis.plot(values)
                 axis.set_title('Temporal Data')
-                axis.set_xlabel('Bitrate [kbps]')
+                axis.set_xlabel('POC')
                 axis.set_ylabel(variable + ' [dB]')
 
         self.updatempl(fig)
