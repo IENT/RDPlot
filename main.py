@@ -211,6 +211,10 @@ class PlotWidget(QWidget, Ui_PlotWidget):
     # adds a figure to the plotwidget
     def addmpl(self, fig):
         self.canvas = FigureCanvas(fig)
+        self.canvas.setParent(self.plotAreaWidget)
+        policy = self.canvas.sizePolicy()
+        policy.setVerticalStretch(1)
+        self.canvas.setSizePolicy(policy)
         self.verticalLayout.addWidget(self.canvas)
         self.toolbar = NavigationToolbar(self.canvas,
                                          self.plotAreaWidget, coordinates=True)
