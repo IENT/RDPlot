@@ -167,11 +167,13 @@ class PlotWidget(QWidget, Ui_PlotWidget):
     def change_plot(self, encLogs, variable, plotTypeSummary):
         if not variable:
             return
-        if plotTypeSummary:
-            # np
-            fig = Figure()
-            axis = fig.add_subplot(111)
 
+        fig = Figure()
+        axis = fig.add_subplot(111)
+        fig.subplots_adjust(left=0.05, right=0.95,
+                                    bottom=0.1, top=0.95,
+                                    hspace=0.2, wspace=0.2)
+        if plotTypeSummary:
             summary_data = summary_data_from_enc_logs(encLogs)
             for seqconf in summary_data:
                 summary = summary_data[seqconf]['SUMMARY']
@@ -179,13 +181,11 @@ class PlotWidget(QWidget, Ui_PlotWidget):
                 rate          = summary['Bitrate']
                 plot_variable = summary[variable]
 
-                axis.plot(rate, plot_variable)
+                axis.plot(rate, plot_variable,'x-')
                 axis.set_title('Summary Data')
                 axis.set_xlabel('Bitrate [kbps]') #TODO is that k bytes or bits? need to check
                 axis.set_ylabel(variable + ' [dB]')
         else:
-            fig = Figure()
-            axis = fig.add_subplot(111)
             for encLog in encLogs:
                 #TODO frames are not consecutive eg. [8, 4, 2, 6, 10, 4, ...] in HEVC
                 frames = encLog.temporal_data[encLog.qp]['Frames']
@@ -210,6 +210,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
     # adds a figure to the plotwidget
     def addmpl(self, fig):
+        fig.patch.set_alpha(0)
         self.canvas = FigureCanvas(fig)
         self.canvas.setParent(self.plotAreaWidget)
         policy = self.canvas.sizePolicy()
