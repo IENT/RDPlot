@@ -181,8 +181,8 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
                 axis.plot(rate, plot_variable)
                 axis.set_title('Summary Data')
-                axis.set_xlabel('Bitrate')
-                axis.set_ylabel(variable)
+                axis.set_xlabel('Bitrate [kbps]') #TODO is that k bytes or bits? need to check
+                axis.set_ylabel(variable + ' [dB]')
         else:
             fig = Figure()
             axis = fig.add_subplot(111)
@@ -192,8 +192,8 @@ class PlotWidget(QWidget, Ui_PlotWidget):
                 values = encLog.temporal_data[encLog.qp][variable]
                 axis.plot(values)
                 axis.set_title('Temporal Data')
-                axis.set_xlabel('Bitrate')
-                axis.set_ylabel(variable)
+                axis.set_xlabel('Bitrate [kbps]')
+                axis.set_ylabel(variable + ' [dB]')
 
         self.updatempl(fig)
 
