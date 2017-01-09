@@ -323,7 +323,7 @@ class OrderedDictTreeItem():
         # Create tree of ordinary dicts from item
         if len(self) == 0:
             return self.value
-        return { child.identifier : child.dict_tree }
+        return { identifier : self[identifier].dict_tree for identifier in self}
 
     def add(self, child):
         child.parent = self
