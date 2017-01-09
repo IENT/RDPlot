@@ -292,6 +292,12 @@ class OrderedDictModel(QAbstractListModel):
     def __repr__(self):
         return str(self)
 
+# Tree model `OrderedDictTreeModel` is subclass of `QAbstractItemModel` class,
+# and implements the abstract methods, thus, the model valid for Qt `QTreeView`.
+# The `OrderedDictTreeItem` class implements items of the tree model.
+# Implementation was done according to the example at
+# http://doc.qt.io/qt-5/qtwidgets-itemviews-simpletreemodel-example.html
+# and corresponding files under BSD licence.
 
 class OrderedDictTreeItem():
     """Item of tree model. The item imitates the behavior of a dictionary, thus,
@@ -369,6 +375,43 @@ class OrderedDictTreeModel(QAbstractItemModel):
 
         self.root = OrderedDictTreeItem()
 
+    # Qt interface functions implemented according to
+    # http://doc.qt.io/qt-5/qtwidgets-itemviews-simpletreemodel-example.html
+
+    def index(self, row, column, q_parent_index):
+        if self.hasIndex(row, column, q_parent_index) == False:
+            return QModelIndex()
+        if q_parent_index.isValid() == True:
+            item = q_parent_index.internalPointer().children[ row ]
+            return self.createIndex(row, 0, item)
+        return self.createIndex(row, column, self.root.children[row])
+
+    def parent(self, q_parent_index):
+        if q_parent_index.isValid() == True:
+            parent = q_parent_index.internalPointer().parent
+            if parent != self.root:
+                row = parent.parent.children.index(parent)
+                return self.createIndex(row, 0, parent)
+        return QModelIndex()
+
+    def rowCount(self, q_parent_index):
+        # TODO Handle different column values
+        if q_parent_index.isValid() == True:
+            return len( q_parent_index.internalPointer() )
+        return len(self.root)
+
+    def columnCount(self, q_parent_index):
+        # All items only hold their own identifier as data to be displayed,
+        # thus, the agument is irrelevant
+        return 1
+
+    def data(self, q_parent_index, q_role):
+        if q_parent_index.isValid() == True and q_role == Qt.DisplayRole:
+                return QVariant( str( q_parent_index.internalPointer() ) )
+        return QVariant()
+
+    # Non-Qt interface functions
+
     def __getitem__(self, *keys):
         """Access elements of the tree by identifiers seperated by commas. The
            last element can be a slice. which automatically select all
@@ -403,38 +446,6 @@ class OrderedDictTreeModel(QAbstractItemModel):
     def __repr__(self):
         return str( self.root.dict_tree )
 
-    # Implement abstract methods from Qt superclass
-
-    def index(self, row, column, q_parent_index):
-        if column == 1 and q_parent_index.isValid() == True:
-            child = q_parent_index.internalPointer().children[ row ]
-            return self.createIndex(row, 1, child)
-        # TODO empty index?
-        return QModelIndex()
-
-    def parent(self, q_parent_index):
-        if q_parent_index.isValid() == True:
-            return QModelIndex()
-            # TODO q_parent_index.internalPointer().parent
-        return QModelIndex()
-
-    def rowCount(self, q_parent_index):
-        # TODO Sufficient?
-        if q_parent_index.isValid() == True:
-            return len( parent_q_index.internalPointer() )
-        return len(self.root)
-
-    def columnCount(self, q_parent_index):
-        # All items only hold their own identifier as data to be displayed,
-        # thus, the agument is irrelevant
-        return 1
-
-    def data(self, q_parent_index, q_role):
-        if q_role == Qt.DisplayRole:
-            if q_parent_index.isValid() == True:
-                return QVariant( str( q_parent_index.internalPointer() ) )
-            return QVariant( str( self.root ) )
-        return QVariant()
 
 class EncLogCollectionModelContainer():
     _max_tree_depth = 3
