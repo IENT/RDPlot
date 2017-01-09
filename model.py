@@ -3,7 +3,7 @@ from glob import glob
 from os.path import (basename, dirname, abspath, join, sep, normpath, isdir,
                      isfile)
 from collections import OrderedDict
-from PyQt5.QtCore import QAbstractListModel
+from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel
 from PyQt5.Qt import Qt, QVariant, QModelIndex
 
 
@@ -402,6 +402,39 @@ class OrderedDictTree(QAbstractItemModel):
 
     def __repr__(self):
         return str( self.root.dict_tree )
+
+    # Implement abstract methods from Qt superclass
+
+    def index(self, row, column, q_parent_index):
+        if column == 1 and q_parent_index.isValid() == True:
+            child = q_parent_index.internalPointer().children[ row ]
+            return self.createIndex(row, 1, child)
+        # TODO empty index?
+        return QModelIndex()
+
+    def parent(self, q_parent_index):
+        if q_parent_index.isValid() == True:
+            return QModelIndex()
+            # TODO q_parent_index.internalPointer().parent
+        return QModelIndex()
+
+    def rowCount(self, q_parent_index):
+        # TODO Sufficient?
+        if q_parent_index.isValid() == True:
+            return len( parent_q_index.internalPointer() )
+        return len(self.root)
+
+    def columnCount(self, q_parent_index):
+        # All items only hold their own identifier as data to be displayed,
+        # thus, the agument is irrelevant
+        return 1
+
+    def data(self, q_parent_index, q_role):
+        if q_role == Qt.DisplayRole:
+            if q_parent_index.isValid() == True:
+                return QVariant( str( q_parent_index.internalPointer() ) )
+            return QVariant( str( self.root ) )
+        return QVariant()
 
 class EncLogCollectionModel(Model):
     _max_tree_depth = 3
