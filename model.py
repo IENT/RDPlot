@@ -363,6 +363,46 @@ class OrderedDictTreeItem():
     def __repr__(self):
         return str(self.dict_tree)
 
+class OrderedDictTree(QAbstractItemModel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.root = OrderedDictTreeItem()
+
+    def __getitem__(self, *keys):
+        """Access elements of the tree by identifiers seperated by commas. The
+           last element can be a slice. which automatically select all
+           subitems, not only the children, but also their children, and so on.
+           """
+        item = self.root
+        for index, key in enumerate(keys):
+            if isinstance(key, slice) == True:
+                # TODO implement slice not only as last identifier
+                if index != len(keys) - 1:
+                    raise KeyError("Slice has to be last identifier")
+                return item.get_all_subitems()
+            item = item[key]
+        return item
+
+    def __setitem__(self, *args):
+        """"""
+        keys, value = args
+
+        item = self.root
+        for index, key in enumerate(keys):
+            if isinstance(key, slice) == True:
+                # TODO implement slice not only as last identifier
+                if index != len(keys) - 1:
+                    raise KeyError("Slice has to be last identifier")
+                return item.get_all_subitems()
+            if key not in item:
+                item.add( OrderedDictTreeItem(identifier=key) )
+            item = item[key]
+        item.value = value
+
+    def __repr__(self):
+        return str( self.root.dict_tree )
+
 class EncLogCollectionModel(Model):
     _max_tree_depth = 3
 
