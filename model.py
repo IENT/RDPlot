@@ -466,20 +466,19 @@ class EncLogCollectionModelContainer():
     def add(self, enc_log):
         """Adds :param: `enc_log` to the collection or replaces it if it is
            already in the collection."""
-
         #TODO Tree access is not unique in
         #filesystem. This prevents an encoder log overwriting another one with
         #same sequence, config and qp but on a different location. The question
         #is, if this should be the case?
-        if enc_log.qp in self.tree_model[enc_log.sequence][enc_log.config]:
-            old_enc_log = self.tree_model[enc_log.sequence][enc_log.config][enc_log.qp]
-            if old_enc_log != enc_log:
-                raise Exception((
-                    "Ambigious encoder logs: Encoder log at {} and {} have the"
-                    " same sequence '{}', dir '{}' and qp '{}', but different"
-                    " absolute paths."
-                ).format(old_enc_log.path, enc_log.path, enc_log.sequence,
-                         enc_log.config, enc_log.qp))
+        # if enc_log.qp in self.tree_model[enc_log.sequence, enc_log.config]:
+        #     old_enc_log = self.tree_model[enc_log.sequence, enc_log.config, enc_log.qp]
+        #     if old_enc_log != enc_log:
+        #         raise Exception((
+        #             "Ambigious encoder logs: Encoder log at {} and {} have the"
+        #             " same sequence '{}', dir '{}' and qp '{}', but different"
+        #             " absolute paths."
+        #         ).format(old_enc_log.path, enc_log.path, enc_log.sequence,
+        #                  enc_log.config, enc_log.qp))
 
         self.tree_model[enc_log.sequence, enc_log.config, enc_log.qp] = enc_log
         self.list_model[enc_log.path] = enc_log
