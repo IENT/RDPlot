@@ -483,8 +483,6 @@ class EncLogCollectionModelContainer():
         self.tree_model[enc_log.sequence, enc_log.config, enc_log.qp] = enc_log
         self.list_model[enc_log.path] = enc_log
 
-        self._update_views(self.tree_model)
-
     def update(self, enc_logs):
         """Adds all elements in the iterable :param: `enc_logs` to the
            collection"""
