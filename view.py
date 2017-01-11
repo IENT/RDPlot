@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets
 from PyQt5.Qt import Qt
-from PyQt5.QtCore import QItemSelectionModel, QItemSelection
+from PyQt5.QtCore import QItemSelectionModel, QItemSelection, QModelIndex
 
 from collections import deque
 from os.path import join
@@ -164,16 +164,33 @@ class QRecursiveSelectionModel(QItemSelectionModel):
         """Extend behavior of inherited method. Add all sub items to selection
            """
 
+        # Handle selections and single indexes
+        if isinstance(selection, QItemSelection):
+            indexes_selected = selection.indexes()
+            recursive_selection = selection
+        if isinstance(selection, QModelIndex):
+            indexes_selected = [selection]
+            # If the selection is an index, a range only containing this index
+            # has to be created
+            recursive_selection = QItemSelection()
+
+            q_index_parent = self.model().parent(selection)
+            q_index_first = selection
+            q_index_last = self.model().index(selection.row(),
+                                              selection.column(),
+                                              q_index_parent)
+            recursive_selection.select(q_index_first, q_index_last)
+
         # Find index ranges of all sub items of the indexes in `selection`
-        index_ranges = self._get_sub_items_index_ranges(selection.indexes())
+        index_ranges = self._get_sub_items_index_ranges(indexes_selected)
         # Add the index ranges to the `selection`
         for (q_index_1, q_index_2) in index_ranges:
             # TODO Problem could be, that select leads to duplicates in the
             # selection. So far, no problem arised. `merge` is no alternative
             # as it does not support all `commands`
-            selection.select(q_index_1, q_index_2)
+            recursive_selection.select(q_index_1, q_index_2)
 
-        super().select(selection, command)
+        super().select(recursive_selection, command)
 
     def _get_sub_items_index_ranges(self, q_index_parent_collection):
         """Given a collection of indexes :param: `q_index_parent_collection`,
