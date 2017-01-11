@@ -8,52 +8,6 @@ from os.path import join
 import model
 
 
-def get_top_level_items_from_tree_widget(tree_widget):
-    for index in range(0, tree_widget.topLevelItemCount()):
-        yield tree_widget.topLevelItem(index)
-
-def get_child_items_from_item(item):
-    return (item.child(index) for index in range(0, item.childCount()))
-
-
-class View:
-    def __init__(self, model=None):
-        # Initialize the 'private' property for the setter to work, and
-        # use setter afterwards invoking obeserver logic
-        self._model = None
-        self.model = model
-
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, model):
-        if self._model is not None:
-            self._model._remove_view(self)
-        self._model = model
-        self._model._add_view(self)
-
-class DictTreeView(View):
-    def __init__(self, tree_widget, model=None):
-        super().__init__(model)
-        self.widget = tree_widget
-
-    def _update_view(self, dict_tree):
-        #TODO rerender the tree is ineffective
-        self.widget.clear()
-
-        for key in dict_tree:
-            child = QtWidgets.QTreeWidgetItem(None, [key])
-            self.widget.addTopLevelItem(child)
-            self._update_tree_widget(dict_tree[key], child)
-
-    def _update_tree_widget(self, dict_tree, parent):
-        if isinstance(dict_tree, dict) == True:
-            for key in dict_tree:
-                child = QtWidgets.QTreeWidgetItem(parent, [key])
-                self._update_tree_widget(dict_tree[key], child)
-
 class EncLogTreeView(QtWidgets.QTreeView):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
