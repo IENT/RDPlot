@@ -481,24 +481,15 @@ class OrderedDictTreeModel(QAbstractItemModel):
     def __repr__(self):
         return str( self.root.dict_tree )
 
-class EncLogCollectionModelContainer():
-    _max_tree_depth = 3
-
-    """Collection of :class: `model.EncLog`s. The class implements different
-       access/iteration/etc. methods. Additionally it implements parsing the
-       file system for certain encoder logs eg. all encoder logs of one sequence
-       in different folders."""
-    def __init__(self, is_summary_enabled=True, enc_logs=None):
+class EncoderLogTreeModel(OrderedDictTreeModel):
+    """Tree model specific to encoder logs, specifying methods to add them
+       to the tree, how to store their data at the tree and how to access
+       them, using the tree."""
+    def __init__(self, *args, is_summary_enabled=True, **kwargs):
         self._is_summary_enabled = True
         self.is_summary_enabled = is_summary_enabled
 
-        #References to the encoder logs are stored in a flat dictionary using
-        #the path/unique identifier as key and a tree using sequence, config and
-        #qp as key
-        self.list_model = OrderedDictModel()
-        self.tree_model = OrderedDictTreeModel()
-        if enc_logs is not None:
-            self.update(enc_logs)
+        super().__init__(*args, **kwargs)
 
     @property
     def is_summary_enabled(self):
@@ -510,13 +501,13 @@ class EncLogCollectionModelContainer():
             self._is_summary_enabled = enabled
 
             if self._is_summary_enabled:
-                for leaf in self.tree_model.root.leafs:
+                for leaf in self.root.leafs:
                     leaf.parent.values.update( leaf.values )
-                    self.tree_model.remove_item(leaf)
+                    self.remove_item(leaf)
             else:
-                for leaf in self.tree_model.root.leafs:
+                for leaf in self.root.leafs:
                     for value in leaf.values:
-                        item = self.tree_model[value.sequence, value.config, value.qp]
+                        item = self[value.sequence, value.config, value.qp]
                         item.values.add(value)
 
     def add(self, enc_log):
@@ -526,8 +517,8 @@ class EncLogCollectionModelContainer():
         #filesystem. This prevents an encoder log overwriting another one with
         #same sequence, config and qp but on a different location. The question
         #is, if this should be the case?
-        # if enc_log.qp in self.tree_model[enc_log.sequence, enc_log.config]:
-        #     old_enc_log = self.tree_model[enc_log.sequence, enc_log.config, enc_log.qp]
+        # if enc_log.qp in self[enc_log.sequence, enc_log.config]:
+        #     old_enc_log = self[enc_log.sequence, enc_log.config, enc_log.qp]
         #     if old_enc_log != enc_log:
         #         raise Exception((
         #             "Ambigious encoder logs: Encoder log at {} and {} have the"
@@ -538,13 +529,11 @@ class EncLogCollectionModelContainer():
 
         # Get element to which the `EncLog` should be added
         if self.is_summary_enabled:
-            item = self.tree_model[enc_log.sequence, enc_log.config]
+            item = self[enc_log.sequence, enc_log.config]
         else:
-            item = self.tree_model[enc_log.sequence, enc_log.config, enc_log.qp]
+            item = self[enc_log.sequence, enc_log.config, enc_log.qp]
 
         item.values.add( enc_log )
-
-        self.list_model[enc_log.path] = enc_log
 
     def update(self, enc_logs):
         """Adds all elements in the iterable :param: `enc_logs` to the
@@ -555,29 +544,9 @@ class EncLogCollectionModelContainer():
     def get_by_sequence(self, sequence):
         #Access a sequence in the EncLog tree and flatten the remaining tree
         enc_logs = set()
-        for item in self.tree_model[sequence, :]:
+        for item in self[sequence, :]:
             enc_logs += item.values
         return enc_logs
 
     def get_by_tree_keys(self, sequence, config, qp):
-        return self.tree_model[sequence, config, qp].values
-
-    def __getitem__(self, path):
-        """Access element by path ie. unique identifier"""
-        return self.list_model[path]
-
-    def __iter__(self):
-        return iter(self.list_model)
-
-    def __contains__(self, enc_log):
-        return enc_log.path in self.list_model
-
-    def __len__(self):
-        return len(self.list_model)
-
-    def __str__(self):
-        return str(list(self))
-
-    def __repr__(self):
-        return str(self)
-
+        return self[sequence, config, qp].values

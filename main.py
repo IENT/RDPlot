@@ -14,7 +14,7 @@ import re
 import collections
 import numpy as np
 
-from model import (EncLog, EncLogCollectionModelContainer, summary_data_from_enc_logs,
+from model import (EncLog, EncoderLogTreeModel, summary_data_from_enc_logs,
                    sort_dict_of_lists_by_key, OrderedDictModel)
 from view import (EncLogTreeView, QRecursiveSelectionModel)
 
@@ -36,16 +36,9 @@ class Main(QMainWindow, Ui_MainWindow):
         self.plotPreview = PlotWidget()
         self.plotAreaVerticalLayout.addWidget(self.plotPreview)
 
-        # store the sequences
-        self.encLogCollectionModelContainer = EncLogCollectionModelContainer()
-        # self.encLogTreeView = EncLogTreeView(
-        #     self.encoderLogTreeView,
-        #     model = self.encLogCollectionModelContainer,
-        #     is_qp_expansion_enabled = False,
-        # )
-        self.encoderLogTreeView.is_qp_expansion_enabled = False
-
-        self.encoderLogTreeView.setModel(self.encLogCollectionModelContainer.tree_model)
+        # Create tree model to store encoder logs and connect it to view
+        self.encoderLogTreeModel = EncoderLogTreeModel()
+        self.encoderLogTreeView.setModel(self.encoderLogTreeModel)
 
         # Connect list view with model for the selected values of tree view
         self.encoderLogTreeView.value_list_model = OrderedDictModel()
@@ -76,7 +69,7 @@ class Main(QMainWindow, Ui_MainWindow):
     def get_selected_enc_logs(self):
         encLogs = []
         for (sequence, config, qp) in self.encLogTreeView.get_selected_enc_log_keys():
-            encLogs.append(self.encLogCollectionModelContainer.get_by_tree_keys(sequence, config, qp))
+            encLogs.append(self.encoderLogTreeModel.get_by_tree_keys(sequence, config, qp))
         return encLogs
 
     def update_plot(self):
@@ -134,7 +127,7 @@ class Main(QMainWindow, Ui_MainWindow):
 
     # updates the plot if the type is changed
     def update_plot_type(self, checked):
-        self.encLogCollectionModelContainer.is_summary_enabled = checked
+        self.encoderLogTreeModel.is_summary_enabled = checked
 
         # TODO enable if selection is implemented
         # if len(self.encoderLogTreeView.selectedItems()) == 0:

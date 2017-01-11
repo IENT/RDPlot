@@ -11,10 +11,10 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     main = Main()
 
-    main.encLogCollectionModelContainer.update(
+    main.encoderLogTreeModel.update(
         EncLog.parse_url('../simulation_examples/HEVC/')
     )
-    # main.encLogCollectionModelContainer.update(
+    # main.encoderLogTreeModel.update(
     #     EncLog.parse_url('../simulation_examples/hm360Lib/')
     # )
 
