@@ -279,6 +279,14 @@ class OrderedDictModel(QAbstractListModel):
         self._dict[key] = item
         self.endInsertRows()
 
+    def pop(self, key):
+        for index, key_other in enumerate(self._dict):
+            if key_other == key:
+                self.beginRemoveRows(QModelIndex(), index, index + 1)
+                item = self._dict.pop(key_other)
+                self.endRemoveRows()
+                return item
+
     def __getitem__(self, key):
         return self._dict[key]
 
