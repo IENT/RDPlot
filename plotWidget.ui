@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>759</width>
+    <width>1042</width>
     <height>621</height>
    </rect>
   </property>
@@ -33,15 +33,7 @@
    </item>
    <item>
     <widget class="QWidget" name="tableAreaWidget" native="true">
-     <layout class="QVBoxLayout" name="verticalLayout_3">
-      <item>
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Table display will go here for plots where it makes sense. I want it below the plot. How to specify/change the order after using addWidget in python?</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
+     <layout class="QVBoxLayout" name="verticalLayout_3"/>
     </widget>
    </item>
   </layout>

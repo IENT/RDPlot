@@ -80,12 +80,13 @@ class EncLog():
         self.path = abspath(path)
 
         #Parse file path and set additional identifiers
-        self.sequence, self.config, self.qp = self._parse_path(self.path)
+        self.logType = self._get_Type(path)
+        self.sequence, self.config, self.qp = self._parse_path(self.path, self.logType)
 
         #Dictionaries holding the parsed values
         #TODO select parsing functions depending on codec type,
-        self.summary_data  = self._parse_summary_data(self.path)
-        self.temporal_data = {self.qp : self._parse_temporal_data(self.path)}
+        self.summary_data  = self._parse_summary_data(self.path, self.logType)
+        self.temporal_data = {self.qp : self._parse_temporal_data(path, self.logType)}
 
     @classmethod
     def parse_url(cls, url):
@@ -142,7 +143,17 @@ class EncLog():
         return (EncLog(p) for p in paths)
 
     @staticmethod
-    def _parse_path(path):
+    def _get_Type(path):
+        logType = ''
+        splitted = path.split('_QPL10')  # separation between HEVC and SHVC
+        if len(splitted) > 1:
+            logType = 'SHVC'
+        else:
+            logType = 'HEVC'
+        return logType
+
+    @staticmethod
+    def _parse_path(path, logType):
         try:
             # Assumes structure of .../<simulation_directory>/log/<basename>
             directories = normpath(path).split(sep)[0 : -2]
@@ -152,10 +163,13 @@ class EncLog():
                 "Path {} can not be splitted into directories and filename"
                 .format(filename, path)
             )
-
         try:
             seperator = '-'
-            filename_splitted = filename.split('_QP')[0].split(seperator)
+            if logType == 'SHVC':
+                filename_splitted = filename.split('_QPL10')[0].split(seperator)
+            else:
+                filename_splitted = filename.split('_QP')[0].split(seperator)
+
             sequence = filename_splitted[-1]
             config = seperator.join(filename_splitted[0 : -2])
         except IndexError:
@@ -167,7 +181,10 @@ class EncLog():
         # prepend simulation directory to config
         config = directories[-1] + ' ' + config
 
-        m = re.search(r'_QP(\d*)_', filename)
+        if logType == 'SHVC':
+            m = re.search(r'_QPL10(\d*)_', filename)
+        else:
+            m = re.search(r'_QP(\d*)_', filename)
         if m:
             qp = m.group(1)
         else:
@@ -178,21 +195,34 @@ class EncLog():
         return (sequence, config, qp)
 
     @staticmethod
-    def _parse_temporal_data(path):
-        #this function extracts temporal values
+    def _parse_temporal_data(path, logType):
+        # this function extracts temporal values
+        shvc = len(path.split('_QPL10')) > 1
         with open(path, 'r') as log_file:
             log_text = log_file.read()  # reads the whole text file
-            tempData = re.findall(r"""
-                POC \s+ (\d+) \s+ .+ \s+ \d+ \s+ . \s+ (.-\D+) ,  #Slice
-                \s .+ \) \s+ (\d+) \s+ (.+) \s+ \[ (\D+) \s+ (\d+.\d+) \s+ #Y PSNR
-                \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # U PSNR
-                \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # v PSNR
-                """, log_text, re.M + re.X)
+            if logType == 'SHVC':
+                tempData = re.findall(r"""
+                                    POC \s+ (\d+) .+? : \s+ (\d+) .+ (\D-\D+) \s \D+,  #Slice
+                                    .+ \) \s+ (\d+) \s+ (.+) \s+ \[ (\D+) \s+ (\d+.\d+) \s+ #Y PSNR
+                                    \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # U PSNR
+                                    \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # v PSNR
+                                    """, log_text, re.M + re.X)
+            else:
+                tempData = re.findall(r"""
+                    POC \s+ (\d+) \s+ .+ \s+ \d+ \s+ . \s+ (.-\D+) ,  #Slice
+                    \s .+ \) \s+ (\d+) \s+ (.+) \s+ \[ (\D+) \s+ (\d+.\d+) \s+ #Y PSNR
+                    \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # U PSNR
+                    \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # v PSNR
+                    """, log_text, re.M + re.X)
 
             #Association between index of data in tempData and corresponding
             #output key. Output shape definition is in one place.
-            names = {0 : 'Frames', 2 : 'Bits', 5 : 'Y-PSNR', 7 : 'U-PSNR',
-                     9 : 'V-PSNR'}
+            if logType == 'SHVC':
+                names = {0: 'Frames', 3: 'Bits', 6: 'Y-PSNR', 8: 'U-PSNR',
+                         10: 'V-PSNR'}
+            else:
+                names = {0 : 'Frames', 2 : 'Bits', 5 : 'Y-PSNR', 7 : 'U-PSNR',
+                         9 : 'V-PSNR'}
 
             #Define output data dict and fill it with parsed values
             data = {name : [] for (index, name) in names.items()}
@@ -202,18 +232,49 @@ class EncLog():
                     data[name].append(tempData[i][index])
             return data
 
+    # @staticmethod
+    # def _parse_temporal_dataSHVC(path):
+    #     # this function extracts temporal values
+    #     with open(path, 'r') as log_file:
+    #         log_text = log_file.read()  # reads the whole text file
+    #         tempData = re.findall(r"""
+    #                 POC \s+ (\d+) .+? : \s+ (\d+) .+ (\D-\D+) \s \D+,  #Slice
+    #                 .+ \) \s+ (\d+) \s+ (.+) \s+ \[ (\D+) \s+ (\d+.\d+) \s+ #Y PSNR
+    #                 \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # U PSNR
+    #                 \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # v PSNR
+    #                 """, log_text, re.M + re.X)
+    #
+    #         # Association between index of data in tempData and corresponding
+    #         # output key. Output shape definition is in one place.
+    #         names = {0: 'Frames', 3: 'Bits', 6: 'Y-PSNR', 8: 'U-PSNR',
+    #                  10: 'V-PSNR'}
+    #
+    #         # Define output data dict and fill it with parsed values
+    #         data = {name: [] for (index, name) in names.items()}
+    #         for i in range(0, len(tempData)):
+    #             # TODO slices and frames?
+    #             for (index, name) in names.items():
+    #                 data[name].append(tempData[i][index])
+    #         return data
+
     @staticmethod
-    def _parse_summary_data(path):
+    def _parse_summary_data(path, logType):
         with open(path, 'r') as log_file:
             log_text = log_file.read()  # reads the whole text file
-            summaries = re.findall(r"""  ^(\w*)-*.*$ # catch summary line
-                           \s* # catch newline and space
-                           (.*)\| # catch phrase Total Frames / I / P / B
-                           (\s*\S*)(\s*\S*)(\s*\S*)(\s*\S*)(\s*\S*)# catch rest of the line
-                           \s* # catch newline and space
-                           (\d*\s*)\w # catch frame number
-                           (\s*\d*\.\d*)(\s*\d*\.\d*)(\s*\d*\.\d*)(\s*\d*\.\d*)(\s*\d*\.\d*) # catch the fractional number (rate, PSNRs)
-                      """, log_text, re.M + re.X)
+            if logType == 'SHVC':
+                summaries = re.findall(r"""
+                            \s+ L (\d+) \s+ (\d+) \s+ \D \s+ # the next is bitrate
+                            (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)
+                            """, log_text, re.M + re.X)
+            else:
+                summaries = re.findall(r"""  ^(\w*)-*.*$ # catch summary line
+                               \s* # catch newline and space
+                               (.*)\| # catch phrase Total Frames / I / P / B
+                               (\s*\S*)(\s*\S*)(\s*\S*)(\s*\S*)(\s*\S*)# catch rest of the line
+                               \s* # catch newline and space
+                               (\d*\s*)\w # catch frame number
+                               (\s*\d*\.\d*)(\s*\d*\.\d*)(\s*\d*\.\d*)(\s*\d*\.\d*)(\s*\d*\.\d*) # catch the fractional number (rate, PSNRs)
+                          """, log_text, re.M + re.X)
 
             data = {}
             for summary in summaries:

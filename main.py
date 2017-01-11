@@ -59,15 +59,36 @@ class Main(QMainWindow, Ui_MainWindow):
         self.actionOpen_Directory.triggered.connect(
             self.encLogTreeView.add_folder
         )
+        self.actionHide_PlotSettings.triggered.connect(
+            self.setPlotSettingsVisibility
+        )
 
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
         self.summaryPlotButton.toggled.connect(self.update_plot_type)
+        self.plotsettings.visibilityChanged.connect(self.plotSettingsVisibilityChanged)
 
     def get_selected_enc_logs(self):
         encLogs = []
         for (sequence, config, qp) in self.encLogTreeView.get_selected_enc_log_keys():
             encLogs.append(self.encLogCollectionModel.get_by_tree_keys(sequence, config, qp))
         return encLogs
+
+    # changes the visibility of plotSettings Widget
+    def setPlotSettingsVisibility(self):
+        self.plotsettings.visibilityChanged.disconnect(self.plotSettingsVisibilityChanged)
+        if self.plotsettings.isHidden():
+            self.plotsettings.setVisible(True)
+        else:
+            self.plotsettings.setHidden(True)
+        self.plotsettings.visibilityChanged.connect(self.plotSettingsVisibilityChanged)
+
+    # updates the QAction if Visibility is changed
+    def plotSettingsVisibilityChanged(self):
+        if self.plotsettings.isHidden():
+            self.actionHide_PlotSettings.setChecked(True)
+        else:
+            self.actionHide_PlotSettings.setChecked(False)
+
 
     def update_plot(self):
         # updates the plot with a new figure.

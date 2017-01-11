@@ -139,6 +139,7 @@ class EncLogTreeView(DictTreeView):
         for sequence_item in get_top_level_items_from_tree_widget(self.widget):
             for config_item in get_child_items_from_item(sequence_item):
                 for qp_item in get_child_items_from_item(config_item):
+                    print (type(qp_item))
                     # Note, that this is valid, as if a parent item is checked
                     # all sub items are also selected
                     if qp_item.isSelected() == True:
@@ -181,21 +182,33 @@ class EncLogTreeView(DictTreeView):
             print("successfully added sequence")
             return
 
+    # adds a logfile to the treeview
     def add_encoder_log(self):
-        directory, file_name = self._get_open_file_names()
+        try:
+            directory, file_name = self._get_open_file_names()
+        except TypeError:
+            return
         path = join(directory, file_name)
 
         self.model.add( model.EncLog( path ) )
 
+    # adds a all logfiles of a sequence from a directory to the treeview
     def add_sequence(self):
-        directory, file_name = self._get_open_file_names()
+        try:
+            directory, file_name = self._get_open_file_names()
+        except TypeError:
+            return
         path = join(directory, file_name)
 
         encLogs = list( model.EncLog.parse_directory_for_sequence( path ) )
         self.model.update(encLogs)
 
+    # adds all logfiles and sequences from a directory to the treeview
     def add_folder(self):
-        path = self._get_folder()
+        try:
+            path = self._get_folder()
+        except TypeError:
+            return
 
         #TODO this uses the parse_directory method, thus, does not automatically
         # parse 'log'.subfolder. Should this be the case?
