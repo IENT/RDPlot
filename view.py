@@ -61,14 +61,6 @@ class EncLogTreeView(QtWidgets.QTreeView):
         # TODO how to initialize this?
         self.value_list_model = None
 
-        # Implement parsing of files dropped to view. Note, that the drag
-        # events have to be accepted and thus, need to be reimplemented,
-        # although, the elements of the view are not dragable
-        self.dragEnterEvent = self.dragEnterEvent
-        self.dragMoveEvent = self.dragMoveEvent
-        self.dropEvent = self.dropEvent
-
-    # is not really nice and should be fixed
     def dragEnterEvent(self, event):
         # Consider only url/path events
         if event.mimeData().hasUrls():
@@ -101,7 +93,7 @@ class EncLogTreeView(QtWidgets.QTreeView):
         # extract folder and filename
         try:
             result = QtWidgets.QFileDialog.getOpenFileNames(
-                self.widget,
+                self,
                 "Open Sequence Encoder Log",
                 "/home/ient/Software/rd-plot-gui/examplLogs",
                 "Enocder Logs (*.log)")
@@ -119,7 +111,7 @@ class EncLogTreeView(QtWidgets.QTreeView):
         # extract folder and filename
         try:
             result = QtWidgets.QFileDialog.getExistingDirectory(
-                self.widget,
+                self,
                 "Open Sequence Encoder Log",
                 "/home/ient/Software/rd-plot-gui/examplLogs")
             return result
@@ -130,20 +122,18 @@ class EncLogTreeView(QtWidgets.QTreeView):
             print("successfully added sequence")
             return
 
-    # TODO Move this to controller or implement add/update at model
-
     def add_encoder_log(self):
         directory, file_name = self._get_open_file_names()
         path = join(directory, file_name)
 
-        # self.model.add( model.EncLog( path ) )
+        self.model().add( model.EncLog( path ) )
 
     def add_sequence(self):
         directory, file_name = self._get_open_file_names()
         path = join(directory, file_name)
 
         encLogs = list( model.EncLog.parse_directory_for_sequence( path ) )
-        # self.model.update(encLogs)
+        self.model().update(encLogs)
 
     def add_folder(self):
         path = self._get_folder()
@@ -151,7 +141,7 @@ class EncLogTreeView(QtWidgets.QTreeView):
         #TODO this uses the parse_directory method, thus, does not automatically
         # parse 'log'.subfolder. Should this be the case?
         encLogs = list( model.EncLog.parse_directory( path ) )
-        # self.model.update(encLogs)
+        self.model().update(encLogs)
 
 class QRecursiveSelectionModel(QItemSelectionModel):
     """Custom selection model for recursive models. If an item is selected, all
