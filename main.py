@@ -40,14 +40,15 @@ class Main(QMainWindow, Ui_MainWindow):
         self.encoderLogTreeModel = EncoderLogTreeModel()
         self.encoderLogTreeView.setModel(self.encoderLogTreeModel)
 
-        # Connect list view with model for the selected values of tree view
-        self.encoderLogTreeView.value_list_model = OrderedDictModel()
-        self.encoderLogListView.setModel( self.encoderLogTreeView.value_list_model )
-
         # Set custom selection model, so that sub items are automatically
         # selected if parent is selected
         self._selection_model = QRecursiveSelectionModel(self.encoderLogTreeView.model())
         self.encoderLogTreeView.setSelectionModel(self._selection_model)
+
+        # Connect list view with model for the selected values of tree view
+        self.selectedEncoderLogListModel = OrderedDictModel()
+        self.encoderLogListView.setModel( self.selectedEncoderLogListModel )
+        self._selection_model.selectionChanged.connect(self.change_list)
 
         # set up signals and slots
         # self.encoderLogTreeView.itemSelectionChanged.connect(self.update_plot)
@@ -65,6 +66,20 @@ class Main(QMainWindow, Ui_MainWindow):
 
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
         self.summaryPlotButton.toggled.connect(self.update_plot_type)
+
+    def change_list(self, q_selected, q_deselected):
+        """Extend superclass behavior by automatically adding the values of
+           all selected items in :param: `q_selected` to value list model. """
+
+        for q_index in q_selected.indexes():
+            # Add values, ie. data stored at the item, to the list model
+            for value in q_index.internalPointer().values:
+                    self.selectedEncoderLogListModel[str(value)] = value
+
+        for q_index in q_deselected.indexes():
+            # Remove values, ie. data stored at the item, from the list model
+            for value in q_index.internalPointer().values:
+                    self.selectedEncoderLogListModel.pop( str(value) )
 
     def get_selected_enc_logs(self):
         encLogs = []

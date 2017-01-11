@@ -58,9 +58,6 @@ class EncLogTreeView(QtWidgets.QTreeView):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # TODO how to initialize this?
-        self.value_list_model = None
-
     def dragEnterEvent(self, event):
         # Consider only url/path events
         if event.mimeData().hasUrls():
@@ -72,22 +69,6 @@ class EncLogTreeView(QtWidgets.QTreeView):
     def dropEvent(self, event):
         for url in event.mimeData().urls():
             self.model().update( model.EncLog.parse_url( url.path() ) )
-
-    def selectionChanged(self, q_selected, q_deselected):
-        """Extend superclass behavior by automatically adding the values of
-           all selected items in :param: `q_selected` to value list model. """
-
-        for q_index in q_selected.indexes():
-            # Add values, ie. data stored at the item, to the list model
-            for value in q_index.internalPointer().values:
-                    self.value_list_model[str(value)] = value
-
-        for q_index in q_deselected.indexes():
-            # Remove values, ie. data stored at the item, from the list model
-            for value in q_index.internalPointer().values:
-                    self.value_list_model.pop( str(value) )
-
-        super().selectionChanged(q_selected, q_deselected)
 
     def _get_open_file_names(self):
         # extract folder and filename
