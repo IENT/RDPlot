@@ -15,7 +15,7 @@ import collections
 import numpy as np
 
 from model import (EncLog, EncLogCollectionModelContainer, summary_data_from_enc_logs,
-                   sort_dict_of_lists_by_key)
+                   sort_dict_of_lists_by_key, OrderedDictModel)
 from view import (EncLogTreeView, QRecursiveSelectionModel)
 
 
@@ -45,8 +45,11 @@ class Main(QMainWindow, Ui_MainWindow):
         # )
         self.encoderLogTreeView.is_qp_expansion_enabled = False
 
-        self.encoderLogListView.setModel(self.encLogCollectionModelContainer.list_model)
         self.encoderLogTreeView.setModel(self.encLogCollectionModelContainer.tree_model)
+
+        # Connect list view with model for the selected values of tree view
+        self.encoderLogTreeView.value_list_model = OrderedDictModel()
+        self.encoderLogListView.setModel( self.encoderLogTreeView.value_list_model )
 
         # Set custom selection model, so that sub items are automatically
         # selected if parent is selected
