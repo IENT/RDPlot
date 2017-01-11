@@ -51,7 +51,8 @@ class Main(QMainWindow, Ui_MainWindow):
         self._selection_model.selectionChanged.connect(self.change_list)
 
         # set up signals and slots
-        # self.encoderLogTreeView.itemSelectionChanged.connect(self.update_plot)
+        self.selectedEncoderLogListModel.rowsInserted.connect(self.update_plot)
+        self.selectedEncoderLogListModel.rowsRemoved.connect(self.update_plot)
 
         # Connect signals of menues
         self.actionOpen_File.triggered.connect(
@@ -82,14 +83,11 @@ class Main(QMainWindow, Ui_MainWindow):
                     self.selectedEncoderLogListModel.pop( str(value) )
 
     def get_selected_enc_logs(self):
-        encLogs = []
-        for (sequence, config, qp) in self.encLogTreeView.get_selected_enc_log_keys():
-            encLogs.append(self.encoderLogTreeModel.get_by_tree_keys(sequence, config, qp))
-        return encLogs
+        return [self.selectedEncoderLogListModel[key] for key in self.selectedEncoderLogListModel]
 
     def update_plot(self):
         # updates the plot with a new figure.
-        self.encoderLogTreeView.itemSelectionChanged.disconnect(self.update_plot)
+        # self.selectedEncoderLogListModel.dataChanged.connect(self.update_plot)
 
         encLogs = self.get_selected_enc_logs()
 
@@ -134,7 +132,7 @@ class Main(QMainWindow, Ui_MainWindow):
                 self.comboBox.setCurrentIndex(0)
                 skip = True
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
-        self.encoderLogTreeView.itemSelectionChanged.connect(self.update_plot)
+        # self.selectedEncoderLogListModel.dataChanged.connect(self.update_plot)
 
         # TODO implement handling of no correctly parsed data
         if skip == False:
