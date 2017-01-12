@@ -587,13 +587,3 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
     def remove(self, enc_log):
         item = self[enc_log.sequence, enc_log.config, enc_log.qp]
         self.remove_item(item)
-
-    def get_by_sequence(self, sequence):
-        #Access a sequence in the EncLog tree and flatten the remaining tree
-        enc_logs = set()
-        for item in self[sequence, :]:
-            enc_logs += item.values
-        return enc_logs
-
-    def get_by_tree_keys(self, sequence, config, qp):
-        return self[sequence, config, qp].values
