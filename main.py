@@ -87,8 +87,10 @@ class Main(QMainWindow, Ui_MainWindow):
         for q_index in q_deselected.indexes():
             # Remove values, ie. data stored at the item, from the list model
             for value in q_index.internalPointer().values:
-                    self.selectedEncoderLogListModel.pop( str(value) )
-
+                key =  str(value)
+                # TODO Why is this check necesarry? Asynchron access?
+                if key in self.selectedEncoderLogListModel:
+                    self.selectedEncoderLogListModel.pop( key )
     def get_selected_enc_logs(self):
         return [self.selectedEncoderLogListModel[key] for key in self.selectedEncoderLogListModel]
 
