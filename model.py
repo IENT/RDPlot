@@ -418,34 +418,35 @@ class OrderedDictTreeModel(QAbstractItemModel):
 
     # Non-Qt interface functions
 
-    def __getitem__(self, keys):
-        """Access elements of the tree by identifiers seperated by commas. The
-           last element can be a slice. which automatically select all
-           subitems, not only the children, but also their children, and so on.
-           """
+    def create_path_and_get_item(self, *path):
+        """Get the item from the tree specified py :param: `*path`. The items
+           are created on access, if they are not already present at the tree.
+           Thus, the function always returns an item."""
 
-        item = self.root
+        # Each path starts at root item `item_parent` and root `QModelIndex`
+        # `q_index_parent`
+        item_parent = self.root
         q_index_parent = QModelIndex()
 
-        for index, key in enumerate(keys):
-            if isinstance(key, slice) == True:
-                # TODO implement slice not only as last identifier
-                if index != len(keys) - 1:
-                    raise KeyError("Slice has to be last identifier")
-                return item.leafs
-
-            # If `key` is not already present as child on `item`, add it
-            if key not in item:
-                row = len(item)
+        # Walk the path
+        for index, key in enumerate(path):
+            # If `key` is not already present as child on `item_parent`, add it
+            if key not in item_parent:
+                # Always add as last child
+                row = len(item_parent)
                 # Call Qt update functions
                 self.beginInsertRows(q_index_parent, row, row)
-                item._add( OrderedDictTreeItem(identifier=key) )
+                item_parent._add( OrderedDictTreeItem(identifier=key) )
                 self.endInsertRows()
-            item = item[key]
-            row = self._get_row_from_item_and_index_parent(item, q_index_parent)
+
+            # Set the current item as `item_parent` for next iteration, and
+            # update the `q_index_parent` accordingly
+            item_parent = item_parent[key]
+            row = self._get_row_from_item_and_index_parent(item_parent, q_index_parent)
             q_index_parent = self.index(row, 0, q_index_parent)
 
-        return item
+        # Note, that `item_parent` is now the last item specified by path
+        return item_parent
 
     def _get_index_parent_from_item(self, item):
         """Retrieve the `QModelIndex` `q_parent_index` of the parent item of
@@ -550,7 +551,9 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
             else:
                 for leaf in self.root.leafs:
                     for value in leaf.values:
-                        item = self[value.sequence, value.config, value.qp]
+                        item = self.create_path_and_get_item(
+                            value.sequence, value.config, value.qp
+                        )
                         item.values.add(value)
 
     def add(self, enc_log):
@@ -572,9 +575,9 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
 
         # Get element to which the `EncLog` should be added
         if self.is_summary_enabled:
-            item = self[enc_log.sequence, enc_log.config]
+            item = self.create_path_and_get_item(enc_log.sequence, enc_log.config)
         else:
-            item = self[enc_log.sequence, enc_log.config, enc_log.qp]
+            item = self.create_path_and_get_item(enc_log.sequence, enc_log.config, enc_log.qp)
 
         item.values.add( enc_log )
 
@@ -585,5 +588,5 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
             self.add(enc_log)
 
     def remove(self, enc_log):
-        item = self[enc_log.sequence, enc_log.config, enc_log.qp]
+        item = self.create_path_and_get_item(enc_log.sequence, enc_log.config)
         self.remove_item(item)
