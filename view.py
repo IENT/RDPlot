@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets
 from PyQt5.Qt import Qt
-from PyQt5.QtCore import QItemSelectionModel, QItemSelection, QModelIndex
+from PyQt5.QtCore import QItemSelectionModel, QItemSelection, QModelIndex, pyqtSignal
 
 from collections import deque
 from os.path import join
@@ -23,6 +23,16 @@ class EncLogTreeView(QtWidgets.QTreeView):
     def dropEvent(self, event):
         for url in event.mimeData().urls():
             self.model().update( model.EncLog.parse_url( url.path() ) )
+
+    # Keypress fix from
+    # http://stackoverflow.com/questions/27475940/pyqt-connect-to-keypressevent
+
+    deleteKey = pyqtSignal()
+
+    def keyPressEvent(self, q_key_event):
+        if q_key_event.count() == 1 and q_key_event.key() == Qt.Key_Delete:
+            self.deleteKey.emit()
+        super().keyPressEvent(q_key_event)
 
     def _get_open_file_names(self):
         # extract folder and filename
