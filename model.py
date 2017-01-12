@@ -259,6 +259,9 @@ class OrderedDictModel(QAbstractListModel):
 
         return item
 
+    def values(self):
+        return [self[key] for key in self]
+
     def __getitem__(self, key):
         return self._dict[key]
 
