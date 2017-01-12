@@ -453,39 +453,61 @@ class OrderedDictTreeModel(QAbstractItemModel):
         )
 
     def _get_index_parent_from_item(self, item):
-        # Return empty index for root item
+        """Retrieve the `QModelIndex` `q_parent_index` of the parent item of
+           :param: `item`. Note, that the tree has to walked up and down again
+           to find the index."""
+
+        # Return invalid index if :param: `item` is the root item
         if item.parent is None:
             return QModelIndex()
 
-        #
-        path = []
-        other = item
-        while other.parent is not None:
-            path.append(other)
+        # Walk the tree up the chain of parent items until the root item
+        # to find the `path`
+        path_queue = deque()
+        other = item.parent
+        while True:
+            path_queue.appendleft(other)
+            # Break if `other` is the root item
+            if other.parent is None:
+                break
             other = other.parent
+        path = list(path_queue)
 
-        path.reverse()
-
-        row = self.root.children.index(path[0])
-        q_index_parent = self.index(row, 0, QModelIndex())
-
-        for (parent, item) in zip(path[:-2], path[1:-1]):
+        # Walk the path down again to the :param: `item` and create
+        # `QModelIndex` along the way.
+        q_index_parent = QModelIndex()
+        for (parent, item) in zip(path[:-1], path[1:]):
             row = parent.children.index(item)
             q_index_parent = self.index(row, 0, q_index_parent)
+
         return q_index_parent
 
     def _get_row_from_item_and_index_parent(self, item, q_index_parent):
-        if q_index_parent.isValid():
+        """Get the row of :param: `item` in reference to the parent at
+           :param: `q_index_parent`"""
+        if q_index_parent.isValid() == True:
             return q_index_parent.internalPointer().children.index(item)
+        # If the :param: `q_index_parent` is invalid, default to root being
+        # parent
         return self.root.children.index(item)
 
     def remove_item(self, item, q_index_parent=None):
+        """Remove an :param: `item` from the tree. Additionally to the item
+           itself, all sub items are removed. Also, all items above `item` in
+           the tree are removed, if they do not have any other children, do not
+           contain any values, nor are the root item. Note, that due to these
+           additional things, which have to be done, removal is not an easy
+           operation performance wise."""
+
+        # If the parent index is not known, look it up
         if q_index_parent is None:
             q_index_parent = self._get_index_parent_from_item( item )
 
+        # Get the row position of the `item` relative to its parent
         row = self._get_row_from_item_and_index_parent(item, q_index_parent)
 
-        # Remove children recursively
+        # Before removing `item` itself, recursively remove all sub items, if
+        # there are any
         if len( item ) > 0:
             q_index = self.index(row, 0, q_index_parent)
             for child in item:
@@ -493,13 +515,16 @@ class OrderedDictTreeModel(QAbstractItemModel):
 
         parent = item.parent
 
+        # Remove `item` itself and notify view
         self.beginRemoveRows(q_index_parent, row, row)
         parent._remove(item)
         self.endRemoveRows()
 
         # If the
-        if len( parent ) == 0 and len( parent.values ) == 0 and parent.parent is not None:
-            self.remove_item(parent, self.parent( q_index_parent ))
+        if  (   len( parent ) == 0
+            and len( parent.values ) == 0
+            and parent.parent is not None
+            ): self.remove_item(parent, self.parent( q_index_parent ))
 
     def __repr__(self):
         return str( self.root.dict_tree )
