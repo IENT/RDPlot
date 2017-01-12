@@ -313,7 +313,7 @@ class OrderedDictTreeItem():
             return self.values
         return { identifier : self[identifier].dict_tree for identifier in self}
 
-    def add(self, child):
+    def _add(self, child):
         child.parent = self
 
         # If a child with the identifier is already present it is replaced, else
@@ -324,11 +324,11 @@ class OrderedDictTreeItem():
         else:
             self._children.append( child )
 
-    def update(self, children):
+    def _update(self, children):
         for child in children:
             self.add(child)
 
-    def remove(self, child):
+    def _remove(self, child):
         child.parent = None
         self._children.remove(child)
 
