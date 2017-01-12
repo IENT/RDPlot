@@ -92,8 +92,18 @@ class QRecursiveSelectionModel(QItemSelectionModel):
     """Custom selection model for recursive models. If an item is selected, all
        sub items are automatically selected."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, model, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.setModel(model)
+
+    def setModel(self, model):
+        if self.model() is not None:
+            self.model().rowsInserted.disconnect(self.selectInsertedRows)
+        super().setModel(model)
+        self.model().rowsInserted.connect(self.selectInsertedRows)
+
+    def selectInsertedRows(self):
+        self.select( self.selection(), QItemSelectionModel.Select)
 
     def select(self, selection, command):
         """Extend behavior of inherited method. Add all sub items to selection

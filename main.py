@@ -152,9 +152,8 @@ class Main(QMainWindow, Ui_MainWindow):
         self.encoderLogTreeModel.is_summary_enabled = checked
 
         # TODO enable if selection is implemented
-        # if len(self.encoderLogTreeView.selectedItems()) == 0:
-        #     return
-        # self.update_plot()
+        if len(self.selectedEncoderLogListModel) != 0:
+            self.update_plot()
 
     # updates the plot if the plot variable is changed
     def update_plot_variable(self, index):
