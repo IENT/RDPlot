@@ -171,7 +171,7 @@ class Main(QMainWindow, Ui_MainWindow):
         index_name = self.comboBox.itemText(index)
         if not index_name:
             return
-        if len( self.encoderLogTreeView.selectedItems() ) != 0:
+        if len( self.encoderLogTreeView.selectedIndexes() ) != 0:
             self.plotPreview.change_plot(
                 self.get_selected_enc_logs(),
                 index_name,
