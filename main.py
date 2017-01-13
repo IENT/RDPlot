@@ -80,9 +80,16 @@ class Main(QMainWindow, Ui_MainWindow):
         """Extend superclass behavior by automatically adding the values of
            all selected items in :param: `q_selected` to value list model. """
 
+        selected_q_indexes = q_deselected.indexes()
+
+        q_reselect_indexes = []
+        for q_index in self.encoderLogTreeView.selectedIndexes():
+            if q_index not in selected_q_indexes:
+                q_reselect_indexes.append( q_index )
+
         # Find all all values that are contained by selected tree items
         tuples = []
-        for q_index in q_selected.indexes():
+        for q_index in q_selected.indexes() + q_reselect_indexes:
             # Add values, ie. data stored at the item, to the list model
             values = q_index.internalPointer().values
             tuples.extend( (str( v ), v) for v in values )
