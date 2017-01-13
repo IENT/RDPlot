@@ -37,7 +37,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.plotAreaVerticalLayout.addWidget(self.plotPreview)
 
         # Create tree model to store encoder logs and connect it to view
-        self.encoderLogTreeModel = EncoderLogTreeModel()
+        self.encoderLogTreeModel = EncoderLogTreeModel(is_summary_enabled=True)
         self.encoderLogTreeView.setModel(self.encoderLogTreeModel)
 
         # Set custom selection model, so that sub items are automatically

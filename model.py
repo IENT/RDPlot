@@ -740,11 +740,10 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
     items_changed = pyqtSignal()
 
     def __init__(self, *args, is_summary_enabled=True, **kwargs):
-        self._is_summary_enabled = True
-        self.is_summary_enabled = is_summary_enabled
-
         super().__init__(*args, **kwargs)
 
+        self._is_summary_enabled = True
+        self.is_summary_enabled = is_summary_enabled
 
     # Properties
 
