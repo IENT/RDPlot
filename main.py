@@ -72,7 +72,9 @@ class Main(QMainWindow, Ui_MainWindow):
 
     def remove(self):
         values = self.selectedEncoderLogListModel.values()
-        self.encoderLogTreeModel.remove(values)
+        #List call necessary to avoid runtime error because of elements changing
+        #during iteration
+        self.encoderLogTreeModel.remove( list( values ) )
 
     def change_list(self, q_selected, q_deselected):
         """Extend superclass behavior by automatically adding the values of
