@@ -98,9 +98,9 @@ class QRecursiveSelectionModel(QItemSelectionModel):
 
     def setModel(self, model):
         if self.model() is not None:
-            self.model().rowsInserted.disconnect(self.selectInsertedRows)
+            self.model().items_changed.disconnect(self.selectInsertedRows)
         super().setModel(model)
-        self.model().rowsInserted.connect(self.selectInsertedRows)
+        self.model().items_changed.connect(self.selectInsertedRows)
 
     def selectInsertedRows(self):
         self.select( self.selection(), QItemSelectionModel.Select)

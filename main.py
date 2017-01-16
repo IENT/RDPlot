@@ -51,8 +51,8 @@ class Main(QMainWindow, Ui_MainWindow):
         self._selection_model.selectionChanged.connect(self.change_list)
 
         # set up signals and slots
-        self.selectedEncoderLogListModel.rowsInserted.connect(self.update_plot)
-        self.selectedEncoderLogListModel.rowsRemoved.connect(self.update_plot)
+        self.selectedEncoderLogListModel.items_changed.connect(self.update_plot)
+        self.selectedEncoderLogListModel.items_changed.connect(self.update_plot)
 
         # Connect signals of menues
         self.actionOpen_File.triggered.connect(
@@ -71,26 +71,27 @@ class Main(QMainWindow, Ui_MainWindow):
         self.encoderLogTreeView.deleteKey.connect(self.remove)
 
     def remove(self):
-        for value in self.selectedEncoderLogListModel.values():
-            if value in self.selectedEncoderLogListModel.values():
-                self.encoderLogTreeModel.remove(value)
+        values = self.selectedEncoderLogListModel.values()
+        self.encoderLogTreeModel.remove(values)
 
     def change_list(self, q_selected, q_deselected):
         """Extend superclass behavior by automatically adding the values of
            all selected items in :param: `q_selected` to value list model. """
 
+        # Find all all values that are contained by selected tree items
+        tuples = []
         for q_index in q_selected.indexes():
             # Add values, ie. data stored at the item, to the list model
-            for value in q_index.internalPointer().values:
-                    self.selectedEncoderLogListModel[str(value)] = value
+            values = q_index.internalPointer().values
+            tuples.extend( (str( v ), v) for v in values )
 
-        for q_index in q_deselected.indexes():
-            # Remove values, ie. data stored at the item, from the list model
-            for value in q_index.internalPointer().values:
-                key =  str(value)
-                # TODO Why is this check necesarry? Asynchron access?
-                if key in self.selectedEncoderLogListModel:
-                    self.selectedEncoderLogListModel.pop( key )
+        # Overwrite all elements in dictionary by selected values
+        # Note, that ovrewriting only issues one `updated` signal, and thus,
+        # only rerenders the plots one time. Therefore, simply overwriting
+        # is much more efficient, despite it would seem, that selectively
+        # overwriting keys is.
+        self.selectedEncoderLogListModel.clear_and_update_from_tuples( tuples )
+
     def get_selected_enc_logs(self):
         return [self.selectedEncoderLogListModel[key] for key in self.selectedEncoderLogListModel]
 

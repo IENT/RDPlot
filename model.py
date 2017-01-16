@@ -4,7 +4,7 @@ from os.path import (basename, dirname, abspath, join, sep, normpath, isdir,
                      isfile)
 from collections import deque
 from collections import OrderedDict
-from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel
+from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel, pyqtSignal
 from PyQt5.Qt import Qt, QVariant, QModelIndex
 
 
@@ -223,9 +223,14 @@ class EncLog():
         return str(self)
 
 class OrderedDictModel(QAbstractListModel):
+
+    items_changed = pyqtSignal()
+
     def __init__(self, *args, **kwargs):
         super().__init__(**kwargs)
         self._dict = OrderedDict(*args, **kwargs)
+
+    # Qt interface methods
 
     def rowCount(self, parent):
         return len(self._dict)
@@ -237,33 +242,20 @@ class OrderedDictModel(QAbstractListModel):
                     return QVariant( key )
         return QVariant()
 
-    def __setitem__(self, key, item):
-        length = len(self._dict)
-        for index, oldkey in enumerate(self._dict):
-            if oldkey == key:
-                length = index
-
-        self.beginInsertRows(QModelIndex(), length, length + 1)
-        self._dict[key] = item
-        self.endInsertRows()
-
-    def pop(self, key):
-        for index, key_other in enumerate(self._dict):
-            if key_other == key:
-                break
-
-        # Remove item of key
-        self.beginRemoveRows(QModelIndex(), index, index + 1)
-        item = self._dict.pop(key)
-        self.endRemoveRows()
-
-        return item
-
-    def values(self):
-        return [self[key] for key in self]
+    # Reimplement ictionary methods.
+    # Note, that implementation of `__setitem__` and `pop` is done using
+    # custom methods, so that `items_changed` is emitted correctly.
 
     def __getitem__(self, key):
         return self._dict[key]
+
+    def __setitem__(self, key, item):
+        self.update((key, item))
+
+    def pop(self, key):
+        item = self[key]
+        self.remove_keys( [key] )
+        return items
 
     def __iter__(self):
         return iter(self._dict)
@@ -279,6 +271,65 @@ class OrderedDictModel(QAbstractListModel):
 
     def __repr__(self):
         return str(self)
+
+    def values(self):
+        return [self[key] for key in self]
+
+    # Implement specific methods
+    # Note, that these methods allow update of whole ranges of data and emit
+    # the `items_changed` signal afterwards. This allows more efficient update
+    # behavior.
+
+    def update_from_tuples(self, tuples):
+        """Add/replace items to the dictionary specified in the iterable :param:
+           `tuples` of (key, item) pairs. Emit `items_changed` afterwards."""
+
+        for key, item in tuples:
+            # Iterate to find index corresponding to key in ordered dict
+            length = len(self._dict)
+            for index, oldkey in enumerate(self._dict):
+                if oldkey == key:
+                    length = index
+
+            # Call Qt interface functions and add/replace item corresponding
+            # to key
+            self.beginInsertRows(QModelIndex(), length, length + 1)
+            self._dict[key] = item
+            self.endInsertRows()
+
+        self.items_changed.emit()
+
+    def clear_and_update_from_tuples(self, tuples):
+        """Clear the dictionary and update it the (key, item) pairs specified
+           in :param: `tuples`. Emit `items_changed` afterwards."""
+
+        # Call Qt interface functions and remove all keys and corresponding
+        # items from the dictionary
+        self.beginRemoveRows(QModelIndex(), 0, len( self ) - 1)
+        self._dict.clear()
+        self.endRemoveRows()
+
+        # Update it with (key, item) pairs specified by `tuples`. The update
+        # method emits `items_changed`.
+        self.update_from_tuples(tuples)
+
+    def remove_keys(self, keys):
+        """Remove all keys and corresponding items specified in iterable
+           :param: `keys` from dictionary. Emit `items_changed` afterwards."""
+
+        # Iterate to find index corresponding to key in ordered dict
+        for key in keys:
+            for index, key_other in enumerate(self._dict):
+                if key_other == key:
+                    break
+
+            # Call Qt interface functions and remove key and corresponding item
+            self.beginRemoveRows(QModelIndex(), index, index + 1)
+            self._dict.pop(key)
+            self.endRemoveRows()
+
+        self.items_changed.emit()
+
 
 # Tree model `OrderedDictTreeModel` is subclass of `QAbstractItemModel` class,
 # and implements the abstract methods, thus, the model valid for Qt `QTreeView`.
@@ -529,6 +580,9 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
     """Tree model specific to encoder logs, specifying methods to add them
        to the tree, how to store their data at the tree and how to access
        them, using the tree."""
+
+    items_changed = pyqtSignal()
+
     def __init__(self, *args, is_summary_enabled=True, **kwargs):
         self._is_summary_enabled = True
         self.is_summary_enabled = is_summary_enabled
@@ -555,38 +609,75 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
                             value.sequence, value.config, value.qp
                         )
                         item.values.add(value)
+                    leaf.values.clear()
+
+            self.items_changed.emit()
+
+    # Implement `add`, `update` and remove to add/remove encoder logs to the
+    # tree.
+    # Note, that `add` is implemented using update, so `items_changed` is
+    # emitted efficiently.
 
     def add(self, enc_log):
-        """Adds :param: `enc_log` to the collection or replaces it if it is
-           already in the collection."""
-        #TODO Tree access is not unique in
-        #filesystem. This prevents an encoder log overwriting another one with
-        #same sequence, config and qp but on a different location. The question
-        #is, if this should be the case?
-        # if enc_log.qp in self[enc_log.sequence, enc_log.config]:
-        #     old_enc_log = self[enc_log.sequence, enc_log.config, enc_log.qp]
-        #     if old_enc_log != enc_log:
-        #         raise Exception((
-        #             "Ambigious encoder logs: Encoder log at {} and {} have the"
-        #             " same sequence '{}', dir '{}' and qp '{}', but different"
-        #             " absolute paths."
-        #         ).format(old_enc_log.path, enc_log.path, enc_log.sequence,
-        #                  enc_log.config, enc_log.qp))
-
-        # Get element to which the `EncLog` should be added
-        if self.is_summary_enabled:
-            item = self.create_path_and_get_item(enc_log.sequence, enc_log.config)
-        else:
-            item = self.create_path_and_get_item(enc_log.sequence, enc_log.config, enc_log.qp)
-
-        item.values.add( enc_log )
+        """Like update, but for a single :param: `enc_log`"""
+        self.update([enc_log])
 
     def update(self, enc_logs):
-        """Adds all elements in the iterable :param: `enc_logs` to the
-           collection"""
-        for enc_log in enc_logs:
-            self.add(enc_log)
+        """Adds all elements in the iterable :param: `enc_logs` to the tree or
+           replaces it if it is already present. Issues the `items_changed`
+           signal, after all encoder logs are added/replaced."""
 
-    def remove(self, enc_log):
-        item = self.create_path_and_get_item(enc_log.sequence, enc_log.config)
-        self.remove_item(item)
+        for enc_log in enc_logs:
+            #TODO Tree access is not unique in
+            #filesystem. This prevents an encoder log overwriting another one with
+            #same sequence, config and qp but on a different location. The question
+            #is, if this should be the case?
+            # if enc_log.qp in self[enc_log.sequence, enc_log.config]:
+            #     old_enc_log = self[enc_log.sequence, enc_log.config, enc_log.qp]
+            #     if old_enc_log != enc_log:
+            #         raise Exception((
+            #             "Ambigious encoder logs: Encoder log at {} and {} have the"
+            #             " same sequence '{}', dir '{}' and qp '{}', but different"
+            #             " absolute paths."
+            #         ).format(old_enc_log.path, enc_log.path, enc_log.sequence,
+            #                  enc_log.config, enc_log.qp))
+
+            # Get `item` of the tree corresponding to `enc_log`
+            if self.is_summary_enabled:
+                item = self.create_path_and_get_item(
+                    enc_log.sequence,
+                    enc_log.config
+                )
+            else:
+                item = self.create_path_and_get_item(
+                    enc_log.sequence,
+                    enc_log.config,
+                    enc_log.qp
+                )
+
+            # Add `enc_log` to the set of values of the tree item `item`
+            item.values.add( enc_log )
+
+        self.items_changed.emit()
+
+    def remove(self, enc_logs):
+        """Remove all encoder logs in iterable `enc_logs` from the tree. Issue
+           `items_changed` signal, after all encoder logs are removed."""
+
+        for enc_log in enc_logs:
+            # Get `item` of the tree corresponding to `enc_log`
+            if self.is_summary_enabled == True:
+                item = self.create_path_and_get_item(
+                    enc_log.sequence,
+                    enc_log.config
+                )
+            else:
+                item = self.create_path_and_get_item(
+                    enc_log.sequence,
+                    enc_log.config,
+                    enc_log.qp
+                )
+
+            self.remove_item(item)
+
+        self.items_changed.emit()
