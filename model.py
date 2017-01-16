@@ -434,15 +434,16 @@ class OrderedDictTreeModel(QAbstractItemModel):
                     raise KeyError("Slice has to be last identifier")
                 return item.leafs
 
-            row = len(item)
+            # If `key` is not already present as child on `item`, add it
             if key not in item:
+                row = len(item)
+                # Call Qt update functions
                 self.beginInsertRows(q_index_parent, row, row)
                 item._add( OrderedDictTreeItem(identifier=key) )
                 self.endInsertRows()
-
             item = item[key]
+            row = self._get_row_from_item_and_index_parent(item, q_index_parent)
             q_index_parent = self.index(row, 0, q_index_parent)
-        return item
 
     def changed(self):
         # TODO Do this selectively, at the moment the whole tree is
@@ -451,6 +452,7 @@ class OrderedDictTreeModel(QAbstractItemModel):
             self.index(                 0, 0, QModelIndex()),
             self.index(len(self.root) - 1, 0, QModelIndex())
         )
+        return item
 
     def _get_index_parent_from_item(self, item):
         """Retrieve the `QModelIndex` `q_parent_index` of the parent item of
