@@ -345,6 +345,10 @@ class OrderedDictTreeItem():
         for child in children:
             self.add(child)
 
+    def remove(self, child):
+        child.parent = None
+        self._children.remove(child)
+
     def __getitem__(self, identifier):
         for child in self._children:
             if child.identifier == identifier:
