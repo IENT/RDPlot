@@ -51,41 +51,21 @@ class DictTreeView(View):
                 child = QtWidgets.QTreeWidgetItem(parent, [key])
                 self._update_tree_widget(dict_tree[key], child)
 
-    def get_items_by_depth(self, depth):
-        output = []
-        for item in get_top_level_items_from_tree_widget(self.widget):
-            # Note, that the top level equals depth zero, thus, the next level
-            # has depth 1
-            output.extend(self._get_items_by_depth_rec(item, 1, depth))
-        return output
+class EncLogTreeView(QtWidgets.QTreeView):
+    def __init__(self, *args, is_qp_expansion_enabled=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        # self.is_qp_expansion_enabled = is_qp_expansion_enabled
 
-    @classmethod
-    def _get_items_by_depth_rec(cls, parent, depth_count, depth):
-        if depth_count >= depth:
-            return [parent]
-
-        output = []
-        for item in get_child_items_from_item(parent):
-            output.extend(
-                cls._get_items_by_depth_rec(item, depth_count + 1, depth)
-            )
-        return output
-
-class EncLogTreeView(DictTreeView):
-    def __init__(self, widget, model=None, is_qp_expansion_enabled=False):
-        super().__init__(widget, model)
-        self.is_qp_expansion_enabled = is_qp_expansion_enabled
-
-        # Implement parsing of files dropped to widget. Note, that the drag
+        # Implement parsing of files dropped to view. Note, that the drag
         # events have to be accepted and thus, need to be reimplemented,
         # although, the elements of the view are not dragable
-        self.widget.dragEnterEvent = self.dragEnterEvent
-        self.widget.dragMoveEvent = self.dragMoveEvent
-        self.widget.dropEvent = self.dropEvent
+        self.dragEnterEvent = self.dragEnterEvent
+        self.dragMoveEvent = self.dragMoveEvent
+        self.dropEvent = self.dropEvent
 
-        self.widget.itemSelectionChanged.connect(self._update_selection)
+        # self.itemSelectionChanged.connect(self._update_selection)
 
-    #TODO implementing this on the view and then overwriting the widget methods
+    #TODO implementing this on the view and then overwriting the view methods
     # is not really nice and should be fixed
     def dragEnterEvent(self, event):
         # Consider only url/path events
@@ -98,11 +78,6 @@ class EncLogTreeView(DictTreeView):
     def dropEvent(self, event):
         for url in event.mimeData().urls():
             self.model.update( model.EncLog.parse_url( url.path() ) )
-
-    def _update_view(self, dict_tree):
-        super()._update_view(dict_tree)
-        # Alter the qp items of the tree
-        self._update_qp_expansion()
 
     @property
     def is_qp_expansion_enabled(self):
@@ -201,3 +176,23 @@ class EncLogTreeView(DictTreeView):
         # parse 'log'.subfolder. Should this be the case?
         encLogs = list( model.EncLog.parse_directory( path ) )
         self.model.update(encLogs)
+
+    def get_items_by_depth(self, depth):
+        output = []
+        for item in get_top_level_items_from_tree_widget(self):
+            # Note, that the top level equals depth zero, thus, the next level
+            # has depth 1
+            output.extend(self._get_items_by_depth_rec(item, 1, depth))
+        return output
+
+    @classmethod
+    def _get_items_by_depth_rec(cls, parent, depth_count, depth):
+        if depth_count >= depth:
+            return [parent]
+
+        output = []
+        for item in get_child_items_from_item(parent):
+            output.extend(
+                cls._get_items_by_depth_rec(item, depth_count + 1, depth)
+            )
+        return output
