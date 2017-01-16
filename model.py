@@ -2,6 +2,7 @@ import re
 from glob import glob
 from os.path import (basename, dirname, abspath, join, sep, normpath, isdir,
                      isfile)
+from collections import deque
 from collections import OrderedDict
 from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel
 from PyQt5.Qt import Qt, QVariant, QModelIndex
@@ -368,6 +369,20 @@ class OrderedDictTreeItem():
 
     def __repr__(self):
         return str(self.dict_tree)
+
+    @property
+    def leafs(self):
+        items = deque( [self] )
+
+        leafs = deque()
+        while len( items ) != 0:
+            item = items.pop()
+
+            items.extend( item.children )
+            if len( item ) == 0:
+                leafs.append( item )
+
+        return list( leafs )
 
 class OrderedDictTreeModel(QAbstractItemModel):
     def __init__(self, *args, **kwargs):
