@@ -14,7 +14,7 @@ import re
 import collections
 import numpy as np
 
-from model import (EncLog, EncLogCollectionModel, summary_data_from_enc_logs,
+from model import (EncLog, EncLogCollectionModelContainer, summary_data_from_enc_logs,
                    sort_dict_of_lists_by_key)
 from view import (EncLogTreeView)
 
@@ -37,28 +37,29 @@ class Main(QMainWindow, Ui_MainWindow):
         self.plotAreaVerticalLayout.addWidget(self.plotPreview)
 
         # store the sequences
-        self.encLogCollectionModel = EncLogCollectionModel()
-        self.encLogTreeView = EncLogTreeView(
-            self.sequenceTreeWidget,
-            model = self.encLogCollectionModel,
-            is_qp_expansion_enabled = False,
-        )
+        self.encLogCollectionModelContainer = EncLogCollectionModelContainer()
+        # self.encLogTreeView = EncLogTreeView(
+        #     self.encoderLogTreeView,
+        #     model = self.encLogCollectionModelContainer,
+        #     is_qp_expansion_enabled = False,
+        # )
 
-        self.encoderLogListView.setModel(self.encLogCollectionModel.flat)
+        self.encoderLogListView.setModel(self.encLogCollectionModelContainer.list_model)
+        self.encoderLogTreeView.setModel(self.encLogCollectionModelContainer.tree_model)
 
         # set up signals and slots
-        self.sequenceTreeWidget.itemSelectionChanged.connect(self.update_plot)
+        # self.encoderLogTreeView.itemSelectionChanged.connect(self.update_plot)
 
         # Connect signals of menues
-        self.actionOpen_File.triggered.connect(
-            self.encLogTreeView.add_encoder_log
-        )
-        self.actionOpen_Sequence.triggered.connect(
-            self.encLogTreeView.add_sequence
-        )
-        self.actionOpen_Directory.triggered.connect(
-            self.encLogTreeView.add_folder
-        )
+        # self.actionOpen_File.triggered.connect(
+        #     self.encLogTreeView.add_encoder_log
+        # )
+        # self.actionOpen_Sequence.triggered.connect(
+        #     self.encLogTreeView.add_sequence
+        # )
+        # self.actionOpen_Directory.triggered.connect(
+        #     self.encLogTreeView.add_folder
+        # )
 
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
         self.summaryPlotButton.toggled.connect(self.update_plot_type)
@@ -66,12 +67,12 @@ class Main(QMainWindow, Ui_MainWindow):
     def get_selected_enc_logs(self):
         encLogs = []
         for (sequence, config, qp) in self.encLogTreeView.get_selected_enc_log_keys():
-            encLogs.append(self.encLogCollectionModel.get_by_tree_keys(sequence, config, qp))
+            encLogs.append(self.encLogCollectionModelContainer.get_by_tree_keys(sequence, config, qp))
         return encLogs
 
     def update_plot(self):
         # updates the plot with a new figure.
-        self.sequenceTreeWidget.itemSelectionChanged.disconnect(self.update_plot)
+        self.encoderLogTreeView.itemSelectionChanged.disconnect(self.update_plot)
 
         encLogs = self.get_selected_enc_logs()
 
@@ -116,7 +117,7 @@ class Main(QMainWindow, Ui_MainWindow):
                 self.comboBox.setCurrentIndex(0)
                 skip = True
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
-        self.sequenceTreeWidget.itemSelectionChanged.connect(self.update_plot)
+        self.encoderLogTreeView.itemSelectionChanged.connect(self.update_plot)
 
         # TODO implement handling of no correctly parsed data
         if skip == False:
@@ -126,7 +127,7 @@ class Main(QMainWindow, Ui_MainWindow):
     def update_plot_type(self, checked):
         self.encLogTreeView.is_qp_expansion_enabled = (not checked)
 
-        if len(self.sequenceTreeWidget.selectedItems()) == 0:
+        if len(self.encoderLogTreeView.selectedItems()) == 0:
             return
         self.update_plot()
 
@@ -136,7 +137,7 @@ class Main(QMainWindow, Ui_MainWindow):
         index_name = self.comboBox.itemText(index)
         if not index_name:
             return
-        if len( self.sequenceTreeWidget.selectedItems() ) != 0:
+        if len( self.encoderLogTreeView.selectedItems() ) != 0:
             self.plotPreview.change_plot(
                 self.get_selected_enc_logs(),
                 index_name,
@@ -205,7 +206,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
     # TODO Remove this? It will not work with the tree widget
     # def addfig(self, name, fig):
     #     self.fig_dict[name] = fig
-    #     self.sequenceTreeWidget.addItem(name)
+    #     self.encoderLogTreeView.addItem(name)
 
     # updates the figure with a new figure
     def updatempl(self, fig):

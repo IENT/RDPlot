@@ -107,7 +107,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QTreeWidget" name="sequenceTreeWidget">
+          <widget class="QTreeView" name="encoderLogTreeView">
            <property name="dragEnabled">
             <bool>false</bool>
            </property>
@@ -126,11 +126,6 @@
            <property name="headerHidden">
             <bool>true</bool>
            </property>
-           <column>
-            <property name="text">
-             <string notr="true">1</string>
-            </property>
-           </column>
           </widget>
          </item>
         </layout>
@@ -215,7 +210,7 @@
      <x>0</x>
      <y>0</y>
      <width>1734</width>
-     <height>26</height>
+     <height>28</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

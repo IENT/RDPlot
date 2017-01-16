@@ -363,7 +363,7 @@ class OrderedDictTreeItem():
     def __repr__(self):
         return str(self.dict_tree)
 
-class OrderedDictTree(QAbstractItemModel):
+class OrderedDictTreeModel(QAbstractItemModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -436,40 +436,32 @@ class OrderedDictTree(QAbstractItemModel):
             return QVariant( str( self.root ) )
         return QVariant()
 
-class EncLogCollectionModel(Model):
+class EncLogCollectionModelContainer():
     _max_tree_depth = 3
 
     """Collection of :class: `model.EncLog`s. The class implements different
        access/iteration/etc. methods. Additionally it implements parsing the
        file system for certain encoder logs eg. all encoder logs of one sequence
        in different folders."""
-    def __init__(self, views=None, enc_logs=None):
-        super().__init__(views=views)
+    def __init__(self, enc_logs=None):
         #References to the encoder logs are stored in a flat dictionary using
         #the path/unique identifier as key and a tree using sequence, config and
         #qp as key
-        self.flat = OrderedDictModel()
-        self._tree = {}
+        self.list_model = OrderedDictModel()
+        self.tree_model = OrderedDictTreeModel()
         if enc_logs is not None:
             self.update(enc_logs)
 
     def add(self, enc_log):
         """Adds :param: `enc_log` to the collection or replaces it if it is
            already in the collection."""
-        #Eventually the tree has to be extended if new sequences are added ie.
-        #additionaly dictionaries have to be inserted before the encoder log can
-        #be appended
-        if enc_log.sequence not in self._tree:
-            self._tree[enc_log.sequence] = {}
-        if enc_log.config not in self._tree[enc_log.sequence]:
-            self._tree[enc_log.sequence][enc_log.config] = {}
 
         #TODO Tree access is not unique in
         #filesystem. This prevents an encoder log overwriting another one with
         #same sequence, config and qp but on a different location. The question
         #is, if this should be the case?
-        if enc_log.qp in self._tree[enc_log.sequence][enc_log.config]:
-            old_enc_log = self._tree[enc_log.sequence][enc_log.config][enc_log.qp]
+        if enc_log.qp in self.tree_model[enc_log.sequence][enc_log.config]:
+            old_enc_log = self.tree_model[enc_log.sequence][enc_log.config][enc_log.qp]
             if old_enc_log != enc_log:
                 raise Exception((
                     "Ambigious encoder logs: Encoder log at {} and {} have the"
@@ -478,10 +470,10 @@ class EncLogCollectionModel(Model):
                 ).format(old_enc_log.path, enc_log.path, enc_log.sequence,
                          enc_log.config, enc_log.qp))
 
-        self._tree[enc_log.sequence][enc_log.config][enc_log.qp] = enc_log
-        self.flat[enc_log.path] = enc_log
+        self.tree_model[enc_log.sequence, enc_log.config, enc_log.qp] = enc_log
+        self.list_model[enc_log.path] = enc_log
 
-        self._update_views(self._tree)
+        self._update_views(self.tree_model)
 
     def update(self, enc_logs):
         """Adds all elements in the iterable :param: `enc_logs` to the
@@ -504,23 +496,23 @@ class EncLogCollectionModel(Model):
 
     def get_by_sequence(self, sequence):
         #Access a sequence in the EncLog tree and flatten the remaining tree
-        return self._flatten_dict_tree( self._tree[sequence] )
+        return self._flatten_dict_tree( self.tree_model[sequence] )
 
     def get_by_tree_keys(self, sequence, config, qp):
-        return self._tree[sequence][config][qp]
+        return self.tree_model[sequence][config][qp]
 
     def __getitem__(self, path):
         """Access element by path ie. unique identifier"""
-        return self.flat[path]
+        return self.list_model[path]
 
     def __iter__(self):
-        return iter(self.flat)
+        return iter(self.list_model)
 
     def __contains__(self, enc_log):
-        return enc_log.path in self.flat
+        return enc_log.path in self.list_model
 
     def __len__(self):
-        return len(self.flat)
+        return len(self.list_model)
 
     def __str__(self):
         return str(list(self))
