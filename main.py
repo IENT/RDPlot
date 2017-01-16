@@ -16,7 +16,7 @@ import numpy as np
 
 from model import (EncLog, EncLogCollectionModelContainer, summary_data_from_enc_logs,
                    sort_dict_of_lists_by_key)
-from view import (EncLogTreeView)
+from view import (EncLogTreeView, QRecursiveSelectionModel)
 
 
 Ui_MainWindow, QMainWindow = loadUiType('mainWindow.ui')
@@ -48,19 +48,24 @@ class Main(QMainWindow, Ui_MainWindow):
         self.encoderLogListView.setModel(self.encLogCollectionModelContainer.list_model)
         self.encoderLogTreeView.setModel(self.encLogCollectionModelContainer.tree_model)
 
+        # Set custom selection model, so that sub items are automatically
+        # selected if parent is selected
+        self._selection_model = QRecursiveSelectionModel(self.encoderLogTreeView.model())
+        self.encoderLogTreeView.setSelectionModel(self._selection_model)
+
         # set up signals and slots
         # self.encoderLogTreeView.itemSelectionChanged.connect(self.update_plot)
 
         # Connect signals of menues
-        # self.actionOpen_File.triggered.connect(
-        #     self.encLogTreeView.add_encoder_log
-        # )
-        # self.actionOpen_Sequence.triggered.connect(
-        #     self.encLogTreeView.add_sequence
-        # )
-        # self.actionOpen_Directory.triggered.connect(
-        #     self.encLogTreeView.add_folder
-        # )
+        self.actionOpen_File.triggered.connect(
+            self.encoderLogTreeView.add_encoder_log
+        )
+        self.actionOpen_Sequence.triggered.connect(
+            self.encoderLogTreeView.add_sequence
+        )
+        self.actionOpen_Directory.triggered.connect(
+            self.encoderLogTreeView.add_folder
+        )
 
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
         self.summaryPlotButton.toggled.connect(self.update_plot_type)

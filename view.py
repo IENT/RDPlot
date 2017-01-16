@@ -1,5 +1,8 @@
 from PyQt5 import QtWidgets
+from PyQt5.Qt import Qt
+from PyQt5.QtCore import QItemSelectionModel, QItemSelection
 
+from collections import deque
 from os.path import join
 
 import model
@@ -52,9 +55,8 @@ class DictTreeView(View):
                 self._update_tree_widget(dict_tree[key], child)
 
 class EncLogTreeView(QtWidgets.QTreeView):
-    def __init__(self, *args, is_qp_expansion_enabled=False, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # self.is_qp_expansion_enabled = is_qp_expansion_enabled
 
         # Implement parsing of files dropped to view. Note, that the drag
         # events have to be accepted and thus, need to be reimplemented,
@@ -63,9 +65,6 @@ class EncLogTreeView(QtWidgets.QTreeView):
         self.dragMoveEvent = self.dragMoveEvent
         self.dropEvent = self.dropEvent
 
-        # self.itemSelectionChanged.connect(self._update_selection)
-
-    #TODO implementing this on the view and then overwriting the view methods
     # is not really nice and should be fixed
     def dragEnterEvent(self, event):
         # Consider only url/path events
@@ -77,51 +76,7 @@ class EncLogTreeView(QtWidgets.QTreeView):
 
     def dropEvent(self, event):
         for url in event.mimeData().urls():
-            self.model.update( model.EncLog.parse_url( url.path() ) )
-
-    @property
-    def is_qp_expansion_enabled(self):
-        return self._is_qp_expansion_enabled
-
-    @is_qp_expansion_enabled.setter
-    def is_qp_expansion_enabled(self, is_enabled):
-        self._is_qp_expansion_enabled = is_enabled
-        self._update_qp_expansion()
-
-    def _update_qp_expansion(self):
-        #TODO alter selection
-        for qp_items in self.get_items_by_depth(2):
-            qp_items.setChildIndicatorPolicy(
-                QtWidgets.QTreeWidgetItem.DontShowIndicatorWhenChildless
-                if self._is_qp_expansion_enabled
-                else QtWidgets.QTreeWidgetItem.DontShowIndicator
-            )
-
-    def _update_selection(self):
-        # Reselect items: All children of selected items are selected
-        for item in get_top_level_items_from_tree_widget(self.widget):
-            self._select_children_rec(item, item.isSelected())
-
-    def _select_children_rec(self, parent, is_selected):
-        for child in get_child_items_from_item(parent):
-            if is_selected == True:
-                child.setSelected(True)
-            self._select_children_rec(child, is_selected or child.isSelected())
-
-    def get_selected_enc_log_keys(self):
-        #Get all enc_logs specified by the selection tree
-        keys = []
-        for sequence_item in get_top_level_items_from_tree_widget(self.widget):
-            for config_item in get_child_items_from_item(sequence_item):
-                for qp_item in get_child_items_from_item(config_item):
-                    # Note, that this is valid, as if a parent item is checked
-                    # all sub items are also selected
-                    if qp_item.isSelected() == True:
-                        sequence = sequence_item.text(0)
-                        config = config_item.text(0)
-                        qp = qp_item.text(0)
-                        keys.append( (sequence, config, qp) )
-        return keys
+            self.model().update( model.EncLog.parse_url( url.path() ) )
 
     def _get_open_file_names(self):
         # extract folder and filename
@@ -156,18 +111,20 @@ class EncLogTreeView(QtWidgets.QTreeView):
             print("successfully added sequence")
             return
 
+    # TODO Move this to controller or implement add/update at model
+
     def add_encoder_log(self):
         directory, file_name = self._get_open_file_names()
         path = join(directory, file_name)
 
-        self.model.add( model.EncLog( path ) )
+        # self.model.add( model.EncLog( path ) )
 
     def add_sequence(self):
         directory, file_name = self._get_open_file_names()
         path = join(directory, file_name)
 
         encLogs = list( model.EncLog.parse_directory_for_sequence( path ) )
-        self.model.update(encLogs)
+        # self.model.update(encLogs)
 
     def add_folder(self):
         path = self._get_folder()
@@ -175,24 +132,68 @@ class EncLogTreeView(QtWidgets.QTreeView):
         #TODO this uses the parse_directory method, thus, does not automatically
         # parse 'log'.subfolder. Should this be the case?
         encLogs = list( model.EncLog.parse_directory( path ) )
-        self.model.update(encLogs)
+        # self.model.update(encLogs)
 
-    def get_items_by_depth(self, depth):
-        output = []
-        for item in get_top_level_items_from_tree_widget(self):
-            # Note, that the top level equals depth zero, thus, the next level
-            # has depth 1
-            output.extend(self._get_items_by_depth_rec(item, 1, depth))
-        return output
+class QRecursiveSelectionModel(QItemSelectionModel):
+    """Custom selection model for recursive models. If an item is selected, all
+       sub items are automatically selected."""
 
-    @classmethod
-    def _get_items_by_depth_rec(cls, parent, depth_count, depth):
-        if depth_count >= depth:
-            return [parent]
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-        output = []
-        for item in get_child_items_from_item(parent):
-            output.extend(
-                cls._get_items_by_depth_rec(item, depth_count + 1, depth)
-            )
-        return output
+    def select(self, selection, command):
+        """Extend behavior of inherited method. Add all sub items to selection
+           """
+
+        # Find index ranges of all sub items of the indexes in `selection`
+        index_ranges = self._get_sub_items_index_ranges(selection.indexes())
+        # Add the index ranges to the `selection`
+        for (q_index_1, q_index_2) in index_ranges:
+            # TODO Problem could be, that select leads to duplicates in the
+            # selection. So far, no problem arised. `merge` is no alternative
+            # as it does not support all `commands`
+            selection.select(q_index_1, q_index_2)
+
+        super().select(selection, command)
+
+    def _get_sub_items_index_ranges(self, q_index_parent_collection):
+        """Given a collection of indexes :param: `q_index_parent_collection`,
+           find the index ranges of all sub items for all indexes in the
+           collection. An index range corresponds to a tuple consisting of the
+           first and the last index in the range. Index ranges are used to
+           describe selections effectively."""
+        # `deque` is more efficient stack data structure
+        q_index_parent_queue = deque( q_index_parent_collection )
+
+        # Output queue with all index ranges found
+        index_ranges = deque()
+        while len( q_index_parent_queue ) != 0:
+            q_index_parent = q_index_parent_queue.pop()
+            # Get parent item from current `QModelIndex`
+            parent         = q_index_parent.internalPointer()
+            # Number of columns and rows of the current parent
+            count_row    = self.model().rowCount(q_index_parent)
+            count_column = self.model().columnCount(q_index_parent)
+
+            # If the currently processed item contains items, then the index
+            # range describing these items has to be added to the output
+            # `index_ranges`, and the sub items have to be processed themselves.
+            # If the item has no sub items, then nothing has to be done, as its
+            # own index is already included in the index range specified by
+            # its own parent.
+            if count_row > 0 or count_column > 0:
+                # Append index range tuple to output `index_ranges`
+                row     = count_row - 1
+                column  = count_column - 1
+                index_ranges.append((
+                    self.model().index(  0,     0, q_index_parent),
+                    self.model().index(row, column, q_index_parent),
+                ))
+                # Append indexes of children to the queue `q_index_parent_queue`
+                for row in range( count_row ):
+                    for column in range( count_column ):
+                        q_index = self.model().index(row, column,
+                                                     q_index_parent)
+                        q_index_parent_queue.append( q_index )
+
+        return list( index_ranges )
