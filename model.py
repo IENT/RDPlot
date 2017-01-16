@@ -462,7 +462,10 @@ class EncLogCollectionModelContainer():
        access/iteration/etc. methods. Additionally it implements parsing the
        file system for certain encoder logs eg. all encoder logs of one sequence
        in different folders."""
-    def __init__(self, enc_logs=None):
+    def __init__(self, is_summary_enabled=True, enc_logs=None):
+        self._is_summary_enabled = True
+        self.is_summary_enabled = is_summary_enabled
+
         #References to the encoder logs are stored in a flat dictionary using
         #the path/unique identifier as key and a tree using sequence, config and
         #qp as key
@@ -470,6 +473,27 @@ class EncLogCollectionModelContainer():
         self.tree_model = OrderedDictTreeModel()
         if enc_logs is not None:
             self.update(enc_logs)
+
+    @property
+    def is_summary_enabled(self):
+        return self._is_summary_enabled
+
+    @is_summary_enabled.setter
+    def is_summary_enabled(self, enabled):
+        if enabled != self._is_summary_enabled:
+            self._is_summary_enabled = enabled
+
+            if self._is_summary_enabled:
+                for leaf in self.tree_model.root.leafs:
+                    leaf.parent.values.update( leaf.values )
+                    leaf.parent.remove( leaf )
+                    del leaf
+            else:
+                for leaf in self.tree_model.root.leafs:
+                    for value in leaf.values:
+                        item = self.tree_model[value.sequence, value.config, value.qp]
+                        item.values.add(value)
+
     def add(self, enc_log):
         """Adds :param: `enc_log` to the collection or replaces it if it is
            already in the collection."""
@@ -487,7 +511,14 @@ class EncLogCollectionModelContainer():
         #         ).format(old_enc_log.path, enc_log.path, enc_log.sequence,
         #                  enc_log.config, enc_log.qp))
 
-        self.tree_model[enc_log.sequence, enc_log.config, enc_log.qp] = enc_log
+        # Get element to which the `EncLog` should be added
+        if self.is_summary_enabled:
+            item = self.tree_model[enc_log.sequence, enc_log.config]
+        else:
+            item = self.tree_model[enc_log.sequence, enc_log.config, enc_log.qp]
+
+        item.values.add( enc_log )
+
         self.list_model[enc_log.path] = enc_log
 
     def update(self, enc_logs):
@@ -498,10 +529,13 @@ class EncLogCollectionModelContainer():
 
     def get_by_sequence(self, sequence):
         #Access a sequence in the EncLog tree and flatten the remaining tree
-        return self._flatten_dict_tree( self.tree_model[sequence] )
+        enc_logs = set()
+        for item in self.tree_model[sequence, :]:
+            enc_logs += item.values
+        return enc_logs
 
     def get_by_tree_keys(self, sequence, config, qp):
-        return self.tree_model[sequence][config][qp]
+        return self.tree_model[sequence, config, qp].values
 
     def __getitem__(self, path):
         """Access element by path ie. unique identifier"""

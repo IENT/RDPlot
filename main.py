@@ -43,6 +43,7 @@ class Main(QMainWindow, Ui_MainWindow):
         #     model = self.encLogCollectionModelContainer,
         #     is_qp_expansion_enabled = False,
         # )
+        self.encoderLogTreeView.is_qp_expansion_enabled = False
 
         self.encoderLogListView.setModel(self.encLogCollectionModelContainer.list_model)
         self.encoderLogTreeView.setModel(self.encLogCollectionModelContainer.tree_model)
@@ -125,11 +126,12 @@ class Main(QMainWindow, Ui_MainWindow):
 
     # updates the plot if the type is changed
     def update_plot_type(self, checked):
-        self.encLogTreeView.is_qp_expansion_enabled = (not checked)
+        self.encLogCollectionModelContainer.is_summary_enabled = checked
 
-        if len(self.encoderLogTreeView.selectedItems()) == 0:
-            return
-        self.update_plot()
+        # TODO enable if selection is implemented
+        # if len(self.encoderLogTreeView.selectedItems()) == 0:
+        #     return
+        # self.update_plot()
 
     # updates the plot if the plot variable is changed
     def update_plot_variable(self, index):
