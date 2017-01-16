@@ -273,7 +273,7 @@ class OrderedDictModel(QAbstractListModel):
         return str(self)
 
     def values(self):
-        return [self[key] for key in self]
+        return self._dict.values()
 
     # Implement specific methods
     # Note, that these methods allow update of whole ranges of data and emit
