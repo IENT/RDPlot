@@ -567,11 +567,17 @@ class OrderedDictTreeModel(QAbstractItemModel):
         parent._remove(item)
         self.endRemoveRows()
 
-        # If the
-        if  (   len( parent ) == 0
+        # Remove parent item recursively if
+        # * the parent item has no children
+        # * the parent item does not contain any values
+        # * the parent item is not the root item
+        condition = (
+                len( parent )        == 0
             and len( parent.values ) == 0
             and parent.parent is not None
-            ): self.remove_item(parent, self.parent( q_index_parent ))
+        )
+        if condition:
+            self.remove_item(parent, self.parent( q_index_parent ))
 
     def __repr__(self):
         return str( self.root.dict_tree )
@@ -628,20 +634,6 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
            signal, after all encoder logs are added/replaced."""
 
         for enc_log in enc_logs:
-            #TODO Tree access is not unique in
-            #filesystem. This prevents an encoder log overwriting another one with
-            #same sequence, config and qp but on a different location. The question
-            #is, if this should be the case?
-            # if enc_log.qp in self[enc_log.sequence, enc_log.config]:
-            #     old_enc_log = self[enc_log.sequence, enc_log.config, enc_log.qp]
-            #     if old_enc_log != enc_log:
-            #         raise Exception((
-            #             "Ambigious encoder logs: Encoder log at {} and {} have the"
-            #             " same sequence '{}', dir '{}' and qp '{}', but different"
-            #             " absolute paths."
-            #         ).format(old_enc_log.path, enc_log.path, enc_log.sequence,
-            #                  enc_log.config, enc_log.qp))
-
             # Get `item` of the tree corresponding to `enc_log`
             if self.is_summary_enabled:
                 item = self.create_path_and_get_item(
@@ -654,6 +646,27 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
                     enc_log.config,
                     enc_log.qp
                 )
+
+            # TODO Tree access is not unique in
+            # filesystem. This prevents an encoder log overwriting another one
+            # with same sequence, config and qp but on a different location. The
+            # question is, if this should be the case?
+            for value in  item.values:
+                # Condition of ambiguous occurence is that identifiers are
+                # similar, but the paths are different
+                condition = (
+                        value.sequence  == enc_log.sequence
+                    and value.config    == enc_log.config
+                    and value.qp        == enc_log.qp
+                    and value.path      != enc_log.path
+                )
+                if condition:
+                    raise Exception((
+                        "Ambigious encoder logs: Encoder log at {} and {} have"
+                        " the same sequence '{}', dir '{}' and qp '{}', but"
+                        " different absolute paths."
+                    ).format(value.path, enc_log.path, enc_log.sequence,
+                             enc_log.config, enc_log.qp))
 
             # Add `enc_log` to the set of values of the tree item `item`
             item.values.add( enc_log )
