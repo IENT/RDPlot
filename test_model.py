@@ -8,8 +8,8 @@ from pdb import set_trace
 from matplotlib.pyplot import plot, show
 from pprint import pprint
 
-from model import (EncLog, EncLogCollection, summary_data_from_enc_logs,
-                   sort_dict_of_lists_by_key)
+from model import (EncLog, EncLogCollectionModel, summary_data_from_enc_logs,
+                   sort_dict_of_lists_by_key, OrderedDictTreeItem)
 
 
 #Assume a example simulation folder "simulation_example" in the parent of the
@@ -65,3 +65,29 @@ def test_enc_log_collection():
     for path in log_collection:
         logs.remove(log_collection[path])
     assert len(logs) == 0
+
+class OrderedDictTreeItemGenerator():
+    def __init__(self):
+        self.count = -1
+        self.items = []
+
+
+    def get(self, number):
+        for i in range(number):
+            self.next()
+        return self.items[ -number : ]
+
+    def next(self):
+        self.count += 1
+        item = OrderedDictTreeItem( str(self.count) )
+        self.items.append( item )
+        return item
+
+def test_dict_tree_item():
+    root = OrderedDictTreeItem("")
+
+    item_generator = OrderedDictTreeItemGenerator()
+
+    root.add( item_generator.next() )
+    root.update( item_generator.get(4) )
+    root[ item_generator.items[1].identifier ].update( item_generator.get(2) )
