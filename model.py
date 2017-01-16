@@ -308,7 +308,7 @@ class OrderedDictTreeItem():
     """Item of tree model. The item imitates the behavior of a dictionary, thus,
        each item has an identifier, and the children of an item can be accessed
        by `DictTreeItem`[ìdentifier]."""
-    def __init__(self, identifier=None,  parent=None, children=None, value=None):
+    def __init__(self, identifier=None,  parent=None, children=None, values=None):
         self.identifier = identifier
         self.parent     = parent
 
@@ -316,7 +316,7 @@ class OrderedDictTreeItem():
         if children is not None:
             self.extend(children)
 
-        self.value      = value
+        self.values     = set( values if values is not None else [] )
 
     @property
     def children(self):
@@ -327,7 +327,7 @@ class OrderedDictTreeItem():
     def dict_tree(self):
         # Create tree of ordinary dicts from item
         if len(self) == 0:
-            return self.value
+            return self.values
         return { identifier : self[identifier].dict_tree for identifier in self}
 
     def add(self, child):
