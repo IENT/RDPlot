@@ -68,6 +68,13 @@ class Main(QMainWindow, Ui_MainWindow):
         self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
         self.summaryPlotButton.toggled.connect(self.update_plot_type)
 
+        self.encoderLogTreeView.deleteKey.connect(self.remove)
+
+    def remove(self):
+        for value in self.selectedEncoderLogListModel.values():
+            if value in self.selectedEncoderLogListModel.values():
+                self.encoderLogTreeModel.remove(value)
+
     def change_list(self, q_selected, q_deselected):
         """Extend superclass behavior by automatically adding the values of
            all selected items in :param: `q_selected` to value list model. """

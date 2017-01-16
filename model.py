@@ -425,18 +425,23 @@ class OrderedDictTreeModel(QAbstractItemModel):
            """
 
         item = self.root
+        q_index_parent = QModelIndex()
+
         for index, key in enumerate(keys):
             if isinstance(key, slice) == True:
                 # TODO implement slice not only as last identifier
                 if index != len(keys) - 1:
                     raise KeyError("Slice has to be last identifier")
                 return item.leafs
+
+            row = len(item)
             if key not in item:
-                item.add( OrderedDictTreeItem(identifier=key) )
-                self.changed()
-            row = item.children.index(item[key])
+                self.beginInsertRows(q_index_parent, row, row)
+                item._add( OrderedDictTreeItem(identifier=key) )
+                self.endInsertRows()
 
             item = item[key]
+            q_index_parent = self.index(row, 0, q_index_parent)
         return item
 
     def changed(self):
@@ -447,11 +452,54 @@ class OrderedDictTreeModel(QAbstractItemModel):
             self.index(len(self.root) - 1, 0, QModelIndex())
         )
 
-    def remove_item(self, item):
-        item.parent.remove(item)
-        # del item
-        self.changed()
+    def _get_index_parent_from_item(self, item):
+        # Return empty index for root item
+        if item.parent is None:
+            return QModelIndex()
 
+        #
+        path = []
+        other = item
+        while other.parent is not None:
+            path.append(other)
+            other = other.parent
+
+        path.reverse()
+
+        row = self.root.children.index(path[0])
+        q_index_parent = self.index(row, 0, QModelIndex())
+
+        for (parent, item) in zip(path[:-2], path[1:-1]):
+            row = parent.children.index(item)
+            q_index_parent = self.index(row, 0, q_index_parent)
+        return q_index_parent
+
+    def _get_row_from_item_and_index_parent(self, item, q_index_parent):
+        if q_index_parent.isValid():
+            return q_index_parent.internalPointer().children.index(item)
+        return self.root.children.index(item)
+
+    def remove_item(self, item, q_index_parent=None):
+        if q_index_parent is None:
+            q_index_parent = self._get_index_parent_from_item( item )
+
+        row = self._get_row_from_item_and_index_parent(item, q_index_parent)
+
+        # Remove children recursively
+        if len( item ) > 0:
+            q_index = self.index(row, 0, q_index_parent)
+            for child in item:
+                self.remove_item(child, q_index)
+
+        parent = item.parent
+
+        self.beginRemoveRows(q_index_parent, row, row)
+        parent._remove(item)
+        self.endRemoveRows()
+
+        # If the
+        if len( parent ) == 0 and len( parent.values ) == 0 and parent.parent is not None:
+            self.remove_item(parent, self.parent( q_index_parent ))
 
     def __repr__(self):
         return str( self.root.dict_tree )
@@ -515,6 +563,10 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
            collection"""
         for enc_log in enc_logs:
             self.add(enc_log)
+
+    def remove(self, enc_log):
+        item = self[enc_log.sequence, enc_log.config, enc_log.qp]
+        self.remove_item(item)
 
     def get_by_sequence(self, sequence):
         #Access a sequence in the EncLog tree and flatten the remaining tree
