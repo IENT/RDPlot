@@ -293,6 +293,76 @@ class OrderedDictModel(QAbstractListModel):
         return str(self)
 
 
+class OrderedDictTreeItem():
+    """Item of tree model. The item imitates the behavior of a dictionary, thus,
+       each item has an identifier, and the children of an item can be accessed
+       by `DictTreeItem`[ìdentifier]."""
+    def __init__(self, identifier,  parent=None, children=None, value=None):
+        self.identifier = identifier
+        self.parent     = parent
+
+        self._children  = []
+        if children is not None:
+            self.extend(children)
+
+        self.value      = value
+
+    @property
+    def children(self):
+        #TODO as this is copy by reference it is not really safer
+        return self._children
+
+    @property
+    def dict_tree(self):
+        # Create tree of ordinary dicts from item
+        if len(self) == 0:
+            return self.value
+        return { child.identifier : child.dict_tree }
+
+    def add(self, child):
+        child.parent = self
+
+        # If a child with the identifier is already present it is replaced, else
+        # the child is inserted at the end
+        if child in self:
+            index = self._children.index(child.identifier)
+            self._children[index] = child
+        else:
+            self._children.append( child )
+
+    def update(self, children):
+        for child in children:
+            self.add(child)
+
+    def __getitem__(self, identifier):
+        for child in self._children:
+            if child.identifier == identifier:
+                return child
+
+        raise KeyError("Key {key} not found in item {item}".format(
+            key     = identifier,
+            item    = str(self)
+        ))
+
+    def __len__(self):
+        return len(self._children)
+
+    def __iter__(self):
+        for child in self._children:
+            yield child.identifier
+
+    def __contains(self, identifier):
+        for identifier_child in self:
+            if identifier_child == identifier:
+                return True
+        return False
+
+    def __str__(self):
+        return str(self.identifier)
+
+    def __repr__(self):
+        return str(self.dict_tree)
+
 class EncLogCollectionModel(Model):
     _max_tree_depth = 3
 
