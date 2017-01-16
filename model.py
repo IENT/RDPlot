@@ -43,6 +43,7 @@ class EncLogParserError(Exception):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+
 class EncLog():
     def __init__(self, path):
         #Path is unique identifier
@@ -222,13 +223,48 @@ class EncLog():
     def __repr__(self):
         return str(self)
 
+#-------------------------------------------------------------------------------
+
+
+#
+# Models
+#
+
+
+class ModelError(Exception):
+    """Error class for model"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+class AmbiguousEncoderLogs(ModelError):
+    """Error class for ambiguous encoder logs"""
+    pass
+
+
+
 class OrderedDictModel(QAbstractListModel):
+    """Subclass of :class: `QAbstractListModel` implementing an
+    :class: `OrderedDict`, whose keys are also the items of the qt list. If
+    used with a :class: `QListView`, the keys are displayed.
+
+    :param *args:    All args forwarded to parent class
+    :param **kwargs: All keyword args forwarded to parent class
+
+    Implements the *items_changed* signal, which is emitted on change of the
+    keys/items. If used with the methods :func: `update_from_tuples`, :func:
+    `clear_and_update_from_tuples` or :func: `remove_keys` it is especially
+    efficient, as it allows updating the model with a collection of
+    keys/items, but emitting the *items_changed* signal only once.
+    """
 
     items_changed = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
-        super().__init__(**kwargs)
-        self._dict = OrderedDict(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+        self._dict = OrderedDict()
+
 
     # Qt interface methods
 
@@ -242,15 +278,16 @@ class OrderedDictModel(QAbstractListModel):
                     return QVariant( key )
         return QVariant()
 
-    # Reimplement ictionary methods.
-    # Note, that implementation of `__setitem__` and `pop` is done using
-    # custom methods, so that `items_changed` is emitted correctly.
+
+    # Reimplement dictionary methods.
+    # Note, that implementation of __setitem__ and pop is done using
+    # custom methods, so that *items_changed* is emitted correctly.
 
     def __getitem__(self, key):
         return self._dict[key]
 
     def __setitem__(self, key, item):
-        self.update((key, item))
+        self.update( (key, item) )
 
     def pop(self, key):
         item = self[key]
@@ -258,31 +295,33 @@ class OrderedDictModel(QAbstractListModel):
         return items
 
     def __iter__(self):
-        return iter(self._dict)
+        return iter( self._dict )
 
     def __contains__(self, key):
         return key in self._dict
 
     def __len__(self):
-        return len(self._dict)
+        return len( self._dict )
 
     def __str__(self):
-        return str(list(self._dict))
+        return str( list( self._dict ) )
 
     def __repr__(self):
-        return str(self)
+        return str( self )
 
     def values(self):
         return self._dict.values()
 
+
     # Implement specific methods
     # Note, that these methods allow update of whole ranges of data and emit
-    # the `items_changed` signal afterwards. This allows more efficient update
+    # the *items_changed* signal afterwards. This allows more efficient update
     # behavior.
 
     def update_from_tuples(self, tuples):
         """Add/replace items to the dictionary specified in the iterable :param:
-           `tuples` of (key, item) pairs. Emit `items_changed` afterwards."""
+        *tuples* of (key, item) pairs. Emit *items_changed* afterwards.
+        """
 
         for key, item in tuples:
             # Iterate to find index corresponding to key in ordered dict
@@ -301,7 +340,10 @@ class OrderedDictModel(QAbstractListModel):
 
     def clear_and_update_from_tuples(self, tuples):
         """Clear the dictionary and update it the (key, item) pairs specified
-           in :param: `tuples`. Emit `items_changed` afterwards."""
+        in *tuples*. Emit *items_changed* afterwards.
+
+        :param tuples: Iterable of tuples of (key, item) which are added
+            to the dictionary."""
 
         # Call Qt interface functions and remove all keys and corresponding
         # items from the dictionary
@@ -309,13 +351,17 @@ class OrderedDictModel(QAbstractListModel):
         self._dict.clear()
         self.endRemoveRows()
 
-        # Update it with (key, item) pairs specified by `tuples`. The update
-        # method emits `items_changed`.
+        # Update it with (key, item) pairs specified by *tuples*. The update
+        # method emits *items_changed*.
         self.update_from_tuples(tuples)
 
     def remove_keys(self, keys):
         """Remove all keys and corresponding items specified in iterable
-           :param: `keys` from dictionary. Emit `items_changed` afterwards."""
+        from dictionary. Emit *items_changed* afterwards.
+
+        :param keys: *keys* which are removed from dictionary together with
+            the corresponding items
+        """
 
         # Iterate to find index corresponding to key in ordered dict
         for key in keys:
@@ -331,20 +377,45 @@ class OrderedDictModel(QAbstractListModel):
         self.items_changed.emit()
 
 
-# Tree model `OrderedDictTreeModel` is subclass of `QAbstractItemModel` class,
-# and implements the abstract methods, thus, the model valid for Qt `QTreeView`.
-# The `OrderedDictTreeItem` class implements items of the tree model.
+# Tree model OrderedDictTreeModel is subclass of QAbstractItemModel class,
+# and implements the abstract methods, thus, the model valid for Qt QTreeView.
+# The OrderedDictTreeItem class implements items of the tree model.
 # Implementation was done according to the example at
 # http://doc.qt.io/qt-5/qtwidgets-itemviews-simpletreemodel-example.html
 # and corresponding files under BSD licence.
 
 class OrderedDictTreeItem():
-    """Item of tree model. The item imitates the behavior of a dictionary, thus,
-       each item has an identifier, and the children of an item can be accessed
-       by `DictTreeItem`[ìdentifier]."""
-    def __init__(self, identifier=None,  parent=None, children=None, values=None):
-        self.identifier = identifier
-        self.parent     = parent
+    """Item of :class: `OrderedDictTreeModel`. The item imitates the
+    behavior of a dictionary, thus, the children of an item can be accessed
+    using slice notation and their identifiers, eg.:
+
+    >>> parent['child_identifier']
+
+    In contrast to that, slice assignement is **not** supported. This
+    would not be very usefull, as the key to an item is **always** its
+    identifier, thus, an *item* is always assigned to its *identifier* as
+    key. Therefore, the functions for appending children are named as with
+    sets, ie. :func: `_add` for single items and :func: `_update` for
+    iterables of items. Additional some dictionary operators are supported.
+
+    The :func: `_add`, :func: `_update` and :func: `_remove` are marked
+    private, as they should only be called from the :class:
+    `OrderedDictModel` object, as the qt tree indexes have to be updated
+    accordingly.
+
+    The *values* property corresponds to some set of data.
+
+    :param identifier: Unique/hashable identifier of the item. The item is
+        referenced from the parent item by using this identifier.
+    :param parent: Parent item
+    :param children: Iterable of childrens of the item
+    :param values: Values contained by the item
+    """
+
+    def __init__(self, identifier=None,  parent=None, children=None,
+                 values=None):
+        self._identifier = identifier
+        self._parent     = parent
 
         self._children  = []
         if children is not None:
@@ -352,20 +423,64 @@ class OrderedDictTreeItem():
 
         self.values     = set( values if values is not None else [] )
 
+
+    # Properties for private attributes
+
+    @property
+    def identifier(self):
+        return self._identifier
+
+    @property
+    def parent(self):
+        return self._parent
+
     @property
     def children(self):
-        #TODO as this is copy by reference it is not really safer
-        return self._children
+        # Copy the list of children
+        return list( self._children )
+
+
+    # Special functions/properties
+
+    @property
+    def leafs(self):
+        """Walk all items below the item in the tree and return all leafs ie.
+        items which do not have any children themselves.
+
+        :rtype: `list` of :class: `OrderedDictTreeItem`s
+        """
+
+        items = deque( [self] )
+
+        leafs = deque()
+        while len( items ) != 0:
+            item = items.pop()
+
+            items.extend( item.children )
+            if len( item ) == 0:
+                leafs.append( item )
+
+        return list( leafs )
 
     @property
     def dict_tree(self):
-        # Create tree of ordinary dicts from item
+        """Walk all items below item in the tree and convert to a tree of
+        dictionaries. For leaf items the value set is returned.
+
+        :rtype: :class: `dict` with *identifiers* as keys and recursive call to
+            :func: `dict_tree` as item
+        :rtype: :class: `set` of values
+        """
+
         if len(self) == 0:
             return self.values
-        return { identifier : self[identifier].dict_tree for identifier in self}
+        return {identifier : self[identifier].dict_tree for identifier in self}
+
+
+    # Functions to add/remove children of the item
 
     def _add(self, child):
-        child.parent = self
+        child._parent = self
 
         # If a child with the identifier is already present it is replaced, else
         # the child is inserted at the end
@@ -380,10 +495,15 @@ class OrderedDictTreeItem():
             self.add(child)
 
     def _remove(self, child):
-        child.parent = None
+        child._parent = None
         self._children.remove(child)
 
+
+    # Reimplement some dictionary functions
+
     def __getitem__(self, identifier):
+        """Get child by *identifier*"""
+
         for child in self._children:
             if child.identifier == identifier:
                 return child
@@ -394,43 +514,42 @@ class OrderedDictTreeItem():
         ))
 
     def __len__(self):
-        return len(self._children)
+        """Number of children"""
+        return len( self._children )
 
     def __iter__(self):
+        """Iterate over *identifier*s ie. dictionary keys"""
         for child in self._children:
             yield child.identifier
 
     def __contains(self, identifier):
+        """Check for identifier ie. key in *children*"""
         for identifier_child in self:
             if identifier_child == identifier:
                 return True
         return False
 
     def __str__(self):
-        return str(self.identifier)
+        return str( self.identifier )
 
     def __repr__(self):
-        return str(self.dict_tree)
+        """Display item as dictionary tree"""
+        return str( self.dict_tree )
 
-    @property
-    def leafs(self):
-        items = deque( [self] )
-
-        leafs = deque()
-        while len( items ) != 0:
-            item = items.pop()
-
-            items.extend( item.children )
-            if len( item ) == 0:
-                leafs.append( item )
-
-        return list( leafs )
 
 class OrderedDictTreeModel(QAbstractItemModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.root = OrderedDictTreeItem()
+        self._root = OrderedDictTreeItem()
+
+
+    # Properties
+
+    @property
+    def root(self):
+        return self._root
+
 
     # Qt interface functions implemented according to
     # http://doc.qt.io/qt-5/qtwidgets-itemviews-simpletreemodel-example.html
@@ -467,21 +586,26 @@ class OrderedDictTreeModel(QAbstractItemModel):
             return QVariant( str( q_parent_index.internalPointer() ) )
         return QVariant()
 
+
     # Non-Qt interface functions
 
-    def create_path_and_get_item(self, *path):
-        """Get the item from the tree specified py :param: `*path`. The items
-           are created on access, if they are not already present at the tree.
-           Thus, the function always returns an item."""
+    def create_path(self, *path):
+        """Create all items along *path* if they are not already present. Return
+        last *item* of the path.
 
-        # Each path starts at root item `item_parent` and root `QModelIndex`
-        # `q_index_parent`
+        :param *path: Accepts an arbitrary number of *identifiers* as path
+
+        :rtype: :class: `OrderedDictTreeItem`
+
+        """
+
+        # Each path starts at root item *item_parent* and root *q_index_parent*
         item_parent = self.root
         q_index_parent = QModelIndex()
 
         # Walk the path
         for index, key in enumerate(path):
-            # If `key` is not already present as child on `item_parent`, add it
+            # If *key* is not already present as child on *item_parent*, add it
             if key not in item_parent:
                 # Always add as last child
                 row = len(item_parent)
@@ -490,38 +614,43 @@ class OrderedDictTreeModel(QAbstractItemModel):
                 item_parent._add( OrderedDictTreeItem(identifier=key) )
                 self.endInsertRows()
 
-            # Set the current item as `item_parent` for next iteration, and
-            # update the `q_index_parent` accordingly
+            # Set the current item as *item_parent* for next iteration, and
+            # update the *q_index_parent* accordingly
             item_parent = item_parent[key]
             row = self._get_row_from_item_and_index_parent(item_parent, q_index_parent)
             q_index_parent = self.index(row, 0, q_index_parent)
 
-        # Note, that `item_parent` is now the last item specified by path
+        # Note, that *item_parent* is now the last item specified by path
         return item_parent
 
     def _get_index_parent_from_item(self, item):
-        """Retrieve the `QModelIndex` `q_parent_index` of the parent item of
-           :param: `item`. Note, that the tree has to walked up and down again
-           to find the index."""
+        """Get the :class: `QModelIndex` *q_parent_index* of the parent item of
+        *item*. Note, that the tree has to walked up and down again
+        to find the index, so performance depens on the depth of the tree.
 
-        # Return invalid index if :param: `item` is the root item
+        :param item: The parent index of this item is found.
+
+        :rtype: :class: `QModelIndex*
+        """
+
+        # Return invalid index if *item* is the root item
         if item.parent is None:
             return QModelIndex()
 
         # Walk the tree up the chain of parent items until the root item
-        # to find the `path`
+        # to find the *path*
         path_queue = deque()
         other = item.parent
         while True:
             path_queue.appendleft(other)
-            # Break if `other` is the root item
+            # Break if *other* is the root item
             if other.parent is None:
                 break
             other = other.parent
         path = list(path_queue)
 
-        # Walk the path down again to the :param: `item` and create
-        # `QModelIndex` along the way.
+        # Walk the path down again to the *item* and create
+        # QModelIndex along the way.
         q_index_parent = QModelIndex()
         for (parent, item) in zip(path[:-1], path[1:]):
             row = parent.children.index(item)
@@ -530,30 +659,40 @@ class OrderedDictTreeModel(QAbstractItemModel):
         return q_index_parent
 
     def _get_row_from_item_and_index_parent(self, item, q_index_parent):
-        """Get the row of :param: `item` in reference to the parent at
-           :param: `q_index_parent`"""
+        """Get the row of an *item* in reference to its parent at
+        *q_parent_index*.
+
+        :param item: Get the position of :class: `OrderedDictTreeItem`
+        :param q_index_parent: :class: `QModelIndex` of the parent of *item*
+
+        :rtype: :class: `Int`
+        """
+
         if q_index_parent.isValid() == True:
             return q_index_parent.internalPointer().children.index(item)
-        # If the :param: `q_index_parent` is invalid, default to root being
+        # If the *q_index_parent* is invalid, default to root being
         # parent
         return self.root.children.index(item)
 
     def remove_item(self, item, q_index_parent=None):
-        """Remove an :param: `item` from the tree. Additionally to the item
-           itself, all sub items are removed. Also, all items above `item` in
-           the tree are removed, if they do not have any other children, do not
-           contain any values, nor are the root item. Note, that due to these
-           additional things, which have to be done, removal is not an easy
-           operation performance wise."""
+        """Remove *item* from the tree. Additionally to the item itself, all sub
+        items are removed. Also, all items above *item* in the tree are removed,
+        if they do not have any other children, do not contain any values and
+        are not the root item. Note, that due to these additional procedures,
+        which have to be done, removal of an item requires some performance.
+
+        :param item: Item to be removed :class: `OrderedDictTreeItem`
+        :param q_index_parent: :class: `QModelIndex` of the parent of *item*
+        """
 
         # If the parent index is not known, look it up
         if q_index_parent is None:
             q_index_parent = self._get_index_parent_from_item( item )
 
-        # Get the row position of the `item` relative to its parent
+        # Get the row position of the *item* relative to its parent
         row = self._get_row_from_item_and_index_parent(item, q_index_parent)
 
-        # Before removing `item` itself, recursively remove all sub items, if
+        # Before removing *item* itself, recursively remove all sub items, if
         # there are any
         if len( item ) > 0:
             q_index = self.index(row, 0, q_index_parent)
@@ -562,7 +701,7 @@ class OrderedDictTreeModel(QAbstractItemModel):
 
         parent = item.parent
 
-        # Remove `item` itself and notify view
+        # Remove *item* itself and notify view
         self.beginRemoveRows(q_index_parent, row, row)
         parent._remove(item)
         self.endRemoveRows()
@@ -582,10 +721,21 @@ class OrderedDictTreeModel(QAbstractItemModel):
     def __repr__(self):
         return str( self.root.dict_tree )
 
+
 class EncoderLogTreeModel(OrderedDictTreeModel):
-    """Tree model specific to encoder logs, specifying methods to add them
-       to the tree, how to store their data at the tree and how to access
-       them, using the tree."""
+    """Tree model specific to encoder logs, specifying methods to add them to
+    the tree, how to store their data at the tree and how to access them, using
+    the tree. Implements *item_changed* signal, which is emitted after the
+    tree model has been altered. With :func: `add`, :func: `update` and :func:
+    `emove`, the signal allows altering a collection of items and efficiently
+    updating the GUI, as *item_changed* is emitted, after all model alterations
+    have been processed.
+
+    :param is_summary_enabled: :class: `Bool` Define if the tree should render
+        for summary or temporal data.
+    :param *args:    Pass to superclass
+    :param **kwargs: Pass to superclass
+    """
 
     items_changed = pyqtSignal()
 
@@ -595,12 +745,16 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
 
         super().__init__(*args, **kwargs)
 
+
+    # Properties
+
     @property
     def is_summary_enabled(self):
         return self._is_summary_enabled
 
     @is_summary_enabled.setter
     def is_summary_enabled(self, enabled):
+        # TODO Write doc
         if enabled != self._is_summary_enabled:
             self._is_summary_enabled = enabled
 
@@ -611,7 +765,7 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
             else:
                 for leaf in self.root.leafs:
                     for value in leaf.values:
-                        item = self.create_path_and_get_item(
+                        item = self.create_path(
                             value.sequence, value.config, value.qp
                         )
                         item.values.add(value)
@@ -619,29 +773,37 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
 
             self.items_changed.emit()
 
-    # Implement `add`, `update` and remove to add/remove encoder logs to the
+
+    # Implement *add*, *update* and remove to add/remove encoder logs to the
     # tree.
-    # Note, that `add` is implemented using update, so `items_changed` is
+    # Note, that *add* is implemented using update, so *items_changed* is
     # emitted efficiently.
 
     def add(self, enc_log):
-        """Like update, but for a single :param: `enc_log`"""
+        """Like update, but for a single *enc_log*. *items_changed* is issued
+        by calling :func: `update` .
+
+        :param enc_log: :class: `EncLog` to be added to tree
+        """
         self.update([enc_log])
 
     def update(self, enc_logs):
-        """Adds all elements in the iterable :param: `enc_logs` to the tree or
-           replaces it if it is already present. Issues the `items_changed`
-           signal, after all encoder logs are added/replaced."""
+        """Adds all elements in the iterable *enc_logs* to the tree or
+        replaces them if they are already present. Issues the *items_changed*
+        signal, after all encoder logs are added/replaced.
+
+        :param enc_logs: Iterable collection of :class: `EncLog`s to be added
+        """
 
         for enc_log in enc_logs:
-            # Get `item` of the tree corresponding to `enc_log`
+            # Get *item* of the tree corresponding to *enc_log*
             if self.is_summary_enabled:
-                item = self.create_path_and_get_item(
+                item = self.create_path(
                     enc_log.sequence,
                     enc_log.config
                 )
             else:
-                item = self.create_path_and_get_item(
+                item = self.create_path(
                     enc_log.sequence,
                     enc_log.config,
                     enc_log.qp
@@ -661,31 +823,34 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
                     and value.path      != enc_log.path
                 )
                 if condition:
-                    raise Exception((
+                    raise AmbiguousEncoderLogs((
                         "Ambigious encoder logs: Encoder log at {} and {} have"
                         " the same sequence '{}', dir '{}' and qp '{}', but"
                         " different absolute paths."
                     ).format(value.path, enc_log.path, enc_log.sequence,
                              enc_log.config, enc_log.qp))
 
-            # Add `enc_log` to the set of values of the tree item `item`
+            # Add *enc_log* to the set of values of the tree item *item*
             item.values.add( enc_log )
 
         self.items_changed.emit()
 
     def remove(self, enc_logs):
-        """Remove all encoder logs in iterable `enc_logs` from the tree. Issue
-           `items_changed` signal, after all encoder logs are removed."""
+        """Remove all elements in iterable collection *enc_logs* from the tree.
+        Emit *items_changed* signal after all encoder logs are removed.
+
+        :param enc_logs: Iterable collection of :class: `EncLog`s to be removed
+        """
 
         for enc_log in enc_logs:
-            # Get `item` of the tree corresponding to `enc_log`
+            # Get *item* of the tree corresponding to *enc_log*
             if self.is_summary_enabled == True:
-                item = self.create_path_and_get_item(
+                item = self.create_path(
                     enc_log.sequence,
                     enc_log.config
                 )
             else:
-                item = self.create_path_and_get_item(
+                item = self.create_path(
                     enc_log.sequence,
                     enc_log.config,
                     enc_log.qp
