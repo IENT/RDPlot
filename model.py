@@ -440,6 +440,7 @@ class OrderedDictTreeModel(QAbstractItemModel):
            last element can be a slice. which automatically select all
            subitems, not only the children, but also their children, and so on.
            """
+
         item = self.root
         for index, key in enumerate(keys):
             if isinstance(key, slice) == True:
@@ -449,8 +450,25 @@ class OrderedDictTreeModel(QAbstractItemModel):
                 return item.leafs
             if key not in item:
                 item.add( OrderedDictTreeItem(identifier=key) )
+                self.changed()
+            row = item.children.index(item[key])
+
             item = item[key]
         return item
+
+    def changed(self):
+        # TODO Do this selectively, at the moment the whole tree is
+        # rerendered
+        self.dataChanged.emit(
+            self.index(                 0, 0, QModelIndex()),
+            self.index(len(self.root) - 1, 0, QModelIndex())
+        )
+
+    def remove_item(self, item):
+        item.parent.remove(item)
+        del item
+        self.changed()
+
 
     def __repr__(self):
         return str( self.root.dict_tree )
@@ -486,8 +504,7 @@ class EncLogCollectionModelContainer():
             if self._is_summary_enabled:
                 for leaf in self.tree_model.root.leafs:
                     leaf.parent.values.update( leaf.values )
-                    leaf.parent.remove( leaf )
-                    del leaf
+                    self.tree_model.remove_item(leaf)
             else:
                 for leaf in self.tree_model.root.leafs:
                     for value in leaf.values:
