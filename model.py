@@ -241,6 +241,10 @@ class EncLog():
     def __eq__(self, enc_log):
         return self.path == enc_log.path
 
+    # TODO remove if usefull 'set' is implemented
+    def __hash__(self):
+        return hash(self.path)
+
     def __str__(self):
         return str((
             "Encoder Log of sequence '{}' from config '{}' with qp '{}'"
