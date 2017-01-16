@@ -297,7 +297,7 @@ class OrderedDictTreeItem():
     """Item of tree model. The item imitates the behavior of a dictionary, thus,
        each item has an identifier, and the children of an item can be accessed
        by `DictTreeItem`[ìdentifier]."""
-    def __init__(self, identifier,  parent=None, children=None, value=None):
+    def __init__(self, identifier=None,  parent=None, children=None, value=None):
         self.identifier = identifier
         self.parent     = parent
 
