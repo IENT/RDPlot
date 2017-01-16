@@ -496,19 +496,6 @@ class EncLogCollectionModelContainer():
         for enc_log in enc_logs:
             self.add(enc_log)
 
-    @classmethod
-    def _flatten_dict_tree(cls, parent, depth=0):
-        """Helper function to create a flatted list from a dictionary tree."""
-        if depth >= cls._max_tree_depth:
-            raise Exception("Maximal tree depth exceeded")
-        if isinstance(parent, EncLog):
-            return [parent]
-
-        enc_logs = []
-        for child in parent.values():
-            enc_logs.extend( cls._flatten_dict_tree(child, depth = depth + 1) )
-        return enc_logs
-
     def get_by_sequence(self, sequence):
         #Access a sequence in the EncLog tree and flatten the remaining tree
         return self._flatten_dict_tree( self.tree_model[sequence] )
