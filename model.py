@@ -445,13 +445,6 @@ class OrderedDictTreeModel(QAbstractItemModel):
             row = self._get_row_from_item_and_index_parent(item, q_index_parent)
             q_index_parent = self.index(row, 0, q_index_parent)
 
-    def changed(self):
-        # TODO Do this selectively, at the moment the whole tree is
-        # rerendered
-        self.dataChanged.emit(
-            self.index(                 0, 0, QModelIndex()),
-            self.index(len(self.root) - 1, 0, QModelIndex())
-        )
         return item
 
     def _get_index_parent_from_item(self, item):
