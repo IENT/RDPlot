@@ -407,7 +407,7 @@ class OrderedDictTreeModel(QAbstractItemModel):
 
     def data(self, q_parent_index, q_role):
         if q_parent_index.isValid() == True and q_role == Qt.DisplayRole:
-                return QVariant( str( q_parent_index.internalPointer() ) )
+            return QVariant( str( q_parent_index.internalPointer() ) )
         return QVariant()
 
     # Non-Qt interface functions
@@ -462,7 +462,6 @@ class EncLogCollectionModelContainer():
         self.tree_model = OrderedDictTreeModel()
         if enc_logs is not None:
             self.update(enc_logs)
-
     def add(self, enc_log):
         """Adds :param: `enc_log` to the collection or replaces it if it is
            already in the collection."""
