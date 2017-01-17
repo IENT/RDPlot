@@ -54,8 +54,8 @@ class EncLog():
 
         #Dictionaries holding the parsed values
         #TODO select parsing functions depending on codec type,
-        self.summary_data  = self._parse_summary_data(self.path)
-        self.temporal_data = {self.qp : self._parse_temporal_data(self.path)}
+        self.summary_data  = self._parse_summary_data()
+        self.temporal_data = self._parse_temporal_data()
 
     @classmethod
     def parse_url(cls, url):
@@ -147,10 +147,9 @@ class EncLog():
             )
         return (sequence, config, qp)
 
-    @staticmethod
-    def _parse_temporal_data(path):
+    def _parse_temporal_data(self):
         #this function extracts temporal values
-        with open(path, 'r') as log_file:
+        with open(self.path, 'r') as log_file:
             log_text = log_file.read()  # reads the whole text file
             tempData = re.findall(r"""
                 POC \s+ (\d+) \s+ .+ \s+ \d+ \s+ . \s+ (.-\D+) ,  #Slice
@@ -167,14 +166,15 @@ class EncLog():
             #Define output data dict and fill it with parsed values
             data = {name : [] for (index, name) in names.items()}
             for i in range(0, len(tempData)):
-                #TODO slices and frames?
+                # As referencing to frame produces error, reference to index *i*
                 for (index, name) in names.items():
-                    data[name].append(tempData[i][index])
+                    data[name].append(
+                        (i, tempData[i][index])
+                    )
             return data
 
-    @staticmethod
-    def _parse_summary_data(path):
-        with open(path, 'r') as log_file:
+    def _parse_summary_data(self):
+        with open(self.path, 'r') as log_file:
             log_text = log_file.read()  # reads the whole text file
             summaries = re.findall(r"""  ^(\w*)-*.*$ # catch summary line
                            \s* # catch newline and space
@@ -200,16 +200,29 @@ class EncLog():
                 name_val_dict = dict(zip(names, vals))  # pack both together in a dict
                 # print(summary_type)
 
+                name_rate = 'Bitrate'
+                names.remove('Bitrate')
+
                 # now pack everything together
                 for name in names:
                     if name not in data[summary_type]: # create upon first access
                         data[summary_type][name] = []
-                    data[summary_type][name].append(name_val_dict[name])
+                    # Reference all data to *self.qp*
+                    data[summary_type][name].append(
+                        (name_val_dict[name_rate], name_val_dict[name])
+                    )
             return data
 
     @property
     def tree_path(self):
         return [self.sequence, self.config, self.qp]
+
+    @property
+    def data(self):
+        return [
+            ([self.sequence, self.config, self.qp], {'Temporal' : self.temporal_data}),
+            ([self.sequence, self.config], {'Summary' : self.summary_data}),
+        ]
 
     def __eq__(self, enc_log):
         return self.path == enc_log.path
