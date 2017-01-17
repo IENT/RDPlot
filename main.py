@@ -147,6 +147,9 @@ class Main(QMainWindow, Ui_MainWindow):
         dict_trees = dict_tree_from_enc_logs(enc_logs)
         self.variableTreeModel.clear_and_update_from_dict_trees( dict_trees )
 
+        # Auto expand variable tree
+        self.variableTreeView.expandAll()
+
     # updates the plot if the type is changed
     def update_plot_type(self, checked):
         self.encoderLogTreeModel.is_summary_enabled = checked
