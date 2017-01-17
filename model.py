@@ -774,23 +774,26 @@ class OrderedDictTreeModel(QAbstractItemModel):
     # Non-Qt interface functions
 
     def get_item_from_path(self, *path):
+        # Save the leaf item to a variable in the current closure, so it can
+        # be retrieved from *_walk_path* and then be returned
         # Note, that this needs to be a list, so closure is supported
         leaf_item = []
         def function_leaf_item(key, item_parent, q_index_parent):
             leaf_item.append( item_parent )
 
+        # Raise an error, if an item of the path does not exist
         def function_item_is_not_existend(key, item_parent, q_index_parent):
             raise KeyError("Key {} does not exist on path {}".format(
                 key,
                 path
             ))
 
+        # Walk the path and return the leaf item
         self._walk_path(
             *path,
             function_item_is_not_existend = function_item_is_not_existend,
             function_leaf_item = function_leaf_item
         )
-
         return leaf_item[0]
 
     def create_path(self, *path):
@@ -815,18 +818,21 @@ class OrderedDictTreeModel(QAbstractItemModel):
             item_parent._add( item )
             self.endInsertRows()
 
+        # Save the leaf item to a variable in the current closure, so it can
+        # be retrieved from *_walk_path* and then be returned
         # Note, that this needs to be a list, so closure is supported
         leaf_item = []
         def function_leaf_item(key, item_parent, q_index_parent):
             leaf_item.append(item_parent)
 
-
+        # Use the walk path function and return the leaf item afterwards:
+        #   * Create items if they do not exist on the specified *path*
+        #   * Save the leaf item of the path, so it can be returned
         self._walk_path(
             *path,
             function_item_is_not_existend = create_item,
             function_leaf_item = function_leaf_item
         )
-
         return leaf_item[0]
 
     def _walk_path(self, *path, function_item_is_not_existend=None,
