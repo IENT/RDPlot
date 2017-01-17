@@ -173,19 +173,16 @@
    <widget class="QWidget" name="dockWidgetContents_2">
     <layout class="QVBoxLayout" name="verticalLayout_3">
      <item>
-      <widget class="QComboBox" name="comboBox">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
+      <widget class="QTreeView" name="variableTreeView">
+       <property name="selectionMode">
+        <enum>QAbstractItemView::ExtendedSelection</enum>
        </property>
-       <property name="layoutDirection">
-        <enum>Qt::LeftToRight</enum>
+       <property name="rootIsDecorated">
+        <bool>true</bool>
        </property>
-       <property name="autoFillBackground">
+       <attribute name="headerVisible">
         <bool>false</bool>
-       </property>
+       </attribute>
       </widget>
      </item>
      <item>

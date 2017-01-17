@@ -15,7 +15,8 @@ import collections
 import numpy as np
 
 from model import (EncLog, EncoderLogTreeModel, summary_data_from_enc_logs,
-                   sort_dict_of_lists_by_key, OrderedDictModel)
+                   sort_dict_of_lists_by_key, OrderedDictModel,
+                   VariableTreeModel, dict_tree_from_enc_logs)
 from view import (EncLogTreeView, QRecursiveSelectionModel)
 
 
@@ -51,8 +52,9 @@ class Main(QMainWindow, Ui_MainWindow):
         self._selection_model.selectionChanged.connect(self.change_list)
 
         # set up signals and slots
-        self.selectedEncoderLogListModel.items_changed.connect(self.update_plot)
-        self.selectedEncoderLogListModel.items_changed.connect(self.update_plot)
+        self.selectedEncoderLogListModel.items_changed.connect(
+            self.update_variable_tree
+        )
 
         # Connect signals of menues
         self.actionOpen_File.triggered.connect(
@@ -65,8 +67,24 @@ class Main(QMainWindow, Ui_MainWindow):
             self.encoderLogTreeView.add_folder
         )
 
-        self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
-        self.summaryPlotButton.toggled.connect(self.update_plot_type)
+        self.summaryPlotButton.toggled.connect( self.update_plot_type )
+
+
+        self.variableTreeModel = VariableTreeModel()
+        self.variableTreeView.setModel( self.variableTreeModel )
+
+        # Set recursive selection model for variable view
+        self._variable_tree_selection_model = QRecursiveSelectionModel(
+            self.variableTreeView.model()
+        )
+        self.variableTreeView.setSelectionModel(
+            self._variable_tree_selection_model
+        )
+
+        #
+        self._variable_tree_selection_model.selectionChanged.connect(
+            self.update_plot
+        )
 
         self.encoderLogTreeView.deleteKey.connect(self.remove)
 
@@ -104,58 +122,29 @@ class Main(QMainWindow, Ui_MainWindow):
     def get_selected_enc_logs(self):
         return [self.selectedEncoderLogListModel[key] for key in self.selectedEncoderLogListModel]
 
-    def update_plot(self):
-        # updates the plot with a new figure.
-        # self.selectedEncoderLogListModel.dataChanged.connect(self.update_plot)
+    def get_plot_data_collection_from_selected_variables(self):
+        """Get a :class: `dict` with y-variable as key and values as items
+        from the current selection of the variable tree.
 
-        encLogs = self.get_selected_enc_logs()
+        :rtype: :class: `dict` of :class: `string` and :class: `list`
+        """
 
-        # get currently chosen plot variable
-        former_variable = self.comboBox.currentText()
+        plot_data_collection = []
+        for q_index in self.variableTreeView.selectedIndexes():
+            item = q_index.internalPointer()
+            if len( item.values ) > 0:
+                plot_data_collection.extend( item.values )
 
-        # update available variables available for this sequence
-        # determine the plottype
-        # add found plot variables to combo box
-        all_variable_names = []  # set because we don't want duplicates
-        if self.summaryPlotButton.isChecked():
-                plot_data = summary_data_from_enc_logs(encLogs)
-        else:
-            plot_data = {encLog.sequence + ' ' + encLog.config : encLog.temporal_data for encLog in encLogs}
+        return plot_data_collection
 
-        for seqconf in plot_data:
-            for a in plot_data[seqconf]:
-                for variable_name in plot_data[seqconf][a].keys():
-                    all_variable_names.append(variable_name)
-                break
-            break
+    def update_variable_tree(self):
+        """Collect all encoder logs currently selected, and create variable
+        tree and corresponding data from it.
+        """
 
-        all_variable_names.sort()
-        self.comboBox.currentIndexChanged.disconnect(self.update_plot_variable)
-        self.comboBox.clear()
-        self.comboBox.addItems(all_variable_names)
-        # use same variable as with last plot if possible
-        skip = False
-        if former_variable in all_variable_names:       # todo: set some smarter defaults here? Problem is the recursive calling
-            new_variable = former_variable
-            self.comboBox.setCurrentText(new_variable)
-        else:
-            if 'YUV-PSNR' in all_variable_names:
-                new_variable = 'YUV-PSNR'
-                self.comboBox.setCurrentText(new_variable)
-                pass
-            elif 'Y-PSNR' in all_variable_names:
-                new_variable = 'Y-PSNR'
-                self.comboBox.setCurrentText(new_variable)
-                pass
-            else:
-                self.comboBox.setCurrentIndex(0)
-                skip = True
-        self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
-        # self.selectedEncoderLogListModel.dataChanged.connect(self.update_plot)
-
-        # TODO implement handling of no correctly parsed data
-        if skip == False:
-            self.plotPreview.change_plot(encLogs, new_variable, self.summaryPlotButton.isChecked())
+        enc_logs = self.get_selected_enc_logs()
+        dict_trees = dict_tree_from_enc_logs(enc_logs)
+        self.variableTreeModel.clear_and_update_from_dict_trees( dict_trees )
 
     # updates the plot if the type is changed
     def update_plot_type(self, checked):
@@ -166,18 +155,13 @@ class Main(QMainWindow, Ui_MainWindow):
             self.update_plot()
 
     # updates the plot if the plot variable is changed
-    def update_plot_variable(self, index):
-        self.comboBox.currentIndexChanged.disconnect(self.update_plot_variable)
-        index_name = self.comboBox.itemText(index)
-        if not index_name:
-            return
-        if len( self.encoderLogTreeView.selectedIndexes() ) != 0:
-            self.plotPreview.change_plot(
-                self.get_selected_enc_logs(),
-                index_name,
-                self.summaryPlotButton.isChecked(),
-            )
-        self.comboBox.currentIndexChanged.connect(self.update_plot_variable)
+    def update_plot(self):
+        plot_data_collection = self.get_plot_data_collection_from_selected_variables()
+
+        self.plotPreview.change_plot(
+            plot_data_collection,
+            self.summaryPlotButton.isChecked()
+        )
 
 class NestedDict(dict):
     """
@@ -199,8 +183,16 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.addmpl(fig)
 
     # refreshes the figure according to new changes done
-    def change_plot(self, encLogs, variable, plotTypeSummary):
-        if not variable:
+    def change_plot(self, plot_data_collection, is_summary_enabled):
+        """Plot all data from the *plot_data_collection*
+
+        :param plot_data_collection: A iterable collection of :clas: `PlotData`
+            objects, which should be plotted.
+        :param is_summary_enabled: :class: `Bool` if the data is summary  or
+            temporal data
+        """
+
+        if len( plot_data_collection ) == 0:
             return
 
         # put a subplot into the figure and set the margins a little bit tighter than the defaults
@@ -208,32 +200,31 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         fig = Figure()
         axis = fig.add_subplot(111)
         fig.subplots_adjust(left=0.05, right=0.95,
-                                    bottom=0.1, top=0.95,
-                                    hspace=0.2, wspace=0.2)
+                            bottom=0.1, top=0.95,
+                            hspace=0.2, wspace=0.2)
+
+
+
+        for plot_data in plot_data_collection:
+            # Convert list of pairs of strings to two sorted lists of floats
+            values = ( (float(x), float(y)) for (x, y) in plot_data.values)
+            sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
+            [xs, ys] = list( zip(*sorted_value_pairs) )
+
+            # Create legend from variable path and encoder log identifiers
+            legend = " ".join(plot_data.identifiers + plot_data.path)
+
+            axis.plot( xs, ys, label=legend )
 
         # distinguish between summary plot and temporal plot
-        if plotTypeSummary:
-            summary_data = summary_data_from_enc_logs(encLogs)
-            for seqconf in summary_data:
-                summary = summary_data[seqconf]['SUMMARY']
-                summary = sort_dict_of_lists_by_key(summary, 'Bitrate')
-                rate          = summary['Bitrate']
-                plot_variable = summary[variable]
-
-                axis.plot(rate, plot_variable,'x-')
-                axis.set_title('Summary Data')
-                axis.set_xlabel('Bitrate [kbps]') #TODO is that k bytes or bits? need to check
-                axis.set_ylabel(variable + ' [dB]')
-        else:
-            for encLog in encLogs:
-                #TODO frames are not consecutive eg. [8, 4, 2, 6, 10, 4, ...] in HEVC
-                #TODO multiple subplots for different QPS
-                frames = encLog.temporal_data[encLog.qp]['Frames']
-                values = encLog.temporal_data[encLog.qp][variable]
-                axis.plot(values)
-                axis.set_title('Temporal Data')
-                axis.set_xlabel('POC')
-                axis.set_ylabel(variable + ' [dB]')
+        # if plotTypeSummary:
+        #     axis.set_title('Summary Data')
+        #     axis.set_xlabel('Bitrate [kbps]') #TODO is that k bytes or bits? need to check
+        #     axis.set_ylabel( + ' [dB]')
+        # else:
+        #     axis.set_title('Temporal Data')
+        #     axis.set_xlabel('POC')
+        #     axis.set_ylabel(variable + ' [dB]')
 
         self.updatempl(fig)
 

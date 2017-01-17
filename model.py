@@ -973,3 +973,41 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
             self.remove_item(item)
 
         self.items_changed.emit()
+
+
+class VariableTreeModel(OrderedDictTreeModel):
+
+    items_changed = pyqtSignal()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, default_item_values=[], **kwargs)
+
+    def update_from_dict_trees(self, dict_tree):
+        """ Update the tree from *dict_trees* . Keys create tree items, ad the
+        leafs of the dictionary tree are appended as values to the corresponding
+        tree items.
+
+        :param dict_tree: Iterable collection of nested :class: `dict`s
+        """
+
+        pairs = deque( ([key], item) for (key, item) in dict_tree.items() )
+        while len( pairs ) != 0:
+            (path, item) = pairs.pop()
+
+            if isinstance(item, dict):
+                pairs.extend(
+                    (path + [key], item) for key, item in item.items()
+                )
+                continue
+
+            tree_item = self.create_path( *path )
+            tree_item.values.extend( item )
+
+        self.items_changed.emit()
+
+    def clear_and_update_from_dict_trees(self, dict_trees):
+        # TODO This needs to be called to times, what obviously should not
+        # be the case
+        self.clear()
+        self.clear()
+        self.update_from_dict_trees( dict_trees )
