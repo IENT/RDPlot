@@ -207,6 +207,10 @@ class EncLog():
                     data[summary_type][name].append(name_val_dict[name])
             return data
 
+    @property
+    def tree_path(self):
+        return [self.sequence, self.config, self.qp]
+
     def __eq__(self, enc_log):
         return self.path == enc_log.path
 
