@@ -66,9 +66,13 @@ class Main(QMainWindow, Ui_MainWindow):
         self.actionOpen_Directory.triggered.connect(
             self.encoderLogTreeView.add_folder
         )
+        self.actionHide_PlotSettings.triggered.connect(
+            self.setPlotSettingsVisibility
+        )
 
         self.variableTreeModel = VariableTreeModel()
         self.variableTreeView.setModel( self.variableTreeModel )
+        self.plotsettings.visibilityChanged.connect(self.plotSettingsVisibilityChanged)
 
         # Set recursive selection model for variable view
         self._variable_tree_selection_model = QRecursiveSelectionModel(
@@ -77,6 +81,22 @@ class Main(QMainWindow, Ui_MainWindow):
         self.variableTreeView.setSelectionModel(
             self._variable_tree_selection_model
         )
+
+    # changes the visibility of plotSettings Widget
+    def setPlotSettingsVisibility(self):
+        self.plotsettings.visibilityChanged.disconnect(self.plotSettingsVisibilityChanged)
+        if self.plotsettings.isHidden():
+            self.plotsettings.setVisible(True)
+        else:
+            self.plotsettings.setHidden(True)
+        self.plotsettings.visibilityChanged.connect(self.plotSettingsVisibilityChanged)
+
+    # updates the QAction if Visibility is changed
+    def plotSettingsVisibilityChanged(self):
+        if self.plotsettings.isHidden():
+            self.actionHide_PlotSettings.setChecked(True)
+        else:
+            self.actionHide_PlotSettings.setChecked(False)
 
         #
         self._variable_tree_selection_model.selectionChanged.connect(

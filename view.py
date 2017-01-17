@@ -67,21 +67,33 @@ class EncLogTreeView(QtWidgets.QTreeView):
             print("successfully added sequence")
             return
 
+    # adds a logfile to the treeview
     def add_encoder_log(self):
-        directory, file_name = self._get_open_file_names()
+        try:
+            directory, file_name = self._get_open_file_names()
+        except TypeError:
+            return
         path = join(directory, file_name)
 
         self.model().add( model.EncLog( path ) )
 
+    # adds a all logfiles of a sequence from a directory to the treeview
     def add_sequence(self):
-        directory, file_name = self._get_open_file_names()
+        try:
+            directory, file_name = self._get_open_file_names()
+        except TypeError:
+            return
         path = join(directory, file_name)
 
         encLogs = list( model.EncLog.parse_directory_for_sequence( path ) )
         self.model().update(encLogs)
 
+    # adds all logfiles and sequences from a directory to the treeview
     def add_folder(self):
-        path = self._get_folder()
+        try:
+            path = self._get_folder()
+        except TypeError:
+            return
 
         #TODO this uses the parse_directory method, thus, does not automatically
         # parse 'log'.subfolder. Should this be the case?
