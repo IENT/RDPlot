@@ -1,6 +1,7 @@
 from PyQt5.uic import loadUiType
 from PyQt5 import QtGui
 from PyQt5 import QtWidgets
+from PyQt5.QtCore import QItemSelectionModel
 
 from matplotlib.figure import Figure
 # from matplotlib.backends.backend_qt4agg import (
@@ -140,12 +141,30 @@ class Main(QMainWindow, Ui_MainWindow):
         tree and corresponding data from it.
         """
 
+        selected_path_collection = []
+        for q_index in self.variableTreeView.selectedIndexes():
+            selected_path_collection.append( q_index.internalPointer().path )
+
         enc_logs = self.get_selected_enc_logs()
         dict_trees = dict_tree_from_enc_logs(enc_logs)
         self.variableTreeModel.clear_and_update_from_dict_trees( dict_trees )
 
         # Auto expand variable tree
         self.variableTreeView.expandAll()
+
+        for path in selected_path_collection:
+            # TODO Check if this path exists
+            item = self.variableTreeModel.create_path( *( v.identifier for v in path[1:] ) )
+            q_index_parent = self.variableTreeModel._get_index_parent_from_item( item )
+            if q_index_parent.isValid():
+                row = q_index_parent.internalPointer().children.index( item )
+            else:
+                row = self.variableTreeModel.root.children.index( item )
+
+            self.variableTreeView.selectionModel().select(
+                self.variableTreeModel.index(row, 0, q_index_parent),
+                QItemSelectionModel.Select,
+            )
 
     # updates the plot if the plot variable is changed
     def update_plot(self):
