@@ -8,6 +8,18 @@ from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel, pyqtSignal
 from PyQt5.Qt import Qt, QVariant, QModelIndex
 
 
+class PlotData():
+    """Class encapsulating data to be plotted
+
+    :param legend: Legend of the line, plotted from *values*
+    :param values: Iterable collection of values, which should be plotted
+    """
+
+    def __init__(self, identifiers, values, path):
+        self.identifiers    = identifiers
+        self.values         = values
+        self.path           = path
+
 def summary_data_from_enc_logs(encLogs):
     """Create a dictionary containing the summary data by combining
        different encLogs."""
