@@ -421,7 +421,7 @@ class OrderedDictTreeItem():
         if children is not None:
             self.extend(children)
 
-        self.values     = set( values if values is not None else [] )
+        self.values = set() if values is None else values
 
 
     # Properties for private attributes
@@ -538,10 +538,15 @@ class OrderedDictTreeItem():
 
 
 class OrderedDictTreeModel(QAbstractItemModel):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, default_item_values=None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._root = OrderedDictTreeItem()
+        # Default item values
+        if default_item_values is None:
+            default_item_values = set()
+        self._default_item_values = default_item_values
+
+        self._root = OrderedDictTreeItem(values=self._default_item_values)
 
 
     # Properties
@@ -611,7 +616,11 @@ class OrderedDictTreeModel(QAbstractItemModel):
                 row = len(item_parent)
                 # Call Qt update functions
                 self.beginInsertRows(q_index_parent, row, row)
-                item_parent._add( OrderedDictTreeItem(identifier=key) )
+                item = OrderedDictTreeItem(
+                    identifier  = key,
+                    values      = self._default_item_values.copy(),
+                )
+                item_parent._add( item )
                 self.endInsertRows()
 
             # Set the current item as *item_parent* for next iteration, and
