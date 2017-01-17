@@ -20,30 +20,6 @@ class PlotData():
         self.values         = values
         self.path           = path
 
-def dict_tree_from_enc_logs(encoder_log_collection):
-    dict_tree = {}
-    for encoder_log in encoder_log_collection:
-        for (identifiers, encoder_log_dict_tree) in encoder_log.data:
-            # Note, that tuple in queue are pairs of path ie. a list of
-            # strings/keys of the encoder_log_dict_tree, and the tree itself.
-            # deque has to be initialized with iterable, thus, pair is wrapped
-            # with list.
-            tree_queue = deque( [ ([], encoder_log_dict_tree) ] )
-            while len( tree_queue ) > 0:
-                (keys, parent) = tree_queue.pop()
-
-                if isinstance(parent, dict):
-                    for key, item in parent.items():
-                        tree_queue.appendleft( (keys + [key], item) )
-                    continue
-
-                dict_tree = append_value_to_dict_tree_at_path(
-                    dict_tree,
-                    keys,
-                    PlotData(identifiers, parent, keys),
-                )
-
-    return dict_tree
 
 def append_value_to_dict_tree_at_path(dict_tree, path, plot_data):
     item = dict_tree
@@ -120,9 +96,50 @@ class EncLog():
         self.summary_data  = self._parse_summary_data()
         self.temporal_data = self._parse_temporal_data()
 
+
+    # Properties
+
     @property
     def tree_path(self):
         return [self.sequence, self.config, self.qp]
+
+    @property
+    def tree_path(self):
+        return [self.sequence, self.config, self.qp]
+
+    @property
+    def data(self):
+        return [
+            ([self.sequence, self.config, self.qp], {'Temporal' : self.temporal_data}),
+            ([self.sequence, self.config], {'Summary' : self.summary_data}),
+        ]
+
+    @property
+
+
+    # Magic methods
+
+    def legend(self):
+        return " ".join( self.sequence, self.config, self.qp )
+
+    def __eq__(self, enc_log):
+        return self.path == enc_log.path
+
+    # TODO remove if usefull 'set' is implemented
+    def __hash__(self):
+        return hash(self.path)
+
+    def __str__(self):
+        return str((
+            "Encoder Log of sequence '{}' from config '{}' with qp '{}'"
+            " at path {}"
+       ).format(self.sequence, self.config, self.qp, self.path))
+
+    def __repr__(self):
+        return str(self)
+
+
+    # Conctructors
 
     @classmethod
     def parse_url(cls, url):
@@ -177,6 +194,9 @@ class EncLog():
         paths = glob(directory + sep + sequence + '*_enc.log')
 
         return (EncLog(p) for p in paths)
+
+
+    # Parsing
 
     @staticmethod
     def _parse_path(path):
@@ -280,36 +300,91 @@ class EncLog():
                     )
             return data
 
-    @property
-    def tree_path(self):
-        return [self.sequence, self.config, self.qp]
 
-    @property
-    def data(self):
-        return [
-            ([self.sequence, self.config, self.qp], {'Temporal' : self.temporal_data}),
-            ([self.sequence, self.config], {'Summary' : self.summary_data}),
-        ]
+    # Data processing
 
-    @property
-    def legend(self):
-        return " ".join( self.sequence, self.config, self.qp )
+    @staticmethod
+    def dict_tree_from_enc_logs(encoder_log_collection):
+        """Combine the *data* of different encoder logs to a tree of
+        :class: `dicts`, which is then used to display the data.
 
-    def __eq__(self, enc_log):
-        return self.path == enc_log.path
+        An *encoder_log* provides a collection of 2-tuples ie. pairs as data.
+        The first element are the identifiers associated with the data, eg.
+        *sequence* and  *config* for summary data. The second element is the
+        data itself, in the form of a dictionary tree. The  dictionary tree
+        has the variables which are provided by the *encoder_log* as keys, and
+        the actual data as leafs. The data  is in the form of lists of 2-tuples
+        containing, an x and the  corresponding y value.
 
-    # TODO remove if usefull 'set' is implemented
-    def __hash__(self):
-        return hash(self.path)
+        Now, the dictionary trees of different encoder logs have to be combined
+        to one dictionary tree. The resulting *dict_tree* is the union of the
+        trees of the encoder logs with :class: `list`s of :class: `PlotData`
+        objects as leafs.
 
-    def __str__(self):
-        return str((
-            "Encoder Log of sequence '{}' from config '{}' with qp '{}'"
-            " at path {}"
-       ).format(self.sequence, self.config, self.qp, self.path))
+        The leafs are created as follows: An :class: `PlotData` object is
+        created from the *identifiers* associated with the :class: `EncLog`
+        and the list of value pairs found at the current position. The current
+        path in the dictionary tree is also added for convinience. Now, if there
+        are already :class: `PlotData` objects present at the current leaf of
+        the *dict_tree*, then:
+            * if the identifiers of the current :class: `PlotData` object equal
+                the one of an already present one, the values are just added
+                to the values of the :class: `PlotData` object already present.
+            * if no :class: `PlotData` object is present with equal identifiers
+                the new :class: `PlotData` object is added to the list
 
-    def __repr__(self):
-        return str(self)
+        Why is this necessary? It might be, that different encoder logs provide
+        data, that has to joined before it is displayed, eg. the summary
+        data for one particular variable is usually provided by several
+        encoder_logs. In this case, the correspondence of the data is coded
+        in the identifier of the data ie. the identfiier would be similar across
+        different encoder logs, and thus, the data can be joined by this
+        function. On the other hand, if several encoder logs just provide data
+        for the same variable, then the data should be rendered seperately, ie.
+        different :class: `PlotData` objects are added to the list for each
+        :class: `EncLog` object.
+
+        :param encoder_log_collection: Iterable of :class: `EncLog`s
+
+        :rtype: tree of :class: `dict`s with :class: `list`s of
+            :class: `PlotData` objects as leafs
+        """
+
+        dict_tree = {}
+
+        for encoder_log in encoder_log_collection:
+            for (identifiers, encoder_log_dict_tree) in encoder_log.data:
+
+                # Process all items of the *encoder_log*'s dictionary tree ie.
+                # create corresponding keys in the output *dict_tree* and
+                # copy the data at the corresponding position in PlotData
+                # objects.
+
+                # Note, that tuple in queue are pairs of path ie. a list of
+                # strings/keys of the encoder_log_dict_tree, and the tree itself.
+                # deque has to be initialized with iterable, thus, pair is wrapped
+                # with list.
+                tree_queue = deque( [ ([], encoder_log_dict_tree) ] )
+
+                while len( tree_queue ) > 0:
+                    (keys, parent) = tree_queue.pop()
+
+                    # Dictionary items are added to the queue to be processed
+                    # themselves
+                    if isinstance(parent, dict):
+                        for key, item in parent.items():
+                            tree_queue.appendleft( (keys + [key], item) )
+                        continue
+
+                    # Non dictionary items are processed ie. their data is
+                    # added as PlotData object to the output *dict_tree*
+                    dict_tree = append_value_to_dict_tree_at_path(
+                        dict_tree,
+                        keys,
+                        PlotData(identifiers, parent, keys),
+                    )
+
+        return dict_tree
 
 #-------------------------------------------------------------------------------
 
