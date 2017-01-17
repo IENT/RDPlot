@@ -476,6 +476,22 @@ class OrderedDictTreeItem():
             return self.values
         return {identifier : self[identifier].dict_tree for identifier in self}
 
+    @property
+    def path(self):
+        """Walk up the path up until the root item and return list of all passed
+        items.
+
+        :rtype: :class: `list` of :class: `OrderedDictTreeItem`
+        """
+
+        path = deque( [self] )
+        item = self
+        while item.parent is not None:
+            path.appendleft(item.parent)
+            item = item.parent
+
+        return list( path )
+
 
     # Functions to add/remove children of the item
 
