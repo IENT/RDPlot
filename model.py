@@ -424,19 +424,27 @@ class OrderedDictModel(QAbstractListModel):
 
     items_changed = pyqtSignal()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, compare_keys_function=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self._dict = OrderedDict()
+
+        # Function to compare keys. This function defines the order of the keys
+        if compare_keys_function is None:
+            def compare_keys_function(first, second):
+                return first > second
+        self._compare_keys_function = compare_keys_function
+
+        self._keys  = []
+        self._items = []
 
 
     # Qt interface methods
 
     def rowCount(self, parent):
-        return len(self._dict)
+        return len( self )
 
     def data(self, qIndex, role):
         if qIndex.isValid() and role == Qt.DisplayRole:
-            for index, (key, item) in enumerate(self._dict.items()):
+            for index, (key, item) in enumerate( self.items() ):
                 if index == qIndex.row():
                     return QVariant( key )
         return QVariant()
@@ -447,7 +455,7 @@ class OrderedDictModel(QAbstractListModel):
     # custom methods, so that *items_changed* is emitted correctly.
 
     def __getitem__(self, key):
-        return self._dict[key]
+        return self._items[ self._keys.index( key ) ]
 
     def __setitem__(self, key, item):
         self.update( (key, item) )
@@ -455,26 +463,28 @@ class OrderedDictModel(QAbstractListModel):
     def pop(self, key):
         item = self[key]
         self.remove_keys( [key] )
-        return items
+        return item
 
     def __iter__(self):
-        return iter( self._dict )
+        return iter( self._keys )
 
     def __contains__(self, key):
-        return key in self._dict
+        return key in self._keys
 
     def __len__(self):
-        return len( self._dict )
+        return len( self._keys )
 
     def __str__(self):
-        return str( list( self._dict ) )
+        return str( list( self._keys ) )
 
     def __repr__(self):
         return str( self )
 
     def values(self):
-        return self._dict.values()
+        return self._keys.values()
 
+    def items(self):
+        return zip( self._keys, self._items )
 
     # Implement specific methods
     # Note, that these methods allow update of whole ranges of data and emit
@@ -487,16 +497,24 @@ class OrderedDictModel(QAbstractListModel):
         """
 
         for key, item in tuples:
-            # Iterate to find index corresponding to key in ordered dict
-            length = len(self._dict)
-            for index, oldkey in enumerate(self._dict):
-                if oldkey == key:
-                    length = index
+            # If the key is already present, just update its item and continue
+            if key in self:
+                self._items[ self._keys.index( key ) ] = item
+                continue
+
+            # Else search the insertion position by comparision
+            index_insert = len( self )
+            for index, key_other in enumerate(self):
+                # If the key is bigger, then insert key/item here
+                if self._compare_keys_function(key_other, key):
+                    index_insert = index
+                    break
 
             # Call Qt interface functions and add/replace item corresponding
             # to key
-            self.beginInsertRows(QModelIndex(), length, length + 1)
-            self._dict[key] = item
+            self.beginInsertRows(QModelIndex(), index_insert, index_insert + 1)
+            self._keys.insert( index_insert, key )
+            self._items.insert( index_insert, item )
             self.endInsertRows()
 
         self.items_changed.emit()
@@ -511,7 +529,8 @@ class OrderedDictModel(QAbstractListModel):
         # Call Qt interface functions and remove all keys and corresponding
         # items from the dictionary
         self.beginRemoveRows(QModelIndex(), 0, len( self ) - 1)
-        self._dict.clear()
+        self._keys.clear()
+        self._items.clear()
         self.endRemoveRows()
 
         # Update it with (key, item) pairs specified by *tuples*. The update
@@ -528,13 +547,14 @@ class OrderedDictModel(QAbstractListModel):
 
         # Iterate to find index corresponding to key in ordered dict
         for key in keys:
-            for index, key_other in enumerate(self._dict):
+            for index, key_other in enumerate(self):
                 if key_other == key:
                     break
 
             # Call Qt interface functions and remove key and corresponding item
             self.beginRemoveRows(QModelIndex(), index, index + 1)
-            self._dict.pop(key)
+            self._keys.pop( index )
+            self._items.pop( index )
             self.endRemoveRows()
 
         self.items_changed.emit()
@@ -573,10 +593,12 @@ class OrderedDictTreeItem():
     :param parent: Parent item
     :param children: Iterable of childrens of the item
     :param values: Values contained by the item
+    :param identifier_compare_function: Function to compare two identifiers,
+        defines the order of children.
     """
 
     def __init__(self, identifier=None,  parent=None, children=None,
-                 values=None):
+                 values=None, compare_identifiers_function=None):
         self._identifier = identifier
         self._parent     = parent
 
@@ -586,6 +608,10 @@ class OrderedDictTreeItem():
 
         self.values = set() if values is None else values
 
+        if compare_identifiers_function is None:
+            def compare_identifiers_function(first, second):
+                return first > second
+        self._compare_identifiers_function = compare_identifiers_function
 
     # Properties for private attributes
 
@@ -601,7 +627,6 @@ class OrderedDictTreeItem():
     def children(self):
         # Copy the list of children
         return list( self._children )
-
 
     # Special functions/properties
 
@@ -661,13 +686,20 @@ class OrderedDictTreeItem():
     def _add(self, child):
         child._parent = self
 
-        # If a child with the identifier is already present it is replaced, else
-        # the child is inserted at the end
-        if child in self:
-            index = self._children.index(child.identifier)
-            self._children[index] = child
-        else:
-            self._children.append( child )
+        # Find the insertion index of the child, and do insertion.
+        for index, identifier in enumerate(self):
+            # If child is already present overwrite it
+            if identifier == child.identifier:
+                self._children[ index ] = child
+                return
+            # If the identifier is bigger than the current one, and thus,
+            # all identifiers before, do insertion here
+            if self._compare_identifiers_function(identifier, child.identifier):
+                self._children.insert( index, child )
+                return
+
+        # If no position has been found, just append the element
+        self._children.append( child )
 
     def _update(self, children):
         for child in children:
@@ -716,6 +748,9 @@ class OrderedDictTreeItem():
         return str( self.dict_tree )
 
 
+def compare_strings_case_insensitive(first, second):
+    return first.casefold() > second.casefold()
+
 class OrderedDictTreeModel(QAbstractItemModel):
     def __init__(self, *args, default_item_values=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -725,7 +760,10 @@ class OrderedDictTreeModel(QAbstractItemModel):
             default_item_values = set()
         self._default_item_values = default_item_values
 
-        self._root = OrderedDictTreeItem(values=self._default_item_values)
+        self._root = OrderedDictTreeItem(
+            values                          = self._default_item_values,
+            compare_identifiers_function    = compare_strings_case_insensitive
+        )
 
 
     # Properties
