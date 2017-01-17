@@ -108,9 +108,10 @@ class Main(QMainWindow, Ui_MainWindow):
         # Find all all values that are contained by selected tree items
         tuples = []
         for q_index in q_selected.indexes() + q_reselect_indexes:
-            # Add values, ie. data stored at the item, to the list model
-            values = q_index.internalPointer().values
-            tuples.extend( (str( v ), v) for v in values )
+            # Add values, ie. encoder logs stored at the item, to the list
+            # model.
+            encoder_logs = q_index.internalPointer().values
+            tuples.extend( (e.path, e) for e in encoder_logs )
 
         # Overwrite all elements in dictionary by selected values
         # Note, that ovrewriting only issues one `updated` signal, and thus,
