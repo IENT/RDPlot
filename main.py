@@ -38,7 +38,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.plotAreaVerticalLayout.addWidget(self.plotPreview)
 
         # Create tree model to store encoder logs and connect it to view
-        self.encoderLogTreeModel = EncoderLogTreeModel(is_summary_enabled=True)
+        self.encoderLogTreeModel = EncoderLogTreeModel()
         self.encoderLogTreeView.setModel(self.encoderLogTreeModel)
 
         # Set custom selection model, so that sub items are automatically
@@ -66,9 +66,6 @@ class Main(QMainWindow, Ui_MainWindow):
         self.actionOpen_Directory.triggered.connect(
             self.encoderLogTreeView.add_folder
         )
-
-        self.summaryPlotButton.toggled.connect( self.update_plot_type )
-
 
         self.variableTreeModel = VariableTreeModel()
         self.variableTreeView.setModel( self.variableTreeModel )
@@ -150,22 +147,11 @@ class Main(QMainWindow, Ui_MainWindow):
         # Auto expand variable tree
         self.variableTreeView.expandAll()
 
-    # updates the plot if the type is changed
-    def update_plot_type(self, checked):
-        self.encoderLogTreeModel.is_summary_enabled = checked
-
-        # TODO enable if selection is implemented
-        if len(self.selectedEncoderLogListModel) != 0:
-            self.update_plot()
-
     # updates the plot if the plot variable is changed
     def update_plot(self):
         plot_data_collection = self.get_plot_data_collection_from_selected_variables()
 
-        self.plotPreview.change_plot(
-            plot_data_collection,
-            self.summaryPlotButton.isChecked()
-        )
+        self.plotPreview.change_plot( plot_data_collection )
 
 class NestedDict(dict):
     """
@@ -187,12 +173,11 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.addmpl(fig)
 
     # refreshes the figure according to new changes done
-    def change_plot(self, plot_data_collection, is_summary_enabled):
+    def change_plot(self, plot_data_collection):
         """Plot all data from the *plot_data_collection*
 
         :param plot_data_collection: A iterable collection of :clas: `PlotData`
             objects, which should be plotted.
-        :param is_summary_enabled: :class: `Bool` if the data is summary  or
             temporal data
         """
 

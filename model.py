@@ -120,6 +120,10 @@ class EncLog():
         self.summary_data  = self._parse_summary_data()
         self.temporal_data = self._parse_temporal_data()
 
+    @property
+    def tree_path(self):
+        return [self.sequence, self.config, self.qp]
+
     @classmethod
     def parse_url(cls, url):
         """Parse a url and return either all encoder logs in the folder, all
@@ -846,47 +850,14 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
     updating the GUI, as *item_changed* is emitted, after all model alterations
     have been processed.
 
-    :param is_summary_enabled: :class: `Bool` Define if the tree should render
-        for summary or temporal data.
     :param *args:    Pass to superclass
     :param **kwargs: Pass to superclass
     """
 
     items_changed = pyqtSignal()
 
-    def __init__(self, *args, is_summary_enabled=True, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self._is_summary_enabled = True
-        self.is_summary_enabled = is_summary_enabled
-
-    # Properties
-
-    @property
-    def is_summary_enabled(self):
-        return self._is_summary_enabled
-
-    @is_summary_enabled.setter
-    def is_summary_enabled(self, enabled):
-        # TODO Write doc
-        if enabled != self._is_summary_enabled:
-            self._is_summary_enabled = enabled
-
-            if self._is_summary_enabled:
-                for leaf in self.root.leafs:
-                    leaf.parent.values.update( leaf.values )
-                    self.remove_item(leaf)
-            else:
-                for leaf in self.root.leafs:
-                    for value in leaf.values:
-                        item = self.create_path(
-                            value.sequence, value.config, value.qp
-                        )
-                        item.values.add(value)
-                    leaf.values.clear()
-
-            self.items_changed.emit()
-
 
     # Implement *add*, *update* and remove to add/remove encoder logs to the
     # tree.
@@ -910,18 +881,9 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
         """
 
         for enc_log in enc_logs:
+
             # Get *item* of the tree corresponding to *enc_log*
-            if self.is_summary_enabled:
-                item = self.create_path(
-                    enc_log.sequence,
-                    enc_log.config
-                )
-            else:
-                item = self.create_path(
-                    enc_log.sequence,
-                    enc_log.config,
-                    enc_log.qp
-                )
+            item = self.create_path( *( enc_log.tree_path ) )
 
             # TODO Tree access is not unique in
             # filesystem. This prevents an encoder log overwriting another one
@@ -931,19 +893,15 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
                 # Condition of ambiguous occurence is that identifiers are
                 # similar, but the paths are different
                 condition = (
-                        value.sequence  == enc_log.sequence
-                    and value.config    == enc_log.config
-                    and value.qp        == enc_log.qp
+                        value.tree_path == enc_log.tree_path
                     and value.path      != enc_log.path
                 )
                 if condition:
                     raise AmbiguousEncoderLogs((
-                        "Ambigious encoder logs: Encoder log at {} and {} have"
-                        " the same sequence '{}', dir '{}' and qp '{}', but"
-                        " different absolute paths."
-                    ).format(value.path, enc_log.path, enc_log.sequence,
-                             enc_log.config, enc_log.qp))
-
+                        "Ambigious encoder logs: Encoder log {} and {}"
+                        " have differen absolute paths but the same"
+                        " position at the tree {}"
+                    ).format(encoder_log, value,encoder_log.tree_path))
             # Add *enc_log* to the set of values of the tree item *item*
             item.values.add( enc_log )
 
@@ -958,18 +916,7 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
 
         for enc_log in enc_logs:
             # Get *item* of the tree corresponding to *enc_log*
-            if self.is_summary_enabled == True:
-                item = self.create_path(
-                    enc_log.sequence,
-                    enc_log.config
-                )
-            else:
-                item = self.create_path(
-                    enc_log.sequence,
-                    enc_log.config,
-                    enc_log.qp
-                )
-
+            item = self.create_path( *( enc_log.tree_path ) )
             self.remove_item(item)
 
         self.items_changed.emit()
