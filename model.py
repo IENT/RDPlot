@@ -722,7 +722,7 @@ class OrderedDictTreeModel(QAbstractItemModel):
         if len( item ) > 0:
             q_index = self.index(row, 0, q_index_parent)
             for child in item:
-                self.remove_item(child, q_index)
+                self.remove_item(item[child], q_index)
 
         parent = item.parent
 
