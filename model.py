@@ -1058,14 +1058,15 @@ class VariableTreeModel(OrderedDictTreeModel):
     items_changed = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
+        # Use lists as default item value
         super().__init__(*args, default_item_values=[], **kwargs)
 
-    def update_from_dict_trees(self, dict_tree):
-        """ Update the tree from *dict_trees* . Keys create tree items, ad the
+    def update_from_dict_tree(self, dict_tree):
+        """ Update the tree from *dict_tree* . Keys create tree items, ad the
         leafs of the dictionary tree are appended as values to the corresponding
         tree items.
 
-        :param dict_tree: Iterable collection of nested :class: `dict`s
+        :param dict_tree: tree of nested :class: `dict`s
         """
 
         pairs = deque( ([key], item) for (key, item) in dict_tree.items() )
@@ -1083,9 +1084,9 @@ class VariableTreeModel(OrderedDictTreeModel):
 
         self.items_changed.emit()
 
-    def clear_and_update_from_dict_trees(self, dict_trees):
+    def clear_and_update_from_dict_tree(self, dict_tree):
         # TODO This needs to be called to times, what obviously should not
         # be the case
         self.clear()
         self.clear()
-        self.update_from_dict_trees( dict_trees )
+        self.update_from_dict_tree( dict_tree )
