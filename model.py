@@ -885,13 +885,9 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
             # Get *item* of the tree corresponding to *enc_log*
             item = self.create_path( *( enc_log.tree_path ) )
 
-            # TODO Tree access is not unique in
-            # filesystem. This prevents an encoder log overwriting another one
-            # with same sequence, config and qp but on a different location. The
-            # question is, if this should be the case?
+            # This prevents an encoder log overwriting another one
+            # with same *tree_path* but different absolute path
             for value in  item.values:
-                # Condition of ambiguous occurence is that identifiers are
-                # similar, but the paths are different
                 condition = (
                         value.tree_path == enc_log.tree_path
                     and value.path      != enc_log.path
@@ -923,6 +919,7 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
 
 
 class VariableTreeModel(OrderedDictTreeModel):
+
 
     items_changed = pyqtSignal()
 
