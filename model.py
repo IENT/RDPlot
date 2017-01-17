@@ -13,6 +13,8 @@ class PlotData():
 
     :param legend: Legend of the line, plotted from *values*
     :param values: Iterable collection of values, which should be plotted
+    :param path: Path in the variable tree. Not needed, but there for
+        convenience.
     """
 
     def __init__(self, identifiers, values, path):
@@ -22,61 +24,50 @@ class PlotData():
 
 
 def append_value_to_dict_tree_at_path(dict_tree, path, plot_data):
+    """Add a *plot_data* object to a *dict_tree* at a certain *path*.
+
+    :param dict_tree: Tree of nested :class: `dict`s
+    :param path: :class: `list` of keys describing a path in the *dict_tree*
+    :param plot_data: :class: `PlotData` object to be added to the *dict_tree*
+
+    :rtype: Altered tree of nested :class: `dict`s
+    """
+
+    # Walk the *path* down at the *dict_tree* and create not existing keys
+    # on the way.
+    # Note, that the last key of the path is excluded, as the data has
+    # to be written to this key.
     item = dict_tree
     for key in path[:-1]:
         # Create nested dictionaries if they do not exist already
         if key not in item:
             item[key] = {}
+
         item = item[key]
 
+    # If the last element of the path does not exist, create a list on the
+    # corresponding position in the *dict_tree* with the *plot_data* object
+    # as only member so far. Return.
     if path[-1] not in item:
-        item[ path[-1] ] = [plot_data]
+        item[ path[-1] ] = [ plot_data ]
         return dict_tree
 
+    # If the last element does exist, retrieve the list stored at its position
     plot_data_list = item[ path[-1] ]
 
-    for plot_data_old in plot_data_list:
-        if plot_data_old.identifiers == plot_data.identifiers:
-            plot_data_old.values.extend( plot_data.values )
-
-
-
-
+    # Iterate over the existing PlotData objects and check, if one has equal
+    # identifiers to the current one. If this is the case, append the values
+    # stored in the current *plot_data* object to one already present. Return.
+    for plot_data_other in plot_data_list:
+        if plot_data_other.identifiers == plot_data.identifiers:
+            plot_data_other.values.extend( plot_data.values )
             return dict_tree
 
+    # If the last element exists, but no PlotData object with the same
+    # identifiers is present, append the PlotData object *plot_data* to the
+    # list.
     plot_data_list.append( plot_data )
     return dict_tree
-
-
-def summary_data_from_enc_logs(encLogs):
-    """Create a dictionary containing the summary data by combining
-       different encLogs."""
-    #{'Summary' : {'Y-PSNR' : [...], 'PSNR' : ...}, 'I' : ...}
-    output = {}
-    for encLog in encLogs:
-        seqconf = encLog.sequence + ' ' + encLog.config
-        if seqconf not in output:
-            output[seqconf] = {}
-        for (name1, dict1) in encLog.summary_data.items():
-            if name1 not in output[seqconf]:
-                output[seqconf][name1] = {}
-            for (name2, list2) in dict1.items():
-                if name2 not in output[seqconf][name1]:
-                    output[seqconf][name1][name2] = []
-                output[seqconf][name1][name2].extend(list2)
-    return output
-
-def sort_dict_of_lists_by_key(dictionary, sorting_key):
-    """Take a dictionary with equal length lists as items and sort all list
-       according to one list identified by sorting_key"""
-    sorting_list = dictionary[sorting_key]
-    sorted_dictionary = {sorting_key : sorted(sorting_list)}
-    for (key, item) in dictionary.items():
-        if key != sorting_key:
-            sorted_pairs = sorted(zip(sorting_list, item),
-                                  key=lambda zipped: zipped[0])
-            sorted_dictionary[key] = list(zip(*sorted_pairs))[1]
-    return sorted_dictionary
 
 
 class EncLogParserError(Exception):
@@ -814,9 +805,8 @@ class OrderedDictTreeModel(QAbstractItemModel):
         # be retrieved from *_walk_path* and then be returned
         # Note, that this needs to be a list, so closure is supported
         leaf_item = []
-        def function_leaf_item(key, item_parent, q_index_parent):
+        def function_leaf_item(item_parent, q_index_parent):
             leaf_item.append( item_parent )
-
 
         # Raise an error, if an item of the path does not exist
         def function_item_is_not_existend(key, item_parent, q_index_parent):
@@ -824,7 +814,6 @@ class OrderedDictTreeModel(QAbstractItemModel):
                 key,
                 path
             ))
-
 
         # Walk the path and return the leaf item
         self._walk_path(
@@ -840,10 +829,11 @@ class OrderedDictTreeModel(QAbstractItemModel):
 
         :param *path: Accepts an arbitrary number of *identifiers* as path
 
-        :rtype: :class: `OrderedDictTreeItem`
-
+        :rtype: Leaf :class: `OrderedDictTreeItem` item of the created path
         """
 
+        # Callback, which is used to create items not already preent at the
+        # *path*
         def create_item(key, item_parent, q_index_parent):
             # Always add as last child
             row = len(item_parent)
@@ -856,18 +846,20 @@ class OrderedDictTreeModel(QAbstractItemModel):
             item = OrderedDictTreeItem(
                 identifier  = key,
                 values      = self._default_item_values.copy(),
-                compare_identifiers_function = compare_strings_case_insensitive            )
+                compare_identifiers_function = compare_strings_case_insensitive
+            )
             item_parent._add( item )
             self.endInsertRows()
 
-
         # Save the leaf item to a variable in the current closure, so it can
-        # be retrieved from *_walk_path* and then be returned        # Note, that this needs to be a list, so closure is supported
+        # be retrieved from *_walk_path* and then be returned
+        # Note, that this needs to be a list, so closure is supported
         leaf_item = []
-        def function_leaf_item(key, item_parent, q_index_parent):
+        def function_leaf_item(item_parent, q_index_parent):
             leaf_item.append(item_parent)
 
-        # Use the walk path function  and return the leaf item afterwards:        #   * Create items if they do not exist on the specified  *path*
+        # Use the walk path function  and return the leaf item afterwards:
+        #   * Create items if they do not exist on the specified  *path*
         #   * Save the leaf item of the path, so it can be returned
         self._walk_path(
             *path,
@@ -878,8 +870,23 @@ class OrderedDictTreeModel(QAbstractItemModel):
 
     def _walk_path(self, *path, function_item_is_not_existend=None,
                    function_leaf_item=None):
-        #TODO Probably this could be based on a generalized function with
-        # self crate path
+        """Generalization of path walking, which supports callback functions
+        if an item of the *path* is not present and for the leaf item of the
+        *path*. Retrieving the leaf item and creation of paths are implemented
+        using this function.
+
+        :param *path: :class: `list` of identifiers which correspond to a path
+            of the tree
+        :param function_item_is_not_existend: Function, which is called if
+            an identfiier of *path* is not present at the tree with arguments:
+                * the current key/identifier
+                * the current parent item :class: `OrderedDictTreeItem`
+                * its parent index :class: `QModelIndex`
+        :param function_leaf_item: Function which is called after the path walk
+            is finished, with the arguments:
+                * leaf item :class: `OrderedDictTreeItem`
+                * its index :class: `QModelIndex`
+        """
 
         # Each path starts at root item *item_parent* and root *q_index_parent*
         item_parent = self.root
@@ -902,7 +909,7 @@ class OrderedDictTreeModel(QAbstractItemModel):
 
         # Note, that *item_parent* is now the last item specified by path
         if function_leaf_item is not None:
-            function_leaf_item(key, item_parent, q_index_parent)
+            function_leaf_item(item_parent, q_index_parent)
 
     def _get_index_parent_from_item(self, item):
         """Get the :class: `QModelIndex` *q_parent_index* of the parent item of
@@ -940,15 +947,26 @@ class OrderedDictTreeModel(QAbstractItemModel):
         return q_index_parent
 
     def _get_index_from_item(self, item):
+        """Get the :class: `QModelIndex` corresponding to a given *item*.
+
+        :param item: :class: `OrderedDictTreeItem`
+
+        :rtype: :class: `QModelIndex` corresponding to the *item*
+        """
+
+        # If the **item** itself is the root item, return an invalid index
         if item.parent is None:
             return QModelIndex()
 
         q_index_parent = self._get_index_parent_from_item(item)
 
+        # If the **parent** item is not the root item, create the index
+        # corresponding to *item* and return it.
         if q_index_parent.isValid():
             row = q_index_parent.internalPointer().children.index( item )
             return self.index(row, 0, q_index_parent)
 
+        # If the **parent** item is the root item, create index and return it.
         row = self.root.children.index( item )
         return self.index(row, 0, QModelIndex())
 
@@ -1100,7 +1118,12 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
 
 
 class VariableTreeModel(OrderedDictTreeModel):
-
+    """Tree model to store the parsed data, which corresponds to the currently
+    selected encoder logs. The data is stored in lists at the leafs of the tree.
+    The tree itself corresponds to a structure of variables, which is exported
+    by the encoder logs. The model implements the *item_changed* signal to
+    be compatible to the :class: `QRecursiveSelectionModel` class.
+    """
 
     items_changed = pyqtSignal()
 
@@ -1109,7 +1132,7 @@ class VariableTreeModel(OrderedDictTreeModel):
         super().__init__(*args, default_item_values=[], **kwargs)
 
     def update_from_dict_tree(self, dict_tree):
-        """ Update the tree from *dict_tree* . Keys create tree items, ad the
+        """ Update the tree from *dict_tree* . Keys create tree items, and the
         leafs of the dictionary tree are appended as values to the corresponding
         tree items.
 
@@ -1132,7 +1155,7 @@ class VariableTreeModel(OrderedDictTreeModel):
         self.items_changed.emit()
 
     def clear_and_update_from_dict_tree(self, dict_tree):
-        # TODO This needs to be called to times, what obviously should not
+        # TODO This needs to be called two times, what obviously should not
         # be the case
         self.clear()
         self.clear()

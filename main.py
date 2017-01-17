@@ -15,8 +15,7 @@ import re
 import collections
 import numpy as np
 
-from model import (EncLog, EncoderLogTreeModel, summary_data_from_enc_logs,
-                   sort_dict_of_lists_by_key, OrderedDictModel,
+from model import (EncLog, EncoderLogTreeModel, OrderedDictModel,
                    VariableTreeModel)
 from view import (EncLogTreeView, QRecursiveSelectionModel)
 
