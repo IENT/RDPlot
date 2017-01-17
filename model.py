@@ -479,10 +479,10 @@ class OrderedDictModel(QAbstractListModel):
         return str( self )
 
     def values(self):
-        return self._keys.values()
+        return list( self._items )
 
     def items(self):
-        return zip( self._keys, self._items )
+        return list( zip( self._keys, self._items ) )
 
     # Implement specific methods
     # Note, that these methods allow update of whole ranges of data and emit
