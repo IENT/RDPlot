@@ -743,6 +743,12 @@ class OrderedDictTreeModel(QAbstractItemModel):
         if condition:
             self.remove_item(parent, self.parent( q_index_parent ))
 
+    def clear(self):
+        """Remove all items except the *root* item from the tree."""
+
+        for child in self.root:
+            self.remove_item(self.root[child], QModelIndex())
+
     def __repr__(self):
         return str( self.root.dict_tree )
 
