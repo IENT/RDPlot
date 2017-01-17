@@ -114,8 +114,6 @@ class EncLog():
             ([self.sequence, self.config], {'Summary' : self.summary_data}),
         ]
 
-    @property
-
 
     # Magic methods
 
@@ -812,12 +810,13 @@ class OrderedDictTreeModel(QAbstractItemModel):
     # Non-Qt interface functions
 
     def get_item_from_path(self, *path):
-        # Save the leaf item to a variable in the current closure, so it can
+         # Save the leaf item to a variable in the current closure, so it can
         # be retrieved from *_walk_path* and then be returned
         # Note, that this needs to be a list, so closure is supported
         leaf_item = []
         def function_leaf_item(key, item_parent, q_index_parent):
             leaf_item.append( item_parent )
+
 
         # Raise an error, if an item of the path does not exist
         def function_item_is_not_existend(key, item_parent, q_index_parent):
@@ -825,6 +824,7 @@ class OrderedDictTreeModel(QAbstractItemModel):
                 key,
                 path
             ))
+
 
         # Walk the path and return the leaf item
         self._walk_path(
@@ -847,24 +847,27 @@ class OrderedDictTreeModel(QAbstractItemModel):
         def create_item(key, item_parent, q_index_parent):
             # Always add as last child
             row = len(item_parent)
+            for index, identifier in enumerate(item_parent):
+                if compare_strings_case_insensitive(key, identifier):
+                    row = index
+                    break
             # Call Qt update functions
             self.beginInsertRows(q_index_parent, row, row)
             item = OrderedDictTreeItem(
                 identifier  = key,
                 values      = self._default_item_values.copy(),
-            )
+                compare_identifiers_function = compare_strings_case_insensitive            )
             item_parent._add( item )
             self.endInsertRows()
 
+
         # Save the leaf item to a variable in the current closure, so it can
-        # be retrieved from *_walk_path* and then be returned
-        # Note, that this needs to be a list, so closure is supported
+        # be retrieved from *_walk_path* and then be returned        # Note, that this needs to be a list, so closure is supported
         leaf_item = []
         def function_leaf_item(key, item_parent, q_index_parent):
             leaf_item.append(item_parent)
 
-        # Use the walk path function and return the leaf item afterwards:
-        #   * Create items if they do not exist on the specified *path*
+        # Use the walk path function  and return the leaf item afterwards:        #   * Create items if they do not exist on the specified  *path*
         #   * Save the leaf item of the path, so it can be returned
         self._walk_path(
             *path,
