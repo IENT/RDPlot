@@ -20,6 +20,58 @@ class PlotData():
         self.values         = values
         self.path           = path
 
+def dict_tree_from_enc_logs(encoder_log_collection):
+    dict_tree = {}
+    for encoder_log in encoder_log_collection:
+        for (identifiers, encoder_log_dict_tree) in encoder_log.data:
+            # Note, that tuple in queue are pairs of path ie. a list of
+            # strings/keys of the encoder_log_dict_tree, and the tree itself.
+            # deque has to be initialized with iterable, thus, pair is wrapped
+            # with list.
+            tree_queue = deque( [ ([], encoder_log_dict_tree) ] )
+            while len( tree_queue ) > 0:
+                (keys, parent) = tree_queue.pop()
+
+                if isinstance(parent, dict):
+                    for key, item in parent.items():
+                        tree_queue.appendleft( (keys + [key], item) )
+                    continue
+
+                dict_tree = append_value_to_dict_tree_at_path(
+                    dict_tree,
+                    keys,
+                    PlotData(identifiers, parent, keys),
+                )
+
+    return dict_tree
+
+def append_value_to_dict_tree_at_path(dict_tree, path, plot_data):
+    item = dict_tree
+    for key in path[:-1]:
+        # Create nested dictionaries if they do not exist already
+        if key not in item:
+            item[key] = {}
+        item = item[key]
+
+    if path[-1] not in item:
+        item[ path[-1] ] = [plot_data]
+        return dict_tree
+
+    plot_data_list = item[ path[-1] ]
+
+    for plot_data_old in plot_data_list:
+        if plot_data_old.identifiers == plot_data.identifiers:
+            plot_data_old.values.extend( plot_data.values )
+
+
+
+
+            return dict_tree
+
+    plot_data_list.append( plot_data )
+    return dict_tree
+
+
 def summary_data_from_enc_logs(encLogs):
     """Create a dictionary containing the summary data by combining
        different encLogs."""
@@ -54,7 +106,6 @@ def sort_dict_of_lists_by_key(dictionary, sorting_key):
 class EncLogParserError(Exception):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
 
 class EncLog():
     def __init__(self, path):
