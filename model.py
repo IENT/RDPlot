@@ -224,6 +224,10 @@ class EncLog():
             ([self.sequence, self.config], {'Summary' : self.summary_data}),
         ]
 
+    @property
+    def legend(self):
+        return " ".join( self.sequence, self.config, self.qp )
+
     def __eq__(self, enc_log):
         return self.path == enc_log.path
 
