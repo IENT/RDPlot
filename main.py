@@ -138,33 +138,44 @@ class Main(QMainWindow, Ui_MainWindow):
 
     def update_variable_tree(self):
         """Collect all encoder logs currently selected, and create variable
-        tree and corresponding data from it.
+        tree and corresponding data from it. Additionaly reselect all prevously
+        selected variables.
         """
 
+        # Create a list of all currently selected paths
+        # Note, that *q_index* can not be used directly, because it might
+        # change if the variable tree is recreated
         selected_path_collection = []
         for q_index in self.variableTreeView.selectedIndexes():
-            selected_path_collection.append( q_index.internalPointer().path )
+            selected_path_collection.append(
+                # Create list of identifiers from path
+                # Note, that the root node is excluded from the path
+                [item.identifier for item in q_index.internalPointer().path[1:]]
+            )
 
+        # Join the data of all currently selected encoder logs to a dictionary
+        # tree
         enc_logs = self.get_selected_enc_logs()
-        dict_trees = dict_tree_from_enc_logs(enc_logs)
-        self.variableTreeModel.clear_and_update_from_dict_trees( dict_trees )
+        dict_tree = EncLog.dict_tree_from_enc_logs(enc_logs)
+        # Reset variable tree and update it with *dict_tree*
+        self.variableTreeModel.clear_and_update_from_dict_tree( dict_tree )
 
         # Auto expand variable tree
         self.variableTreeView.expandAll()
 
+        # Reselect all variables, which also exist on the new tree
         for path in selected_path_collection:
-            # TODO Check if this path exists
-            item = self.variableTreeModel.create_path( *( v.identifier for v in path[1:] ) )
-            q_index_parent = self.variableTreeModel._get_index_parent_from_item( item )
-            if q_index_parent.isValid():
-                row = q_index_parent.internalPointer().children.index( item )
-            else:
-                row = self.variableTreeModel.root.children.index( item )
-
-            self.variableTreeView.selectionModel().select(
-                self.variableTreeModel.index(row, 0, q_index_parent),
-                QItemSelectionModel.Select,
-            )
+            # Try to reselect, and do nothing, if path does not exist anymore
+            try:
+                # Reselect new item corresponding to the previously selected
+                # path
+                item = self.variableTreeModel.get_item_from_path( *path )
+                self.variableTreeView.selectionModel().select(
+                    self.variableTreeModel._get_index_from_item( item ),
+                    QItemSelectionModel.Select,
+                )
+            except KeyError:
+                pass
 
     # updates the plot if the plot variable is changed
     def update_plot(self):

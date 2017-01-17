@@ -773,6 +773,26 @@ class OrderedDictTreeModel(QAbstractItemModel):
 
     # Non-Qt interface functions
 
+    def get_item_from_path(self, *path):
+        # Note, that this needs to be a list, so closure is supported
+        leaf_item = []
+        def function_leaf_item(key, item_parent, q_index_parent):
+            leaf_item.append( item_parent )
+
+        def function_item_is_not_existend(key, item_parent, q_index_parent):
+            raise KeyError("Key {} does not exist on path {}".format(
+                key,
+                path
+            ))
+
+        self._walk_path(
+            *path,
+            function_item_is_not_existend = function_item_is_not_existend,
+            function_leaf_item = function_leaf_item
+        )
+
+        return leaf_item[0]
+
     def create_path(self, *path):
         """Create all items along *path* if they are not already present. Return
         last *item* of the path.
@@ -783,33 +803,59 @@ class OrderedDictTreeModel(QAbstractItemModel):
 
         """
 
+        def create_item(key, item_parent, q_index_parent):
+            # Always add as last child
+            row = len(item_parent)
+            # Call Qt update functions
+            self.beginInsertRows(q_index_parent, row, row)
+            item = OrderedDictTreeItem(
+                identifier  = key,
+                values      = self._default_item_values.copy(),
+            )
+            item_parent._add( item )
+            self.endInsertRows()
+
+        # Note, that this needs to be a list, so closure is supported
+        leaf_item = []
+        def function_leaf_item(key, item_parent, q_index_parent):
+            leaf_item.append(item_parent)
+
+
+        self._walk_path(
+            *path,
+            function_item_is_not_existend = create_item,
+            function_leaf_item = function_leaf_item
+        )
+
+        return leaf_item[0]
+
+    def _walk_path(self, *path, function_item_is_not_existend=None,
+                   function_leaf_item=None):
+        #TODO Probably this could be based on a generalized function with
+        # self crate path
+
         # Each path starts at root item *item_parent* and root *q_index_parent*
         item_parent = self.root
         q_index_parent = QModelIndex()
 
         # Walk the path
         for index, key in enumerate(path):
-            # If *key* is not already present as child on *item_parent*, add it
-            if key not in item_parent:
-                # Always add as last child
-                row = len(item_parent)
-                # Call Qt update functions
-                self.beginInsertRows(q_index_parent, row, row)
-                item = OrderedDictTreeItem(
-                    identifier  = key,
-                    values      = self._default_item_values.copy(),
-                )
-                item_parent._add( item )
-                self.endInsertRows()
-
             # Set the current item as *item_parent* for next iteration, and
             # update the *q_index_parent* accordingly
+            if key not in item_parent:
+                if function_item_is_not_existend is not None:
+                    function_item_is_not_existend(key, item_parent,
+                                                  q_index_parent)
             item_parent = item_parent[key]
-            row = self._get_row_from_item_and_index_parent(item_parent, q_index_parent)
+            row = self._get_row_from_item_and_index_parent(
+                item_parent,
+                q_index_parent,
+            )
             q_index_parent = self.index(row, 0, q_index_parent)
 
         # Note, that *item_parent* is now the last item specified by path
-        return item_parent
+        if function_leaf_item is not None:
+            function_leaf_item(key, item_parent, q_index_parent)
 
     def _get_index_parent_from_item(self, item):
         """Get the :class: `QModelIndex` *q_parent_index* of the parent item of
@@ -845,6 +891,19 @@ class OrderedDictTreeModel(QAbstractItemModel):
             q_index_parent = self.index(row, 0, q_index_parent)
 
         return q_index_parent
+
+    def _get_index_from_item(self, item):
+        if item.parent is None:
+            return QModelIndex()
+
+        q_index_parent = self._get_index_parent_from_item(item)
+
+        if q_index_parent.isValid():
+            row = q_index_parent.internalPointer().children.index( item )
+            return self.index(row, 0, q_index_parent)
+
+        row = self.root.children.index( item )
+        return self.index(row, 0, QModelIndex())
 
     def _get_row_from_item_and_index_parent(self, item, q_index_parent):
         """Get the row of an *item* in reference to its parent at
