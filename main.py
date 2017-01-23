@@ -69,6 +69,9 @@ class Main(QMainWindow, Ui_MainWindow):
         self.actionHide_PlotSettings.triggered.connect(
             self.setPlotSettingsVisibility
         )
+        self.actionHide_Playlist.triggered.connect(
+            self.clearPlot
+        )
 
         self.variableTreeModel = VariableTreeModel()
         self.variableTreeView.setModel( self.variableTreeModel )
@@ -202,6 +205,11 @@ class Main(QMainWindow, Ui_MainWindow):
 
         self.plotPreview.change_plot( plot_data_collection )
 
+    def clearPlot(self):
+        pass
+
+
+
 class NestedDict(dict):
     """
     Provides the nested dict used to store all the sequence data.
@@ -218,8 +226,8 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.setupUi(self)
         self.fig_dict = {}
 
-        fig = Figure()
-        self.addmpl(fig)
+        self.fig = Figure()
+        self.addmpl()
 
     # refreshes the figure according to new changes done
     def change_plot(self, plot_data_collection):
@@ -235,9 +243,9 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
         # put a subplot into the figure and set the margins a little bit tighter than the defaults
         # this is some workaround for PyQt similar to tight layout
-        fig = Figure()
-        axis = fig.add_subplot(111)
-        fig.subplots_adjust(left=0.05, right=0.95,
+        self.fig.clear()
+        axis = self.fig.add_subplot(111)
+        self.fig.subplots_adjust(left=0.05, right=0.95,
                             bottom=0.1, top=0.95,
                             hspace=0.2, wspace=0.2)
 
@@ -263,27 +271,20 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         #     axis.set_title('Temporal Data')
         #     axis.set_xlabel('POC')
         #     axis.set_ylabel(variable + ' [dB]')
-
-        self.updatempl(fig)
+        self.canvas.draw()
 
     # TODO Remove this? It will not work with the tree widget
     # def addfig(self, name, fig):
     #     self.fig_dict[name] = fig
     #     self.encoderLogTreeView.addItem(name)
 
-    # updates the figure with a new figure
-    def updatempl(self, fig):
-        self.rmmpl()
-        self.addmpl(fig)
-        pass
-
     # adds a figure to the plotwidget
-    def addmpl(self, fig):
+    def addmpl(self):
         # set backgroung to transparent
-        fig.patch.set_alpha(0)
+        self.fig.patch.set_alpha(0)
         # set some properties for canvas and add it to the vertical layout.
         # Most important is to turn the vertical stretch on as otherwise the plot is only scaled in x direction when rescaling the window
-        self.canvas = FigureCanvas(fig)
+        self.canvas = FigureCanvas(self.fig)
         self.canvas.setParent(self.plotAreaWidget)
         policy = self.canvas.sizePolicy()
         policy.setVerticalStretch(1)
