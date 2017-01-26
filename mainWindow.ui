@@ -133,8 +133,9 @@
     <property name="title">
      <string>&amp;View</string>
     </property>
-    <addaction name="actionHide_Playlist"/>
+    <addaction name="actionHide_Sequences"/>
     <addaction name="actionHide_PlotSettings"/>
+    <addaction name="actionHide_Status"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
@@ -207,7 +208,7 @@
     <string>&amp;Save Plot</string>
    </property>
   </action>
-  <action name="actionHide_Playlist">
+  <action name="actionHide_Sequences">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -215,7 +216,7 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>&amp;Hide Playlist</string>
+    <string>&amp;Hide Sequences</string>
    </property>
   </action>
   <action name="actionHide_PlotSettings">
@@ -239,6 +240,11 @@
   <action name="actionOpen_Sequence">
    <property name="text">
     <string>Ope&amp;n Sequence</string>
+   </property>
+  </action>
+  <action name="actionHide_Status">
+   <property name="text">
+    <string>Hide Status</string>
    </property>
   </action>
  </widget>
