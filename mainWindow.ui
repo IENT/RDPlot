@@ -81,7 +81,7 @@
     </size>
    </property>
    <property name="allowedAreas">
-    <set>Qt::RightDockWidgetArea</set>
+    <set>Qt::AllDockWidgetAreas</set>
    </property>
    <property name="windowTitle">
     <string>&amp;Plotsettings</string>
@@ -133,7 +133,7 @@
     <property name="title">
      <string>&amp;View</string>
     </property>
-    <addaction name="actionHide_Sequences"/>
+    <addaction name="actionHide_Sequence"/>
     <addaction name="actionHide_PlotSettings"/>
     <addaction name="actionHide_Status"/>
    </widget>
@@ -142,7 +142,7 @@
   </widget>
   <widget class="QDockWidget" name="sequenceWidget">
    <property name="allowedAreas">
-    <set>Qt::LeftDockWidgetArea</set>
+    <set>Qt::AllDockWidgetAreas</set>
    </property>
    <property name="windowTitle">
     <string>Sequences</string>
@@ -192,7 +192,6 @@
     </layout>
    </widget>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
   <action name="actionOpen_File">
    <property name="text">
     <string>&amp;Open File</string>
@@ -208,7 +207,7 @@
     <string>&amp;Save Plot</string>
    </property>
   </action>
-  <action name="actionHide_Sequences">
+  <action name="actionHide_Sequence">
    <property name="checkable">
     <bool>true</bool>
    </property>

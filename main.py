@@ -69,8 +69,8 @@ class Main(QMainWindow, Ui_MainWindow):
         self.actionHide_PlotSettings.triggered.connect(
             self.setPlotSettingsVisibility
         )
-        self.actionHide_Playlist.triggered.connect(
-            self.clearPlot
+        self.actionHide_Sequence.triggered.connect(
+            self.setSequenceWidgetVisibility
         )
 
         self.variableTreeModel = VariableTreeModel()
@@ -85,7 +85,7 @@ class Main(QMainWindow, Ui_MainWindow):
             self._variable_tree_selection_model
         )
 
-    # changes the visibility of plotSettings Widget
+        # sets Visibility for the Plotsettings Widget
     def setPlotSettingsVisibility(self):
         self.plotsettings.visibilityChanged.disconnect(self.plotSettingsVisibilityChanged)
         if self.plotsettings.isHidden():
@@ -107,6 +107,36 @@ class Main(QMainWindow, Ui_MainWindow):
         )
 
         self.encoderLogTreeView.deleteKey.connect(self.remove)
+
+    # sets Visibility for the Sequence Widget
+    def setSequenceWidgetVisibility(self):
+        self.sequenceWidget.visibilityChanged.disconnect(self.sequenceWidgetVisibilityChanged)
+        if self.sequenceWidget.isHidden():
+            self.sequenceWidget.setVisible(True)
+        else:
+            self.sequenceWidget.setHidden(True)
+        self.sequenceWidget.visibilityChanged.connect(self.sequenceWidgetVisibilityChanged)
+
+    def sequenceWidgetVisibilityChanged(self):
+        if self.sequenceWidget.isHidden():
+            self.actionHide_Sequence.setChecked(True)
+        else:
+            self.actionHide_Sequence.setChecked(False)
+
+    # Sets Visibility for the Status Widget
+    def setStatusWidgetVisibility(self):
+        self.statusWidget.visibilityChanged.disconnect(self.statusWidgetVisibilityChanged)
+        if self.statusWidget.isHidden():
+            self.statusWidget.setVisible(True)
+        else:
+            self.statusWidget.setHidden(True)
+        self.statusWidget.visibilityChanged.connect(self.statusWidgetVisibilityChanged)
+
+    def sequenceWidgetVisibilityChanged(self):
+        if self.statusWidget.isHidden():
+            self.actionHide_Status.setChecked(True)
+        else:
+            self.actionHide_Status.setChecked(False)
 
     def remove(self):
         values = self.selectedEncoderLogListModel.values()
