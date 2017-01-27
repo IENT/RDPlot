@@ -76,6 +76,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.variableTreeModel = VariableTreeModel()
         self.variableTreeView.setModel( self.variableTreeModel )
         self.plotsettings.visibilityChanged.connect(self.plotSettingsVisibilityChanged)
+        self.sequenceWidget.visibilityChanged.connect(self.sequenceWidgetVisibilityChanged)
 
         # Set recursive selection model for variable view
         self._variable_tree_selection_model = QRecursiveSelectionModel(
@@ -131,12 +132,6 @@ class Main(QMainWindow, Ui_MainWindow):
         else:
             self.statusWidget.setHidden(True)
         self.statusWidget.visibilityChanged.connect(self.statusWidgetVisibilityChanged)
-
-    def sequenceWidgetVisibilityChanged(self):
-        if self.statusWidget.isHidden():
-            self.actionHide_Status.setChecked(True)
-        else:
-            self.actionHide_Status.setChecked(False)
 
     def remove(self):
         values = self.selectedEncoderLogListModel.values()
