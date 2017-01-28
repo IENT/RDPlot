@@ -188,6 +188,13 @@ class EncLog():
 
     # Parsing
 
+    #TODO
+    # This should not be decided on the Path
+    # actually this QP_10 depends on the configuration for SHVC
+    # lets just open an encoder log file and parse the first line.
+    # There should be some information about the software
+    # moreover I think it is not really good to have a variable which
+    # stores the simulation type. This way we need many if then else statements
     @staticmethod
     def _get_Type(path):
         logType = ''
