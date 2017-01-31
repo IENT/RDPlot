@@ -120,23 +120,13 @@ class QRecursiveSelectionModel(QItemSelectionModel):
     def select(self, selection, command):
         """Extend behavior of inherited method. Add all sub items to selection
            """
-
+        # if the selection is a QModelIndex return und don do anything
+        if isinstance(selection, QModelIndex):
+            return
         # Handle selections and single indexes
         if isinstance(selection, QItemSelection):
             indexes_selected = selection.indexes()
             recursive_selection = selection
-        if isinstance(selection, QModelIndex):
-            indexes_selected = [selection]
-            # If the selection is an index, a range only containing this index
-            # has to be created
-            recursive_selection = QItemSelection()
-
-            q_index_parent = self.model().parent(selection)
-            q_index_first = selection
-            q_index_last = self.model().index(selection.row(),
-                                              selection.column(),
-                                              q_index_parent)
-            recursive_selection.select(q_index_first, q_index_last)
 
         # Find index ranges of all sub items of the indexes in `selection`
         index_ranges = self._get_sub_items_index_ranges(indexes_selected)
