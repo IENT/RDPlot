@@ -15,8 +15,8 @@ import re
 import collections
 import numpy as np
 
-from model import (EncLog, EncoderLogTreeModel, OrderedDictModel,
-                   VariableTreeModel)
+from model import (EncoderLogTreeModel, OrderedDictModel,
+                   VariableTreeModel, dict_tree_from_sim_data_items)
 from view import (EncLogTreeView, QRecursiveSelectionModel)
 
 
@@ -47,18 +47,18 @@ class Main(QMainWindow, Ui_MainWindow):
         self.encoderLogTreeView.setSelectionModel(self._selection_model)
 
         # Connect list view with model for the selected values of tree view
-        self.selectedEncoderLogListModel = OrderedDictModel()
-        self.encoderLogListView.setModel( self.selectedEncoderLogListModel )
+        self.selectedSimulationDataItemListModel = OrderedDictModel()
+        self.encoderLogListView.setModel( self.selectedSimulationDataItemListModel )
         self._selection_model.selectionChanged.connect(self.change_list)
 
         # set up signals and slots
-        self.selectedEncoderLogListModel.items_changed.connect(
+        self.selectedSimulationDataItemListModel.items_changed.connect(
             self.update_variable_tree
         )
 
         # Connect signals of menues
         self.actionOpen_File.triggered.connect(
-            self.encoderLogTreeView.add_encoder_log
+            self.encoderLogTreeView.add_sim_data_item
         )
         self.actionOpen_Sequence.triggered.connect(
             self.encoderLogTreeView.add_sequence
@@ -134,7 +134,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.statusWidget.visibilityChanged.connect(self.statusWidgetVisibilityChanged)
 
     def remove(self):
-        values = self.selectedEncoderLogListModel.values()
+        values = self.selectedSimulationDataItemListModel.values()
         #List call necessary to avoid runtime error because of elements changing
         #during iteration
         self.encoderLogTreeModel.remove( list( values ) )
@@ -163,10 +163,10 @@ class Main(QMainWindow, Ui_MainWindow):
         # only rerenders the plots one time. Therefore, simply overwriting
         # is much more efficient, despite it would seem, that selectively
         # overwriting keys is.
-        self.selectedEncoderLogListModel.clear_and_update_from_tuples( tuples )
+        self.selectedSimulationDataItemListModel.clear_and_update_from_tuples( tuples )
 
-    def get_selected_enc_logs(self):
-        return [self.selectedEncoderLogListModel[key] for key in self.selectedEncoderLogListModel]
+    def get_selected_simulation_data_items(self):
+        return [self.selectedSimulationDataItemListModel[key] for key in self.selectedSimulationDataItemListModel]
 
     def get_plot_data_collection_from_selected_variables(self):
         """Get a :class: `dict` with y-variable as key and values as items
@@ -200,10 +200,10 @@ class Main(QMainWindow, Ui_MainWindow):
                 [item.identifier for item in q_index.internalPointer().path[1:]]
             )
 
-        # Join the data of all currently selected encoder logs to a dictionary
+        # Join the data of all currently selected items to a dictionary
         # tree
-        enc_logs = self.get_selected_enc_logs()
-        dict_tree = EncLog.dict_tree_from_enc_logs(enc_logs)
+        sim_data_items = self.get_selected_simulation_data_items()
+        dict_tree = dict_tree_from_sim_data_items(sim_data_items)
         # Reset variable tree and update it with *dict_tree*
         self.variableTreeModel.clear_and_update_from_dict_tree( dict_tree )
 
@@ -273,8 +273,6 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.fig.subplots_adjust(left=0.05, right=0.95,
                             bottom=0.1, top=0.95,
                             hspace=0.2, wspace=0.2)
-
-
 
         for plot_data in plot_data_collection:
             # Convert list of pairs of strings to two sorted lists of floats
