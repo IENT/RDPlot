@@ -7,21 +7,90 @@ from collections import OrderedDict
 from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel, pyqtSignal
 from PyQt5.Qt import Qt, QVariant, QModelIndex
 
+#
+# Functions
+#
+def dict_tree_from_sim_data_items(sim_data_item_collection):
+    """Combine the *data* of different encoder logs to a tree of
+    :class: `dicts`, which is then used to display the data.
 
-class PlotData():
-    """Class encapsulating data to be plotted
+    An *encoder_log* provides a collection of 2-tuples ie. pairs as data.
+    The first element are the identifiers associated with the data, eg.
+    *sequence* and  *config* for summary data. The second element is the
+    data itself, in the form of a dictionary tree. The  dictionary tree
+    has the variables which are provided by the *encoder_log* as keys, and
+    the actual data as leafs. The data  is in the form of lists of 2-tuples
+    containing, an x and the  corresponding y value.
 
-    :param legend: Legend of the line, plotted from *values*
-    :param values: Iterable collection of values, which should be plotted
-    :param path: Path in the variable tree. Not needed, but there for
-        convenience.
+    Now, the dictionary trees of different encoder logs have to be combined
+    to one dictionary tree. The resulting *dict_tree* is the union of the
+    trees of the encoder logs with :class: `list`s of :class: `PlotData`
+    objects as leafs.
+
+    The leafs are created as follows: A :class: `PlotData` object is
+    created from the *identifiers* associated with the :class: `EncLog`
+    and the list of value pairs found at the current position. The current
+    path in the dictionary tree is also added for convenience. Now, if there
+    are already :class: `PlotData` objects present at the current leaf of
+    the *dict_tree*, then:
+        * if the identifiers of the current :class: `PlotData` object equal
+            the one of an already present one, the values are just added
+            to the values of the :class: `PlotData` object already present.
+        * if no :class: `PlotData` object is present with equal identifiers
+            the new :class: `PlotData` object is added to the list
+
+    Why is this necessary? It might be, that different encoder logs provide
+    data, that has to be joined before it is displayed, eg. the summary
+    data for one particular variable is usually provided by several
+    encoder_logs. In this case, the correspondence of the data is coded
+    in the identifier of the data ie. the identifier would be similar across
+    different encoder logs, and thus, the data can be joined by this
+    function. On the other hand, if several encoder logs just provide data
+    for the same variable, then the data should be rendered separately, ie.
+    different :class: `PlotData` objects are added to the list for each
+    :class: `EncLog` object.
+
+    :param encoder_log_collection: Iterable of :class: `EncLog`s
+
+    :rtype: tree of :class: `dict`s with :class: `list`s of
+        :class: `PlotData` objects as leafs
     """
 
-    def __init__(self, identifiers, values, path):
-        self.identifiers    = identifiers
-        self.values         = values
-        self.path           = path
+    dict_tree = {}
 
+    for sim_data_item in sim_data_item_collection:
+        for (identifiers, sim_data_item_dict_tree) in sim_data_item.data:
+
+            # Process all items of the *encoder_log*'s dictionary tree ie.
+            # create corresponding keys in the output *dict_tree* and
+            # copy the data at the corresponding position in PlotData
+            # objects.
+
+            # Note, that tuple in queue are pairs of path ie. a list of
+            # strings/keys of the encoder_log_dict_tree, and the tree itself.
+            # deque has to be initialized with iterable, thus, pair is wrapped
+            # with list.
+            tree_queue = deque([([], sim_data_item_dict_tree)])
+
+            while len(tree_queue) > 0:
+                (keys, parent) = tree_queue.pop()
+
+                # Dictionary items are added to the queue to be processed
+                # themselves
+                if isinstance(parent, dict):
+                    for key, item in parent.items():
+                        tree_queue.appendleft((keys + [key], item))
+                    continue
+
+                # Non dictionary items are processed ie. their data is
+                # added as PlotData object to the output *dict_tree*
+                dict_tree = append_value_to_dict_tree_at_path(
+                    dict_tree,
+                    keys,
+                    PlotData(identifiers, parent, keys),
+                )
+
+    return dict_tree
 
 def append_value_to_dict_tree_at_path(dict_tree, path, plot_data):
     """Add a *plot_data* object to a *dict_tree* at a certain *path*.
@@ -69,32 +138,47 @@ def append_value_to_dict_tree_at_path(dict_tree, path, plot_data):
     plot_data_list.append( plot_data )
     return dict_tree
 
+def compare_strings_case_insensitive(first, second):
+    return first.casefold() > second.casefold()
+
+#-------------------------------------------------------------------------------
+
+#
+# Classes
+#
+class PlotData():
+    """Class encapsulating data to be plotted
+
+    :param legend: Legend of the line, plotted from *values*
+    :param values: Iterable collection of values, which should be plotted
+    :param path: Path in the variable tree. Not needed, but there for
+        convenience.
+    """
+
+    def __init__(self, identifiers, values, path):
+        self.identifiers    = identifiers
+        self.values         = values
+        self.path           = path
 
 class EncLogParserError(Exception):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-class EncLog():
+class EncLog:
     def __init__(self, path):
         #Path is unique identifier
         self.path = abspath(path)
 
         #Parse file path and set additional identifiers
-        self.logType = self._get_Type(path)
-        self.sequence, self.config, self.qp = self._parse_path(self.path, self.logType)
+        # self.logType = self._get_Type(path)
+        self.sequence, self.config, self.qp = self._parse_path(self.path)
 
         #Dictionaries holding the parsed values
         #TODO select parsing functions depending on codec type,
-        self.summary_data  = self._parse_summary_data(self.logType)
-        self.temporal_data = self._parse_temporal_data(self.logType)
-
+        self.summary_data  = self._parse_summary_data()
+        self.temporal_data = self._parse_temporal_data()
 
     # Properties
-
-    @property
-    def tree_path(self):
-        return [self.sequence, self.config, self.qp]
-
     @property
     def tree_path(self):
         return [self.sequence, self.config, self.qp]
@@ -108,7 +192,6 @@ class EncLog():
 
 
     # Magic methods
-
     def legend(self):
         return " ".join( self.sequence, self.config, self.qp )
 
@@ -130,7 +213,6 @@ class EncLog():
 
 
     # Conctructors
-
     @classmethod
     def parse_url(cls, url):
         """Parse a url and return either all encoder logs in the folder, all
@@ -160,310 +242,20 @@ class EncLog():
         raise EncLogParserError( "Could not parse url {} for encoder logs"
                                 .format(url) )
 
-    @classmethod
-    def parse_directory(cls, directory_path):
-        """Parse a directory for all encoder log files and return generator
-           yielding :class: `EncLog`s"""
-        #TODO join vs sep and glob pattern?
-        paths = glob(join(directory_path, '*_enc.log'))
-
-        return (EncLog(p) for p in paths)
-
-    @classmethod
-    def parse_directory_for_sequence(cls, sequence_file_path):
-        """Parse a directory for encoder logs of a specific sequence given one
-           encoder log of this sequence returning a generator yielding parsed
-           encoder :class: `EncLog`s"""
-        filename = basename(sequence_file_path)
-        directory = dirname(sequence_file_path)
-        sequence = filename.rsplit('_QP', 1)[0]
-
-        #Search for other encoder logs in directory and parse them
-        #TODO hardcoded file ending, needed to prevent ambiguous occurence
-        #exceptions due to *.csv or other files being parsed
-        paths = glob(directory + sep + sequence + '*_enc.log')
-
-        return (EncLog(p) for p in paths)
-
-
-    # Parsing
-
-    #TODO
-    # This should not be decided on the Path
-    # actually this QP_10 depends on the configuration for SHVC
-    # lets just open an encoder log file and parse the first line.
-    # There should be some information about the software
-    # moreover I think it is not really good to have a variable which
-    # stores the simulation type. This way we need many if then else statements
-    @staticmethod
-    def _get_Type(path):
-        logType = ''
-        splitted = path.split('_QPL10')  # separation between HEVC and SHVC
-        if len(splitted) > 1:
-            logType = 'SHVC'
-        else:
-            logType = 'HEVC'
-        return logType
-
-    @staticmethod
-    def _parse_path(path, logType):
-        try:
-            # Assumes structure of .../<simulation_directory>/log/<basename>
-            directories = normpath(path).split(sep)[0 : -2]
-            filename    = basename(path)
-        except IndexError:
-            raise EncLogParserError(
-                "Path {} can not be splitted into directories and filename"
-                .format(filename, path)
-            )
-
-        try:
-            seperator = '-'
-            if logType == 'SHVC':
-                filename_splitted = filename.split('_QPL10')[0].split(seperator)
-            else:
-                filename_splitted = filename.split('_QP')[0].split(seperator)
-
-            sequence = filename_splitted[-1]
-            config = seperator.join(filename_splitted[0 : -2])
-        except IndexError:
-            raise EncLogParserError((
-                "Filename {} can not be splitted into config until '{}' and"
-                " sequence between last '{}' and '_QP'"
-            ).format(filename, seperator, seperator))
-
-        # prepend simulation directory to config
-        config = directories[-1] + ' ' + config
-
-        if logType == 'SHVC':
-            m = re.search(r'_QPL10(\d*)_', filename)
-        else:
-            m = re.search(r'_QP(\d*)_', filename)
-        if m:
-            qp = m.group(1)
-        else:
-            raise EncLogParserError(
-                "Basename {} of path {} does not contain a valid qp value"
-                .format(filename, path)
-            )
-        return (sequence, config, qp)
-
-    def _parse_temporal_data(self, logType):
-        #this function extracts temporal values
-        shvc = len(self.path.split('_QPL10')) > 1
-        with open(self.path, 'r') as log_file:
-            log_text = log_file.read()  # reads the whole text file
-            if logType == 'SHVC':
-                tempData = re.findall(r"""
-                                    POC \s+ (\d+) .+? : \s+ (\d+) .+ (\D-\D+) \s \D+,  #Slice
-                                    .+ \) \s+ (\d+) \s+ (.+) \s+ \[ (\D+) \s+ (\d+.\d+) \s+ #Y PSNR
-                                    \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # U PSNR
-                                    \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # v PSNR
-                                    """, log_text, re.M + re.X)
-            else:
-                tempData = re.findall(r"""
-                    POC \s+ (\d+) \s+ .+ \s+ \d+ \s+ . \s+ (.-\D+) ,  #Slice
-                    \s .+ \) \s+ (\d+) \s+ (.+) \s+ \[ (\D+) \s+ (\d+.\d+) \s+ #Y PSNR
-                    \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # U PSNR
-                    \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # v PSNR
-                    """, log_text, re.M + re.X)
-
-            #Association between index of data in tempData and corresponding
-            #output key. Output shape definition is in one place.
-            if logType == 'SHVC':
-                names = {0: 'Frames', 3: 'Bits', 6: 'Y-PSNR', 8: 'U-PSNR',
-                         10: 'V-PSNR'}
-            else:
-                names = {0 : 'Frames', 2 : 'Bits', 5 : 'Y-PSNR', 7 : 'U-PSNR',
-                         9 : 'V-PSNR'}
-
-            #Define output data dict and fill it with parsed values
-            data = {name : [] for (index, name) in names.items()}
-            for i in range(0, len(tempData)):
-                # As referencing to frame produces error, reference to index *i*
-                for (index, name) in names.items():
-                    data[name].append(
-                        (i, tempData[i][index])
-                    )
-            return data
-
-
-    # def _parse_temporal_dataSHVC(self, path):
-    #     # this function extracts temporal values
-    #     with open(self.path, 'r') as log_file:
-    #         log_text = log_file.read()  # reads the whole text file
-    #         tempData = re.findall(r"""
-    #                 POC \s+ (\d+) .+? : \s+ (\d+) .+ (\D-\D+) \s \D+,  #Slice
-    #                 .+ \) \s+ (\d+) \s+ (.+) \s+ \[ (\D+) \s+ (\d+.\d+) \s+ #Y PSNR
-    #                 \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # U PSNR
-    #                 \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # v PSNR
-    #                 """, log_text, re.M + re.X)
-    #
-    #         # Association between index of data in tempData and corresponding
-    #         # output key. Output shape definition is in one place.
-    #         names = {0: 'Frames', 3: 'Bits', 6: 'Y-PSNR', 8: 'U-PSNR',
-    #                  10: 'V-PSNR'}
-    #
-    #         # Define output data dict and fill it with parsed values
-    #         data = {name: [] for (index, name) in names.items()}
-    #         for i in range(0, len(tempData)):
-    #             # TODO slices and frames?
-    #             for (index, name) in names.items():
-    #                 data[name].append(tempData[i][index])
-    #         return data
-
-    def _parse_summary_data(self, logType):
-        with open(self.path, 'r') as log_file:
-            log_text = log_file.read()  # reads the whole text file
-            if logType == 'SHVC':
-                summaries = re.findall(r"""
-                            \s+ L (\d+) \s+ (\d+) \s+ \D \s+ # the next is bitrate
-                            (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)
-                            """, log_text, re.M + re.X)
-            else:
-                summaries = re.findall(r"""  ^(\w*)-*.*$ # catch summary line
-                               \s* # catch newline and space
-                               (.*)\| # catch phrase Total Frames / I / P / B
-                               (\s*\S*)(\s*\S*)(\s*\S*)(\s*\S*)(\s*\S*)# catch rest of the line
-                               \s* # catch newline and space
-                               (\d*\s*)\w # catch frame number
-                               (\s*\d*\.\d*)(\s*\d*\.\d*)(\s*\d*\.\d*)(\s*\d*\.\d*)(\s*\d*\.\d*) # catch the fractional number (rate, PSNRs)
-                          """, log_text, re.M + re.X)
-
-            data = {}
-            for summary in summaries:
-                summary_type = summary[0]
-                # Create upon first access
-                if summary_type not in data:
-                    data[summary_type] = {}
-                names = summary[1:7]
-                vals = summary[7:]
-
-                names = [name.strip() for name in names]  # remove leading and trailing space
-                vals = [float(val) for val in vals]  # convert to numbers
-
-                name_val_dict = dict(zip(names, vals))  # pack both together in a dict
-                # print(summary_type)
-
-                name_rate = 'Bitrate'
-                names.remove('Bitrate')
-
-                # now pack everything together
-                for name in names:
-                    if name not in data[summary_type]: # create upon first access
-                        data[summary_type][name] = []
-                    # Reference all data to *self.qp*
-                    data[summary_type][name].append(
-                        (name_val_dict[name_rate], name_val_dict[name])
-                    )
-            return data
-
-
-    # Data processing
-
-    @staticmethod
-    def dict_tree_from_enc_logs(encoder_log_collection):
-        """Combine the *data* of different encoder logs to a tree of
-        :class: `dicts`, which is then used to display the data.
-
-        An *encoder_log* provides a collection of 2-tuples ie. pairs as data.
-        The first element are the identifiers associated with the data, eg.
-        *sequence* and  *config* for summary data. The second element is the
-        data itself, in the form of a dictionary tree. The  dictionary tree
-        has the variables which are provided by the *encoder_log* as keys, and
-        the actual data as leafs. The data  is in the form of lists of 2-tuples
-        containing, an x and the  corresponding y value.
-
-        Now, the dictionary trees of different encoder logs have to be combined
-        to one dictionary tree. The resulting *dict_tree* is the union of the
-        trees of the encoder logs with :class: `list`s of :class: `PlotData`
-        objects as leafs.
-
-        The leafs are created as follows: An :class: `PlotData` object is
-        created from the *identifiers* associated with the :class: `EncLog`
-        and the list of value pairs found at the current position. The current
-        path in the dictionary tree is also added for convinience. Now, if there
-        are already :class: `PlotData` objects present at the current leaf of
-        the *dict_tree*, then:
-            * if the identifiers of the current :class: `PlotData` object equal
-                the one of an already present one, the values are just added
-                to the values of the :class: `PlotData` object already present.
-            * if no :class: `PlotData` object is present with equal identifiers
-                the new :class: `PlotData` object is added to the list
-
-        Why is this necessary? It might be, that different encoder logs provide
-        data, that has to joined before it is displayed, eg. the summary
-        data for one particular variable is usually provided by several
-        encoder_logs. In this case, the correspondence of the data is coded
-        in the identifier of the data ie. the identfiier would be similar across
-        different encoder logs, and thus, the data can be joined by this
-        function. On the other hand, if several encoder logs just provide data
-        for the same variable, then the data should be rendered seperately, ie.
-        different :class: `PlotData` objects are added to the list for each
-        :class: `EncLog` object.
-
-        :param encoder_log_collection: Iterable of :class: `EncLog`s
-
-        :rtype: tree of :class: `dict`s with :class: `list`s of
-            :class: `PlotData` objects as leafs
-        """
-
-        dict_tree = {}
-
-        for encoder_log in encoder_log_collection:
-            for (identifiers, encoder_log_dict_tree) in encoder_log.data:
-
-                # Process all items of the *encoder_log*'s dictionary tree ie.
-                # create corresponding keys in the output *dict_tree* and
-                # copy the data at the corresponding position in PlotData
-                # objects.
-
-                # Note, that tuple in queue are pairs of path ie. a list of
-                # strings/keys of the encoder_log_dict_tree, and the tree itself.
-                # deque has to be initialized with iterable, thus, pair is wrapped
-                # with list.
-                tree_queue = deque( [ ([], encoder_log_dict_tree) ] )
-
-                while len( tree_queue ) > 0:
-                    (keys, parent) = tree_queue.pop()
-
-                    # Dictionary items are added to the queue to be processed
-                    # themselves
-                    if isinstance(parent, dict):
-                        for key, item in parent.items():
-                            tree_queue.appendleft( (keys + [key], item) )
-                        continue
-
-                    # Non dictionary items are processed ie. their data is
-                    # added as PlotData object to the output *dict_tree*
-                    dict_tree = append_value_to_dict_tree_at_path(
-                        dict_tree,
-                        keys,
-                        PlotData(identifiers, parent, keys),
-                    )
-
-        return dict_tree
-
 #-------------------------------------------------------------------------------
-
 
 #
 # Models
 #
-
-
 class ModelError(Exception):
     """Error class for model"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-
 class AmbiguousEncoderLogs(ModelError):
     """Error class for ambiguous encoder logs"""
     pass
-
-
 
 class OrderedDictModel(QAbstractListModel):
     """Subclass of :class: `QAbstractListModel` implementing an
@@ -805,10 +597,6 @@ class OrderedDictTreeItem():
         """Display item as dictionary tree"""
         return str( self.dict_tree )
 
-
-def compare_strings_case_insensitive(first, second):
-    return first.casefold() > second.casefold()
-
 class OrderedDictTreeModel(QAbstractItemModel):
     def __init__(self, *args, default_item_values=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1108,7 +896,6 @@ class OrderedDictTreeModel(QAbstractItemModel):
     def __repr__(self):
         return str( self.root.dict_tree )
 
-
 class EncoderLogTreeModel(OrderedDictTreeModel):
     """Tree model specific to encoder logs, specifying methods to add them to
     the tree, how to store their data at the tree and how to access them, using
@@ -1155,7 +942,7 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
 
             # This prevents an encoder log overwriting another one
             # with same *tree_path* but different absolute path
-            for value in  item.values:
+            for value in item.values:
                 condition = (
                         value.tree_path == enc_log.tree_path
                     and value.path      != enc_log.path
@@ -1184,7 +971,6 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
             self.remove_item(item)
 
         self.items_changed.emit()
-
 
 class VariableTreeModel(OrderedDictTreeModel):
     """Tree model to store the parsed data, which corresponds to the currently
@@ -1229,3 +1015,5 @@ class VariableTreeModel(OrderedDictTreeModel):
         self.clear()
         self.clear()
         self.update_from_dict_tree( dict_tree )
+
+
