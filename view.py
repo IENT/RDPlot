@@ -6,7 +6,7 @@ from collections import deque
 from os.path import join
 
 import model
-
+from SimulationDataFactory import SimulationDataItemFactory
 
 class EncLogTreeView(QtWidgets.QTreeView):
     def __init__(self, *args, **kwargs):
@@ -68,14 +68,14 @@ class EncLogTreeView(QtWidgets.QTreeView):
             return
 
     # adds a logfile to the treeview
-    def add_encoder_log(self):
+    def add_sim_data_item(self):
         try:
             directory, file_name = self._get_open_file_names()
         except TypeError:
             return
         path = join(directory, file_name)
-
-        self.model().add( model.EncLog( path ) )
+        SimDataItem = SimulationDataItemFactory.create_instance_for_file(path)
+        self.model().add( SimDataItem )
 
     # adds a all logfiles of a sequence from a directory to the treeview
     def add_sequence(self):
@@ -85,8 +85,8 @@ class EncLogTreeView(QtWidgets.QTreeView):
             return
         path = join(directory, file_name)
 
-        encLogs = list( model.EncLog.parse_directory_for_sequence( path ) )
-        self.model().update(encLogs)
+        SimDataItems = list( SimulationDataItemFactory.parse_directory_for_sequence( path ) )
+        self.model().update(SimDataItems)
 
     # adds all logfiles and sequences from a directory to the treeview
     def add_folder(self):
@@ -97,8 +97,8 @@ class EncLogTreeView(QtWidgets.QTreeView):
 
         #TODO this uses the parse_directory method, thus, does not automatically
         # parse 'log'.subfolder. Should this be the case?
-        encLogs = list( model.EncLog.parse_directory( path ) )
-        self.model().update(encLogs)
+        SimDataItems = list( SimulationDataItemFactory.parse_directory( path ) )
+        self.model().update(SimDataItems)
 
 class QRecursiveSelectionModel(QItemSelectionModel):
     """Custom selection model for recursive models. If an item is selected, all
