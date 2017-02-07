@@ -72,11 +72,15 @@ class Main(QMainWindow, Ui_MainWindow):
         self.actionHide_Sequence.triggered.connect(
             self.setSequenceWidgetVisibility
         )
+        self.actionHide_Status.triggered.connect(
+            self.setStatusWidgetVisibility
+        )
 
         self.variableTreeModel = VariableTreeModel()
         self.variableTreeView.setModel( self.variableTreeModel )
         self.plotsettings.visibilityChanged.connect(self.plotSettingsVisibilityChanged)
         self.sequenceWidget.visibilityChanged.connect(self.sequenceWidgetVisibilityChanged)
+        self.statusWidget.visibilityChanged.connect(self.statusWidgetVisibilityChanged)
 
         # Set recursive selection model for variable view
         self._variable_tree_selection_model = QRecursiveSelectionModel(
@@ -132,6 +136,12 @@ class Main(QMainWindow, Ui_MainWindow):
         else:
             self.statusWidget.setHidden(True)
         self.statusWidget.visibilityChanged.connect(self.statusWidgetVisibilityChanged)
+
+    def statusWidgetVisibilityChanged(self):
+        if self.statusWidget.isHidden():
+            self.actionHide_Status.setChecked(True)
+        else:
+            self.actionHide_Status.setChecked(False)
 
     def remove(self):
         values = self.selectedSimulationDataItemListModel.values()
