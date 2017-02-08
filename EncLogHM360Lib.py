@@ -1,0 +1,96 @@
+from model import (EncLog, EncLogParserError)
+
+from os.path import (basename,sep, normpath)
+import re
+
+class EncLogHM360Lib(EncLog):
+    def __init__(self, path):
+        super().__init__(path)
+
+    def _parse_path(self,path):
+        try:
+            # Assumes structure of .../<simulation_directory>/log/<basename>
+            directories = normpath(path).split(sep)[0 : -2]
+            filename    = basename(path)
+        except IndexError:
+            raise EncLogParserError(
+                "Path {} can not be splitted into directories and filename"
+                .format(filename, path)
+            )
+
+        try:
+            seperator = '-'
+            filename_splitted = filename.split('_QP')[0].split(seperator)
+            sequence = filename_splitted[-1]
+            #config = seperator.join(filename_splitted[0 : -2])
+        except IndexError:
+            raise EncLogParserError((
+                "Filename {} can not be splitted into config until '{}' and"
+                " sequence between last '{}' and '_QP'"
+            ).format(filename, seperator, seperator))
+
+        # prepend simulation directory to config
+        config = directories[-1] #+ ' ' + config
+        m = re.search(r'_QP(\d*)_', filename)
+        if m:
+            qp = m.group(1)
+        else:
+            raise EncLogParserError(
+                "Basename {} of path {} does not contain a valid qp value"
+                .format(filename, path)
+            )
+        return (sequence, config, qp)
+
+    def _parse_summary_data(self):
+        with open(self.path, 'r') as log_file:
+            log_text = log_file.read()  # reads the whole text file
+            summaries = re.findall(r""" ^(\S+) .+ $ \s .+ $
+                                        \s+ (\d+) \s+ \D \s+ (\S+)  # Total Frames, Bitrate
+                                        \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)  # y-, u-, v-, yuv-PSNR
+                                        \s+ (\S+) \s+ (\S+) \s+ (\S+)  # WSPSNR
+                                        \s+ (\S+) \s+ (\S+) \s+ (\S+)  # CPPPSNR
+                                        \s+ (\S+) \s+ (\S+) \s+ (\S+) \s $  # E2EWSPSNR
+                                        """, log_text, re.M + re.X)
+            data = {}
+            names = {1: 'Frames', 2: 'Bitrate', 3: 'Y-PSNR', 4: 'U-PSNR',
+                     5: 'V-PSNR', 6: 'YUV-PSNR', 7: 'Y-WSPSNR', 8: 'U-WSPSNR',
+                     9: 'V-WSPSNR', 10:'Y-CPPSNR', 11: 'U-CPPSNR', 12: 'V-CPPSNR',
+                     13: 'Y-E2EWSPSNR', 14: 'U-E2EWSPSNR', 15: 'V-E2EWSPSNR'}
+
+            for i in range(0, len(summaries)):  # iterate through Summary, I, P, B
+                data2 = {name: [] for (index, name) in names.items()}
+                for (index, name) in names.items():
+                    data2[name].append(
+                        (summaries[i][2], summaries[i][index])
+                    )
+                data[summaries[i][0]] = data2
+
+            return data
+
+    def _parse_temporal_data(self):
+        #this function extracts temporal values
+        with open(self.path, 'r') as log_file:
+            log_text = log_file.read()  # reads the whole text file
+            tempData = re.findall(r"""
+                ^POC \s+ (\d+) \s+ .+ \s+ \d+ \s+ . \s+ (.-\D+) ,  # POC, Slice
+                \s .+ \) \s+ (\d+) \s+ \S+ \s+  # bitrate
+                \[ \S \s (\S+) \s \S+ \s+ \S \s (\S+) \s \S+ \s+ \S \s (\S+) \s \S+ ] \s  # y-, u-, v-PSNR
+                \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-WSPSNR
+                \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-CPPPSNR
+                \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-E2EWSPSNR
+                """, log_text, re.M + re.X)
+
+            # Association between index of data in tempData and corresponding
+            # output key. Output shape definition is in one place.
+            names = {0: 'Frames', 2: 'Bits', 5: 'Y-PSNR', 7: 'U-PSNR',
+                     9: 'V-PSNR'}
+
+            # Define output data dict and fill it with parsed values
+            data = {name: [] for (index, name) in names.items()}
+            for i in range(0, len(tempData)):
+                # As referencing to frame produces error, reference to index *i*
+                for (index, name) in names.items():
+                    data[name].append(
+                        (i, tempData[i][index])
+                    )
+            return data

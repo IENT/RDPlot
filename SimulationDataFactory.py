@@ -4,6 +4,7 @@ from glob import glob
 
 import EncLogHM
 import EncLogSHM
+import EncLogHM360Lib
 import re
 
 class SimulationDataItemFactory():
@@ -11,19 +12,20 @@ class SimulationDataItemFactory():
     # this dictionary stores the simulation types in a key value manner,
     # the key is a string which can be parsed from the log file and is unique
     # for a simulation type, the value is the class of the simulation type
-    simTypeDict = {r'^HM \s software': EncLogHM.EncLogHM,
-                   r'^SHM \s software': EncLogSHM.EncLogSHM
-                   }
+    # for non unique keys, the order plays an important role!
+    simTypeDict = [(r'^-----360 \s video \s parameters----', EncLogHM360Lib.EncLogHM360Lib),
+                   (r'^SHM \s software', EncLogSHM.EncLogSHM),
+                   (r'^HM \s software', EncLogHM.EncLogHM)
+                   ]
 
     def _getSimType(self,path):
         try:
-            for simType in self.simTypeDict:
+            for pattern, enclog in self.simTypeDict:
                 with open(path, 'r') as log_file:
                     log_text = log_file.read()  # reads the whole text file
-                    type = re.search(simType, log_text, re.M + re.X)
+                    type = re.search(pattern, log_text, re.M + re.X)
                 if type:
-                    simType = self.simTypeDict[simType]
-                    return simType
+                    return enclog
         except:
             print("Dont be foolish. Do something useful here")
 

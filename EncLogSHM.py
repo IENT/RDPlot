@@ -45,7 +45,7 @@ class EncLogSHM(EncLog):
         with open(self.path, 'r') as log_file:
             log_text = log_file.read()  # reads the whole text file
             summaries = re.findall(r"""
-                        \s+ L (\d+) \s+ (\d+) \s+ \D \s+ # the next is bitrate
+                        ^\s+ L (\d+) \s+ (\d+) \s+ \D \s+ # the next is bitrate
                         (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)
                         """, log_text, re.M + re.X)
 
@@ -77,47 +77,12 @@ class EncLogSHM(EncLog):
                 data[headerNames[it]] = data2
             return data
 
-            # for it in range(0, 4):  # iterate through Summary, I, P, B
-            #     data2 = {}
-            #     for (index, name) in names.items():
-            #         data2[name] = []
-            #         for layer in range(0, layerQuantity):  # iterate through layers
-            #             data2[name].append(summaries[layerQuantity * it + layer][index])
-            #     data[headerNames[it]] = data2
-
-            # for summary in summaries:
-            #     summary_type = summary[0]
-            #     # Create upon first access
-            #     if summary_type not in data:
-            #         data[summary_type] = {}
-            #     names = summary[1:7]
-            #     vals = summary[7:]
-            #
-            #     names = [name.strip() for name in names]  # remove leading and trailing space
-            #     vals = [float(val) for val in vals]  # convert to numbers
-            #
-            #     name_val_dict = dict(zip(names, vals))  # pack both together in a dict
-            #     # print(summary_type)
-            #
-            #     name_rate = 'Bitrate'
-            #     names.remove('Bitrate')
-            #
-            #     # now pack everything together
-            #     for name in names:
-            #         if name not in data[summary_type]: # create upon first access
-            #             data[summary_type][name] = []
-            #         # Reference all data to *self.qp*
-            #         data[summary_type][name].append(
-            #             (name_val_dict[name_rate], name_val_dict[name])
-            #         )
-            # return data
-
     def _parse_temporal_data(self):
         #this function extracts temporal values
         with open(self.path, 'r') as log_file:
             log_text = log_file.read()  # reads the whole text file
             tempData = re.findall(r"""
-                                POC \s+ (\d+) .+? : \s+ (\d+) .+ (\D-\D+) \s \D+,  #Slice
+                                ^POC \s+ (\d+) .+? : \s+ (\d+) .+ (\D-\D+) \s \D+,  #Slice
                                 .+ \) \s+ (\d+) \s+ (.+) \s+ \[ (\D+) \s+ (\d+.\d+) \s+ #Y PSNR
                                 \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # U PSNR
                                 \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # v PSNR

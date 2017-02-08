@@ -46,13 +46,13 @@ class EncLogHM(EncLog):
     def _parse_summary_data(self):
         with open(self.path, 'r') as log_file:
             log_text = log_file.read()  # reads the whole text file
-            summaries = re.findall(r"""  ^(\w*)-*.*$ # catch summary line
+            summaries = re.findall(r""" ^(\w*)-*.*$ # catch summary line
                            \s* # catch newline and space
                            (.*)\| # catch phrase Total Frames / I / P / B
-                           (\s*\S*)(\s*\S*)(\s*\S*)(\s*\S*)(\s*\S*)# catch rest of the line
+                           (\s+\S+)(\s+\S+)(\s+\S+)(\s+\S+)(\s+\S+)# catch rest of the line
                            \s* # catch newline and space
-                           (\d*\s*)\w # catch frame number
-                           (\s*\d*\.\d*)(\s*\d*\.\d*)(\s*\d*\.\d*)(\s*\d*\.\d*)(\s*\d*\.\d*) # catch the fractional number (rate, PSNRs)
+                           (\d+\s+)\w # catch frame number
+                           (\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+) # catch the fractional number (rate, PSNRs)
                       """, log_text, re.M + re.X)
 
             data = {}
@@ -89,7 +89,7 @@ class EncLogHM(EncLog):
             log_text = log_file.read()  # reads the whole text file
 
             tempData = re.findall(r"""
-                POC \s+ (\d+) \s+ .+ \s+ \d+ \s+ . \s+ (.-\D+) ,  #Slice
+                ^POC \s+ (\d+) \s+ .+ \s+ \d+ \s+ . \s+ (.-\D+) ,  #Slice
                 \s .+ \) \s+ (\d+) \s+ (.+) \s+ \[ (\D+) \s+ (\d+.\d+) \s+ #Y PSNR
                 \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # U PSNR
                 \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # v PSNR
