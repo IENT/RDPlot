@@ -134,6 +134,7 @@
     <addaction name="actionOpen_Sequence"/>
     <addaction name="actionOpen_Directory"/>
     <addaction name="separator"/>
+    <addaction name="actionSave_Table"/>
     <addaction name="actionSave_Plot"/>
     <addaction name="actionSave_all_Plots"/>
     <addaction name="separator"/>
@@ -260,6 +261,11 @@
   <action name="actionHide_Status">
    <property name="text">
     <string>&amp;Hide Status</string>
+   </property>
+  </action>
+  <action name="actionSave_Table">
+   <property name="text">
+    <string>Save Table</string>
    </property>
   </action>
  </widget>

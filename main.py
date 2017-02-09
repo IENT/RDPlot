@@ -2,6 +2,7 @@ from PyQt5.uic import loadUiType
 from PyQt5 import QtGui
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QItemSelectionModel
+from PyQt5.uic.Compiler.qtproxies import QtCore
 
 from matplotlib.figure import Figure
 import matplotlib.ticker as ticker
@@ -79,6 +80,10 @@ class Main(QMainWindow, Ui_MainWindow):
         )
         self.actionHide_Status.triggered.connect(
             self.setStatusWidgetVisibility
+        )
+
+        self.actionSave_Table.triggered.connect(
+            self.save_bd_table
         )
 
         self.variableTreeModel = VariableTreeModel()
@@ -260,13 +265,18 @@ class Main(QMainWindow, Ui_MainWindow):
         self.bdTableModel.update_table(self.combo_rate_psnr.currentText(),
                                  self.combo_interp.currentText(), index)
 
+    def save_bd_table(self):
+        if self.bdTableModel.rowCount(self) == 0:
+            return
+        filename = QtWidgets.QFileDialog.getSaveFileName(self,'Save Table as')[0]
+        self.bdTableModel.export_to_latex(filename)
+
     def on_combo_box(self):
         # just update the bd table but do not change the anchor
         self.update_bd_table(-1)
 
     def clearPlot(self):
         pass
-
 
 
 class NestedDict(dict):
