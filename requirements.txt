@@ -1,7 +1,6 @@
 cycler
 matplotlib
 numpy
-pkg-resources
 py
 pyparsing
 PyQt5
