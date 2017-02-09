@@ -56,6 +56,22 @@
      <widget class="QWidget" name="tableAreaWidget" native="true">
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Preferred</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
         <widget class="QLabel" name="label">
          <property name="text">
           <string>Bjontegaard Delta Measurements</string>

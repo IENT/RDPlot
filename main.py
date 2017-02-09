@@ -4,6 +4,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtCore import QItemSelectionModel
 
 from matplotlib.figure import Figure
+import matplotlib.ticker as ticker
 # from matplotlib.backends.backend_qt4agg import (
 #     FigureCanvasQTAgg as FigureCanvas,
 #     NavigationToolbar2QT as NavigationToolbar)
@@ -329,8 +330,15 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             # Create legend from variable path and encoder log identifiers
             legend = " ".join([plot_data.identifiers[0].split('_')[0]] + [plot_data.identifiers[1]] + plot_data.path)
 
+            # plot the current plotdata and set the legend
             axis.plot( xs, ys, '-x',  label=legend )
             axis.legend(loc='lower right')
+
+            #set grid and default y tick in 0.5 spacing
+            axis.grid(True)
+            start, end = axis.get_ylim()
+            axis.yaxis.set_ticks(np.arange(start, end, 0.5))
+
 
         # distinguish between summary plot and temporal plot
         # if plotTypeSummary:
