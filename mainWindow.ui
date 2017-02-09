@@ -51,18 +51,12 @@
        <property name="childrenCollapsible">
         <bool>true</bool>
        </property>
-       <widget class="QFrame" name="plotsFrame">
+       <widget class="QWidget" name="plotsFrame" native="true">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::StyledPanel</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Raised</enum>
         </property>
        </widget>
       </widget>
@@ -83,7 +77,7 @@
    <property name="minimumSize">
     <size>
      <width>200</width>
-     <height>122</height>
+     <height>192</height>
     </size>
    </property>
    <property name="allowedAreas">
@@ -110,6 +104,16 @@
        </attribute>
       </widget>
      </item>
+     <item>
+      <widget class="QComboBox" name="combo_interp">
+       <property name="currentText">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="combo_rate_psnr"/>
+     </item>
     </layout>
    </widget>
   </widget>
@@ -119,7 +123,7 @@
      <x>0</x>
      <y>0</y>
      <width>1734</width>
-     <height>25</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -254,9 +258,6 @@
    </property>
   </action>
   <action name="actionHide_Status">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
    <property name="text">
     <string>&amp;Hide Status</string>
    </property>
