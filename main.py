@@ -327,9 +327,10 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             [xs, ys] = list( zip(*sorted_value_pairs) )
 
             # Create legend from variable path and encoder log identifiers
-            legend = " ".join(plot_data.identifiers + plot_data.path)
+            legend = " ".join([plot_data.identifiers[0].split('_')[0]] + [plot_data.identifiers[1]] + plot_data.path)
 
-            axis.plot( xs, ys, label=legend )
+            axis.plot( xs, ys, '-x',  label=legend )
+            axis.legend(loc='lower right')
 
         # distinguish between summary plot and temporal plot
         # if plotTypeSummary:
