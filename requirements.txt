@@ -10,3 +10,4 @@ python-dateutil
 pytz
 sip
 six
+scipy
