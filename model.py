@@ -3,9 +3,12 @@ from glob import glob
 from os.path import (basename, dirname, abspath, join, sep, normpath, isdir,
                      isfile)
 from collections import deque
-from collections import OrderedDict
-from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel, pyqtSignal
+import numpy as np
 from PyQt5.Qt import Qt, QVariant, QModelIndex
+from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel, QAbstractTableModel, pyqtSignal
+
+from BD import bjontegaard
+
 
 #
 # Functions
@@ -1015,5 +1018,158 @@ class VariableTreeModel(OrderedDictTreeModel):
         self.clear()
         self.clear()
         self.update_from_dict_tree( dict_tree )
+
+# This is the model for storing the bd table
+class BdTableModel(QAbstractTableModel):
+    def  __init__(self, parent=None, *args):
+        super(BdTableModel, self).__init__()
+        self._data = np.empty(shape=[0, 0])
+        self._horizontal_headers = []
+        self._vertical_headers = []
+
+        # Store the current anchor index and plot data collection
+        self._anchor_index = 0
+        self._plot_data_collection = []
+
+    def rowCount(self, parent):
+        return self._data.shape[0]
+
+    def columnCount(self, parent):
+        return self._data.shape[1]
+
+
+    def data(self, qIndex, role):
+        if qIndex.isValid() and role == Qt.DisplayRole:
+            value = self._data[qIndex.row(),qIndex.column()]
+            return QVariant(str(value))
+        return QVariant()
+
+    def headerData(self, col, orientation, role):
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            return QVariant(self._horizontal_headers[col])
+        elif orientation == Qt.Vertical and role == Qt.DisplayRole:
+            return QVariant(self._vertical_headers[col])
+        return QVariant()
+
+    def flags(self, index):
+        return Qt.ItemIsEnabled
+
+    def resetModel(self):
+        self.beginRemoveColumns(QModelIndex(), 0, self._data.shape[1])
+        self.removeColumns(0,self._data.shape[1], QModelIndex())
+        self.endRemoveColumns()
+
+        self.beginRemoveRows(QModelIndex(), 0, self._data.shape[0])
+        self.removeRows(0, self._data.shape[0], QModelIndex())
+        self.endRemoveRows()
+
+        self._data = np.empty(shape=[0, 0])
+        self._horizontal_headers = []
+        self._vertical_headers = []
+        self.headerDataChanged.emit(Qt.Horizontal,0,self._data.shape[1])
+        self.headerDataChanged.emit(Qt.Vertical, 0, self._data.shape[0])
+
+    def update(self, plot_data_collection, bd_option, interp_option):
+        # reset the model in the first place and set data afterwards appropriately
+        self.beginResetModel()
+        self.resetModel()
+        self.endResetModel()
+
+        # there is no need to calculate a bd for just one curve
+        if len(plot_data_collection) < 2:
+            return
+
+        seq_set = set()
+        config_set = set()
+        for i in plot_data_collection:
+            seq_set.add(i.identifiers[0])
+            config_set.add(i.identifiers[1])
+        seq_set = sorted(seq_set)
+        config_set = sorted(config_set)
+
+        # there is no need to calculate a bjontegaard delta, if only one configuration is loaded
+        if len(config_set) < 2:
+            return
+
+        self._horizontal_headers = list(config_set)
+        self._vertical_headers = list(seq_set)
+
+        # insert as many columns as we need for the selected data
+        self.beginInsertColumns(QModelIndex(), 0, len(config_set)-1)
+        self.insertColumns(0,len(config_set),QModelIndex())
+        self.endInsertColumns()
+
+        # insert as many rows as we need for the selected data
+        self.beginInsertRows(QModelIndex(), 0, len(seq_set)-1)
+        self.insertRows(0,len(seq_set),QModelIndex())
+        self.endInsertRows()
+
+
+        self._plot_data_collection = plot_data_collection
+        self._data = np.zeros((len(seq_set),len(config_set)))
+        self.update_table(bd_option, interp_option, 0)
+
+    # This function is called when the anchor, the interpolation method
+    # or the output of the bjontegaard delta is changed
+    def update_table(self,bd_option, interp_option, anchor_index):
+
+        # set the whole data matrix to zero first
+        self._data = np.zeros((len(self._vertical_headers), len(self._horizontal_headers)))
+
+        # if we have passed the index of the column for the anchor select that one as anchor
+        anchor = self._horizontal_headers[self._anchor_index]
+        if isinstance(anchor_index, int) and anchor_index !=-1:
+            anchor = self._horizontal_headers[anchor_index]
+            self._anchor_index = anchor_index
+
+        # iterate over all rows (sequences) and columns (configurations)
+        # of the table. Calculate one bd for each cell and store it in the
+        # model. Emit in the very and the dataChanged signal
+        row = 0
+        for seq in self._vertical_headers:
+            col = 0
+            for config in self._horizontal_headers:
+                # for the anchor vs anchor measurement the bd is zero,
+                # so just skip that case
+                if config==anchor:
+                    col += 1
+                    continue
+                # determine the identifiers of the current cell
+                identifiersTmp = [seq, config]
+
+                # if the anchor configuration is not available for the current seq continue
+                if len([x for x in self._plot_data_collection if x.identifiers.__eq__([identifiersTmp[0], anchor])])==0:
+                    self._data[row, col] = np.nan
+                    col += 1
+                    continue
+
+                # get the rd values for curve c1 which is the anchor
+                c1 = [x for x in self._plot_data_collection if x.identifiers.__eq__([identifiersTmp[0], anchor])][0].values
+                c1 = sorted(list(set(c1))) # remove duplicates, this is just a workaround for the moment....
+
+                # if the configuration is not available for the current seq continue
+                if len([x for x in self._plot_data_collection if x.identifiers.__eq__(identifiersTmp)]) == 0:
+                    self._data[row, col] = np.nan
+                    col += 1
+                    continue
+
+                # get the rd values for curve c2
+                c2 = [x for x in self._plot_data_collection if x.identifiers.__eq__(identifiersTmp)][0].values
+                c2 = sorted(list(set(c2)))
+
+                # calculate the bd, actually this can be extended by some plots
+                # TODO: Those plots could be a future project
+                configs = [anchor, identifiersTmp[1]]
+                self._data[row,col] = bjontegaard(c1, c2, bd_option, interp_option, 'TEST', configs, True)
+                col += 1
+            row += 1
+            self.dataChanged.emit(self.index(0,0),self.index(row,col))
+
+
+
+
+
+
+
 
 

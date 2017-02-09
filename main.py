@@ -16,7 +16,7 @@ import collections
 import numpy as np
 
 from model import (EncoderLogTreeModel, OrderedDictModel,
-                   VariableTreeModel, dict_tree_from_sim_data_items)
+                   VariableTreeModel, BdTableModel, dict_tree_from_sim_data_items)
 from view import (EncLogTreeView, QRecursiveSelectionModel)
 
 
@@ -36,10 +36,14 @@ class Main(QMainWindow, Ui_MainWindow):
         # add a widget for previewing plots, they can then be added to the actual plot
         self.plotPreview = PlotWidget()
         self.plotAreaVerticalLayout.addWidget(self.plotPreview)
-
-        # Create tree model to store encoder logs and connect it to view
+        # Create tree model to store encoder logs and connect it to views
         self.encoderLogTreeModel = EncoderLogTreeModel()
+        self.bdTableModel = BdTableModel()
         self.encoderLogTreeView.setModel(self.encoderLogTreeModel)
+        self.plotPreview.tableView.setModel(self.bdTableModel)
+
+        # connect a double clicked section of the bd table to a change of the anchor
+        self.plotPreview.tableView.horizontalHeader().sectionDoubleClicked.connect(self.update_bd_table)
 
         # Set custom selection model, so that sub items are automatically
         # selected if parent is selected
@@ -90,7 +94,13 @@ class Main(QMainWindow, Ui_MainWindow):
             self._variable_tree_selection_model
         )
 
-        # sets Visibility for the Plotsettings Widget
+        # set up combo boxes for rate/psnr and interpolation options
+        self.combo_interp.addItems(["pchip", "pol"])
+        self.combo_rate_psnr.addItems(["drate", "dsnr"])
+        self.combo_interp.currentIndexChanged.connect(self.on_combo_box)
+        self.combo_rate_psnr.currentIndexChanged.connect(self.on_combo_box)
+
+    # sets Visibility for the Plotsettings Widget
     def setPlotSettingsVisibility(self):
         self.plotsettings.visibilityChanged.disconnect(self.plotSettingsVisibilityChanged)
         if self.plotsettings.isHidden():
@@ -105,11 +115,7 @@ class Main(QMainWindow, Ui_MainWindow):
             self.actionHide_PlotSettings.setChecked(True)
         else:
             self.actionHide_PlotSettings.setChecked(False)
-
-        #
-        self._variable_tree_selection_model.selectionChanged.connect(
-            self.update_plot
-        )
+        self._variable_tree_selection_model.selectionChanged.connect(self.update_plot)
 
         self.encoderLogTreeView.deleteKey.connect(self.remove)
 
@@ -194,7 +200,7 @@ class Main(QMainWindow, Ui_MainWindow):
         return plot_data_collection
 
     def update_variable_tree(self):
-        """Collect all encoder logs currently selected, and create variable
+        """Collect all SimDataItems currently selected, and create variable
         tree and corresponding data from it. Additionaly reselect all prevously
         selected variables.
         """
@@ -240,6 +246,23 @@ class Main(QMainWindow, Ui_MainWindow):
 
         self.plotPreview.change_plot( plot_data_collection )
 
+        # update the model for the bd table, note the anchor is always
+        # the first config if new simDataItems are selected
+        self.bdTableModel.update(plot_data_collection, self.combo_rate_psnr.currentText(),
+                                 self.combo_interp.currentText())
+
+    def update_bd_table(self, index):
+
+        # update bd table, the index determines the anchor,
+        # if it is non integer per default the first config is regarded as
+        # anchor
+        self.bdTableModel.update_table(self.combo_rate_psnr.currentText(),
+                                 self.combo_interp.currentText(), index)
+
+    def on_combo_box(self):
+        # just update the bd table but do not change the anchor
+        self.update_bd_table(-1)
+
     def clearPlot(self):
         pass
 
@@ -261,8 +284,21 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.setupUi(self)
         self.fig_dict = {}
 
-        self.fig = Figure()
-        self.addmpl()
+        # set figure and backgroung to transparent
+        self.plotAreaWidget.fig = Figure()
+        self.plotAreaWidget.fig.patch.set_alpha(0)
+        # set some properties for canvas and add it to the vertical layout.
+        # Most important is to turn the vertical stretch on as otherwise the plot is only scaled in x direction when rescaling the window
+        self.plotAreaWidget.canvas = FigureCanvas(self.plotAreaWidget.fig)
+        # self.plotAreaWidget.canvas.setParent(self.plotAreaWidget)
+        policy = self.plotAreaWidget.canvas.sizePolicy()
+        policy.setVerticalStretch(1)
+        self.plotAreaWidget.canvas.setSizePolicy(policy)
+        self.verticalLayout_3.addWidget(self.plotAreaWidget.canvas)
+        # add the toolbar for the plot
+        self.toolbar = NavigationToolbar(self.plotAreaWidget.canvas,
+                                         self.plotAreaWidget, coordinates=True)
+        self.verticalLayout_3.addWidget(self.toolbar)
 
     # refreshes the figure according to new changes done
     def change_plot(self, plot_data_collection):
@@ -278,9 +314,9 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
         # put a subplot into the figure and set the margins a little bit tighter than the defaults
         # this is some workaround for PyQt similar to tight layout
-        self.fig.clear()
-        axis = self.fig.add_subplot(111)
-        self.fig.subplots_adjust(left=0.05, right=0.95,
+        self.plotAreaWidget.fig.clear()
+        axis = self.plotAreaWidget.fig.add_subplot(111)
+        self.plotAreaWidget.fig.subplots_adjust(left=0.05, right=0.95,
                             bottom=0.1, top=0.95,
                             hspace=0.2, wspace=0.2)
 
@@ -304,7 +340,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         #     axis.set_title('Temporal Data')
         #     axis.set_xlabel('POC')
         #     axis.set_ylabel(variable + ' [dB]')
-        self.canvas.draw()
+        self.plotAreaWidget.canvas.draw()
 
     # TODO Remove this? It will not work with the tree widget
     # def addfig(self, name, fig):
