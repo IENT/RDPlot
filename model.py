@@ -1157,12 +1157,22 @@ class BdTableModel(QAbstractTableModel):
                 c2 = [x for x in self._plot_data_collection if x.identifiers.__eq__(identifiersTmp)][0].values
                 c2 = sorted(list(set(c2)))
 
+                # if a simulation does not contain at least 4 rate points,
+                # we do not want to calculate the bd
+                if len(c1) < 4 or len(c2) < 4:
+                    self._data[row, col] = np.nan
+                    col += 1
+                    continue
+
                 # calculate the bd, actually this can be extended by some plots
                 # TODO: Those plots could be a future project
                 configs = [anchor, identifiersTmp[1]]
                 self._data[row,col] = bjontegaard(c1, c2, bd_option, interp_option, 'TEST', configs, True)
                 col += 1
             row += 1
+
+            # round the output to something meaningful
+            self._data = np.around(self._data, decimals=2)
             self.dataChanged.emit(self.index(0,0),self.index(row,col))
 
 
