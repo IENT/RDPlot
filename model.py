@@ -1081,7 +1081,15 @@ class BdTableModel(QAbstractTableModel):
 
         seq_set = set()
         config_set = set()
+        indentifiers_list = []
         for i in plot_data_collection:
+            # there is no reason for calculating a bjontegaard, if we want to plot
+            # serveral variables from the same sequence and config, so return in that case
+            # otherwise append the identifiers to the list and go on
+            if indentifiers_list.__contains__(i.identifiers):
+                return
+            indentifiers_list.append(i.identifiers)
+
             seq_set.add(i.identifiers[0])
             config_set.add(i.identifiers[1])
         seq_set = sorted(seq_set)
@@ -1103,7 +1111,6 @@ class BdTableModel(QAbstractTableModel):
         self.beginInsertRows(QModelIndex(), 0, len(seq_set)-1)
         self.insertRows(0,len(seq_set),QModelIndex())
         self.endInsertRows()
-
 
         self._plot_data_collection = plot_data_collection
         self._data = np.zeros((len(seq_set),len(config_set)))
