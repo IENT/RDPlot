@@ -1182,6 +1182,12 @@ class BdTableModel(QAbstractTableModel):
             self._data = np.around(self._data, decimals=2)
             self.dataChanged.emit(self.index(0,0),self.index(row,col))
 
+    def export_to_latex(self, filename):
+        from tabulate import tabulate
+
+        seqs = [seq.split('_')[0] for seq in self._vertical_headers]
+        filehandle = open(filename, 'w')
+        filehandle.write(tabulate(self._data, self._horizontal_headers, showindex=seqs, tablefmt="latex_booktabs"))
 
 
 
