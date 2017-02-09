@@ -5,6 +5,7 @@ from glob import glob
 import EncLogHM
 import EncLogSHM
 import EncLogHM360Lib
+import EncLogHM360LibOld
 import re
 
 class SimulationDataItemFactory():
@@ -13,7 +14,8 @@ class SimulationDataItemFactory():
     # the key is a string which can be parsed from the log file and is unique
     # for a simulation type, the value is the class of the simulation type
     # for non unique keys, the order plays an important role!
-    simTypeDict = [(r'^-----360 \s video \s parameters----', EncLogHM360Lib.EncLogHM360Lib),
+    simTypeDict = [(r'Y-PSNR_VP0', EncLogHM360Lib.EncLogHM360Lib),
+                   (r'^-----360 \s video \s parameters----', EncLogHM360LibOld.EncLogHM360LibOld),
                    (r'^SHM \s software', EncLogSHM.EncLogSHM),
                    (r'^HM \s software', EncLogHM.EncLogHM)
                    ]

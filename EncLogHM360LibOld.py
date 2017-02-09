@@ -3,7 +3,7 @@ from model import (EncLog, EncLogParserError)
 from os.path import (basename,sep, normpath)
 import re
 
-class EncLogHM360Lib(EncLog):
+class EncLogHM360LibOld(EncLog):
     def __init__(self, path):
         super().__init__(path)
 
@@ -47,25 +47,15 @@ class EncLogHM360Lib(EncLog):
             summaries = re.findall(r""" ^(\S+) .+ $ \s .+ $
                                         \s+ (\d+) \s+ \D \s+ (\S+)  # Total Frames, Bitrate
                                         \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)  # y-, u-, v-, yuv-PSNR
-                                        \s+ (\S+) \s+ (\S+) \s+ (\S+)  # SPSNR_NN
                                         \s+ (\S+) \s+ (\S+) \s+ (\S+)  # WSPSNR
-                                        \s+ (\S+) \s+ (\S+) \s+ (\S+)  # SPSNR_I
                                         \s+ (\S+) \s+ (\S+) \s+ (\S+)  # CPPPSNR
-                                        \s+ (\S+) \s+ (\S+) \s+ (\S+)  # E2EWSPSNR
-                                        \s+ (\S+) \s+ (\S+) \s+ (\S+)  # PSNR_VP0
-                                        \s+ (\S+) \s+ (\S+) \s+ (\S+)  # PSNR_VP1
+                                        \s+ (\S+) \s+ (\S+) \s+ (\S+) \s $  # E2EWSPSNR
                                         """, log_text, re.M + re.X)
             data = {}
-            names = {1: 'Frames', 2: 'Bitrate',
-                     3: 'Y-PSNR', 4: 'U-PSNR', 5: 'V-PSNR', 6: 'YUV-PSNR',
-                     7: 'Y-SPSNR_NN', 8: 'U-SPSNR_NN', 9: 'V-SPSNR_NN',
-                     10: 'Y-WSPSNR', 11: 'U-WSPSNR', 12: 'V-WSPSNR',
-                     13: 'Y-SPSNR_I', 14: 'U-SPSNR_I', 15: 'V-SPSNR_I',
-                     16: 'Y-CPPSNR', 17: 'U-CPPSNR', 18: 'V-CPPSNR',
-                     19: 'Y-E2EWSPSNR', 20: 'U-E2EWSPSNR', 21: 'V-E2EWSPSNR',
-                     22: 'Y-PSNR_VP0', 23: 'U-PSNR_VP0', 24: 'V-PSNR_VP0',
-                     25: 'Y-PSNR_VP1', 26: 'U-PSNR_VP1', 27: 'V-PSNR_VP1'
-                     }
+            names = {1: 'Frames', 2: 'Bitrate', 3: 'Y-PSNR', 4: 'U-PSNR',
+                     5: 'V-PSNR', 6: 'YUV-PSNR', 7: 'Y-WSPSNR', 8: 'U-WSPSNR',
+                     9: 'V-WSPSNR', 10:'Y-CPPSNR', 11: 'U-CPPSNR', 12: 'V-CPPSNR',
+                     13: 'Y-E2EWSPSNR', 14: 'U-E2EWSPSNR', 15: 'V-E2EWSPSNR'}
 
             for i in range(0, len(summaries)):  # iterate through Summary, I, P, B
                 data2 = {name: [] for (index, name) in names.items()}
@@ -75,6 +65,15 @@ class EncLogHM360Lib(EncLog):
                     )
                 data[summaries[i][0]] = data2
 
+            # viewport = re.findall(r""" ^\s+ (\d+) \s+ \D \s+ (\d+)  # total frames, viewport
+            #                            \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)  # y-,u-,v-, yuv-PSNR
+            #                            \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)$  # y-,u-,v-, yuv-MSE
+            #                             """, log_text, re.M + re.X)
+            #
+            # viewportNames = {0: 'Frames', 1: 'Viewport', 2: 'Y-PSNR', 3: 'U-PSNR',
+            #          4: 'V-PSNR', 5: 'YUV-PSNR', 6: 'Y-MSE', 7: 'U-MSE',
+            #          8: 'V-MSE', 9: 'Y-MSE'}
+
             return data
 
     def _parse_temporal_data(self):
@@ -83,28 +82,20 @@ class EncLogHM360Lib(EncLog):
             log_text = log_file.read()  # reads the whole text file
             tempData = re.findall(r"""
                 ^POC \s+ (\d+) \s+ .+ \s+ \d+ \s+ . \s+ (.-\D+) ,  # POC, Slice
-                \s .+ \) \s+ (\d+) \s+ \S+ \s+  # bitrate
+                \s .+ \) \s+ (\d+) \s+ \S+ \s+  # bits
                 \[ \S \s (\S+) \s \S+ \s+ \S \s (\S+) \s \S+ \s+ \S \s (\S+) \s \S+ ] \s  # y-, u-, v-PSNR
-                \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-SPSNR_NN
                 \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-WSPSNR
-                \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-SPSNR_I
                 \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-CPPPSNR
                 \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-E2EWSPSNR
-                \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-PSNR_VP0
-                \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-PSNR_VP1
                 """, log_text, re.M + re.X)
 
             # Association between index of data in tempData and corresponding
             # output key. Output shape definition is in one place.
             names = {0: 'Frames', 2: 'Bits',
                      3: 'Y-PSNR', 4: 'U-PSNR', 5: 'V-PSNR',
-                     6: 'Y-SPSNR_NN', 7: 'U-SPSNR_NN', 8: 'V-SPSNR_NN',
-                     9: 'Y-WSPSNR', 10: 'U-WSPSNR', 11: 'V-WSPSNR',
-                     12: 'Y-SPSNR_I', 13: 'U-SPSNR_I', 14: 'V-SPSNR_I',
-                     15: 'Y-CPPSNR', 16: 'U-CPPSNR', 17: 'V-CPPSNR',
-                     18: 'Y-E2EWSPSNR', 19: 'U-E2EWSPSNR', 20: 'V-E2EWSPSNR',
-                     21: 'Y-PSNR_VP0', 22: 'U-PSNR_VP0', 23: 'V-PSNR_VP0',
-                     24: 'Y-PSNR_VP1', 25: 'U-PSNR_VP1', 26: 'V-PSNR_VP1'
+                     6: 'Y-WSPSNR', 7: 'U-WSPSNR', 8: 'V-WSPSNR',
+                     9: 'Y-CPPSNR', 10: 'U-CPPSNR', 11: 'V-CPPSNR',
+                     12: 'Y-E2EWSPSNR', 13: 'U-E2EWSPSNR', 14: 'V-E2EWSPSNR',
                      }
 
             # Define output data dict and fill it with parsed values
