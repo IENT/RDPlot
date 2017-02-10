@@ -1,11 +1,12 @@
 from PyQt5.uic import loadUiType
-from PyQt5.QtCore import QItemSelectionModel
+from PyQt5.QtCore import QItemSelectionModel, Qt
 
 from matplotlib.figure import Figure
 
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar)
+
 
 import numpy as np
 import math
@@ -289,15 +290,12 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.fig_dict = {}
 
         # set figure and backgroung to transparent
-        self.plotAreaWidget.fig = Figure()
-        self.plotAreaWidget.fig.patch.set_alpha(0)
+        self.plotAreaWidget.fig = Figure(facecolor="white")
 
-        # set some properties for canvas and add it to the vertical layout.
-        # Most important is to turn the vertical stretch on as otherwise the plot is only scaled in x direction when rescaling the window
+        # set some properties for canvas
         self.plotAreaWidget.canvas = FigureCanvas(self.plotAreaWidget.fig)
-        policy = self.plotAreaWidget.canvas.sizePolicy()
-        policy.setVerticalStretch(1)
-        self.plotAreaWidget.canvas.setSizePolicy(policy)
+        # self.plotAreaWidget.canvas.setParent(self.plotAreaWidget)
+        # self.plotAreaWidget.canvas.setFocusPolicy(Qt.StrongFocus)
 
         # connect scroll and double click event to canvas
         self.plotAreaWidget.canvas.mpl_connect('scroll_event', self.onWheel)
@@ -356,6 +354,9 @@ class PlotWidget(QWidget, Ui_PlotWidget):
     def onWheel(self,event):
         base_scale = 1.5
         axis = self.plotAreaWidget.fig.gca()
+        if axis.has_data()==False:
+            axis.remove()
+            return
         # get the current x and y limits
         cur_xlim = axis.get_xlim()
         cur_ylim = axis.get_ylim()
@@ -382,6 +383,9 @@ class PlotWidget(QWidget, Ui_PlotWidget):
     def onDbClick(self,event):
         if event.dblclick:
             axis = self.plotAreaWidget.fig.gca()
+            if axis.has_data() == False:
+                axis.remove()
+                return
             axis.autoscale()
             self.plotAreaWidget.canvas.draw()  # force re-draw
         else:
@@ -389,7 +393,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
 if __name__ == '__main__':
     import sys
-    from PyQt5 import QtGui
+    from PyQt5 import QtGui, QtWidgets
     from PyQt5 import QtWidgets
 
     app = QtWidgets.QApplication(sys.argv)
