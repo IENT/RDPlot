@@ -1122,7 +1122,7 @@ class BdTableModel(QAbstractTableModel):
         # if there are no rows and colums in the model,
         # nothing can be updated
         if self.rowCount(self)==0 and self.columnCount(self)==0:
-            return 
+            return
 
         # set the whole data matrix to zero first
         self._data = np.zeros((len(self._vertical_headers), len(self._horizontal_headers)))
