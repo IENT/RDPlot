@@ -291,17 +291,18 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         # set figure and backgroung to transparent
         self.plotAreaWidget.fig = Figure()
         self.plotAreaWidget.fig.patch.set_alpha(0)
+
         # set some properties for canvas and add it to the vertical layout.
         # Most important is to turn the vertical stretch on as otherwise the plot is only scaled in x direction when rescaling the window
         self.plotAreaWidget.canvas = FigureCanvas(self.plotAreaWidget.fig)
-        # self.plotAreaWidget.canvas.setParent(self.plotAreaWidget)
         policy = self.plotAreaWidget.canvas.sizePolicy()
         policy.setVerticalStretch(1)
         self.plotAreaWidget.canvas.setSizePolicy(policy)
 
+        # connect scroll and double click event to canvas
         self.plotAreaWidget.canvas.mpl_connect('scroll_event', self.onWheel)
         self.plotAreaWidget.canvas.mpl_connect('button_press_event', self.onDbClick)
- 
+
         self.verticalLayout_3.addWidget(self.plotAreaWidget.canvas)
         # add the toolbar for the plot
         self.toolbar = NavigationToolbar(self.plotAreaWidget.canvas,
@@ -378,27 +379,13 @@ class PlotWidget(QWidget, Ui_PlotWidget):
                      ydata + cur_yrange * scale_factor])
         self.plotAreaWidget.canvas.draw() # force re-draw
 
-
     def onDbClick(self,event):
         if event.dblclick:
             axis = self.plotAreaWidget.fig.gca()
-            axis.relim()
-            # update ax.viewLim using the new dataLim
             axis.autoscale()
             self.plotAreaWidget.canvas.draw()  # force re-draw
-
         else:
             return
-
-
-class Graph():
-    """"
-    Hold all information on a single plot of a sequence.
-    """
-
-    def __init__(self):
-        self.rd_points = {}
-
 
 if __name__ == '__main__':
     import sys
