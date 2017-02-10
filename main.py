@@ -1,22 +1,14 @@
-import matplotlib
 from PyQt5.uic import loadUiType
-from PyQt5 import QtGui
-from PyQt5 import QtWidgets
 from PyQt5.QtCore import QItemSelectionModel
-from PyQt5.uic.Compiler.qtproxies import QtCore
 
 from matplotlib.figure import Figure
-import matplotlib.ticker as ticker
-# from matplotlib.backends.backend_qt4agg import (
-#     FigureCanvasQTAgg as FigureCanvas,
-#     NavigationToolbar2QT as NavigationToolbar)
+
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar)
-from glob import glob
-import re
-import collections
+
 import numpy as np
+import math
 
 from model import (EncoderLogTreeModel, OrderedDictModel,
                    VariableTreeModel, BdTableModel, dict_tree_from_sim_data_items)
@@ -351,6 +343,8 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             #set grid and default y tick in 0.5 spacing
             axis.grid(True)
             start, end = axis.get_ylim()
+            start = math.floor(start)
+            end = math.ceil(end)
             axis.yaxis.set_ticks(np.arange(start, end, 0.5))
 
             self.plotAreaWidget.canvas.draw()
