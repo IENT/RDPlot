@@ -1,3 +1,4 @@
+import matplotlib
 from PyQt5.uic import loadUiType
 from PyQt5 import QtGui
 from PyQt5 import QtWidgets
@@ -305,6 +306,9 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         policy = self.plotAreaWidget.canvas.sizePolicy()
         policy.setVerticalStretch(1)
         self.plotAreaWidget.canvas.setSizePolicy(policy)
+
+        self.plotAreaWidget.canvas.mpl_connect('scroll_event', self.zoom_fun)
+
         self.verticalLayout_3.addWidget(self.plotAreaWidget.canvas)
         # add the toolbar for the plot
         self.toolbar = NavigationToolbar(self.plotAreaWidget.canvas,
@@ -349,48 +353,35 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             start, end = axis.get_ylim()
             axis.yaxis.set_ticks(np.arange(start, end, 0.5))
 
+            self.plotAreaWidget.canvas.draw()
 
-        # distinguish between summary plot and temporal plot
-        # if plotTypeSummary:
-        #     axis.set_title('Summary Data')
-        #     axis.set_xlabel('Bitrate [kbps]') #TODO is that k bytes or bits? need to check
-        #     axis.set_ylabel( + ' [dB]')
-        # else:
-        #     axis.set_title('Temporal Data')
-        #     axis.set_xlabel('POC')
-        #     axis.set_ylabel(variable + ' [dB]')
-        self.plotAreaWidget.canvas.draw()
-
-    # TODO Remove this? It will not work with the tree widget
-    # def addfig(self, name, fig):
-    #     self.fig_dict[name] = fig
-    #     self.encoderLogTreeView.addItem(name)
-
-    # adds a figure to the plotwidget
-    def addmpl(self):
-        # set backgroung to transparent
-        self.fig.patch.set_alpha(0)
-        # set some properties for canvas and add it to the vertical layout.
-        # Most important is to turn the vertical stretch on as otherwise the plot is only scaled in x direction when rescaling the window
-        self.canvas = FigureCanvas(self.fig)
-        self.canvas.setParent(self.plotAreaWidget)
-        policy = self.canvas.sizePolicy()
-        policy.setVerticalStretch(1)
-        self.canvas.setSizePolicy(policy)
-        self.verticalLayout.addWidget(self.canvas)
-        # add the toolbar for the plot
-        self.toolbar = NavigationToolbar(self.canvas,
-                                         self.plotAreaWidget, coordinates=True)
-        self.verticalLayout.addWidget(self.toolbar)
-        pass
-
-    # removes a figure from the plotwidget
-    def rmmpl(self, ):
-        self.verticalLayout.removeWidget(self.canvas)
-        self.canvas.close()
-        self.verticalLayout.removeWidget(self.toolbar)
-        self.toolbar.close()
-
+    # this function enables zoom with mousewheel
+    # see also: http://stackoverflow.com/questions/11551049/matplotlib-plot-zooming-with-scroll-wheel
+    def zoom_fun(self,event):
+        base_scale = 2
+        axis = self.plotAreaWidget.fig.gca()
+        # get the current x and y limits
+        cur_xlim = axis.get_xlim()
+        cur_ylim = axis.get_ylim()
+        cur_xrange = (cur_xlim[1] - cur_xlim[0]) * .5
+        cur_yrange = (cur_ylim[1] - cur_ylim[0]) * .5
+        xdata = event.xdata  # get event x location
+        ydata = event.ydata  # get event y location
+        if event.button == 'up':
+            # deal with zoom in
+            scale_factor = 1 / base_scale
+        elif event.button == 'down':
+            # deal with zoom out
+            scale_factor = base_scale
+        else:
+            # deal with something that should never happen
+            scale_factor = 1
+        # set new limits
+        axis.set_xlim([xdata - cur_xrange * scale_factor,
+                     xdata + cur_xrange * scale_factor])
+        axis.set_ylim([ydata - cur_yrange * scale_factor,
+                     ydata + cur_yrange * scale_factor])
+        self.plotAreaWidget.canvas.draw() # force re-draw
 
 class Graph():
     """"
