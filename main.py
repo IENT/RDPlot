@@ -7,6 +7,8 @@ from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar)
 
+from mpldatacursor import datacursor
+
 
 import numpy as np
 import math
@@ -337,8 +339,11 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             legend = " ".join([plot_data.identifiers[0].split('_')[0]] + [plot_data.identifiers[1]] + plot_data.path)
 
             # plot the current plotdata and set the legend
-            axis.plot( xs, ys, '-x',  label=legend )
+            curve = axis.plot( xs, ys, '-x',  label=legend )
             axis.legend(loc='lower right')
+
+            # add datacurser for the curve
+            datacursor(curve)
 
             #set grid and default y tick in 0.5 spacing
             axis.grid(True)

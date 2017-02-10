@@ -11,3 +11,4 @@ sip
 six
 scipy
 tabulate
+mpldatacursor
