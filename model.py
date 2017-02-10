@@ -1119,6 +1119,10 @@ class BdTableModel(QAbstractTableModel):
     # This function is called when the anchor, the interpolation method
     # or the output of the bjontegaard delta is changed
     def update_table(self,bd_option, interp_option, anchor_index):
+        # if there are no rows and colums in the model,
+        # nothing can be updated
+        if self.rowCount(self)==0 and self.columnCount(self)==0:
+            return 
 
         # set the whole data matrix to zero first
         self._data = np.zeros((len(self._vertical_headers), len(self._horizontal_headers)))
