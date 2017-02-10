@@ -299,8 +299,9 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         policy.setVerticalStretch(1)
         self.plotAreaWidget.canvas.setSizePolicy(policy)
 
-        self.plotAreaWidget.canvas.mpl_connect('scroll_event', self.zoom_fun)
-
+        self.plotAreaWidget.canvas.mpl_connect('scroll_event', self.onWheel)
+        self.plotAreaWidget.canvas.mpl_connect('button_press_event', self.onDbClick)
+ 
         self.verticalLayout_3.addWidget(self.plotAreaWidget.canvas)
         # add the toolbar for the plot
         self.toolbar = NavigationToolbar(self.plotAreaWidget.canvas,
@@ -351,8 +352,8 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
     # this function enables zoom with mousewheel
     # see also: http://stackoverflow.com/questions/11551049/matplotlib-plot-zooming-with-scroll-wheel
-    def zoom_fun(self,event):
-        base_scale = 2
+    def onWheel(self,event):
+        base_scale = 1.5
         axis = self.plotAreaWidget.fig.gca()
         # get the current x and y limits
         cur_xlim = axis.get_xlim()
@@ -376,6 +377,19 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         axis.set_ylim([ydata - cur_yrange * scale_factor,
                      ydata + cur_yrange * scale_factor])
         self.plotAreaWidget.canvas.draw() # force re-draw
+
+
+    def onDbClick(self,event):
+        if event.dblclick:
+            axis = self.plotAreaWidget.fig.gca()
+            axis.relim()
+            # update ax.viewLim using the new dataLim
+            axis.autoscale()
+            self.plotAreaWidget.canvas.draw()  # force re-draw
+
+        else:
+            return
+
 
 class Graph():
     """"
