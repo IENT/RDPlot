@@ -32,14 +32,11 @@ class EncLogHM(EncLog):
 
         # prepend simulation directory to config
         config = directories[-1] + ' ' + config
-        m = re.search(r'_QP(\d*)_', filename)
-        if m:
-            qp = m.group(1)
-        else:
-            raise EncLogParserError(
-                "Basename {} of path {} does not contain a valid qp value"
-                    .format(filename, path)
-            )
+        with open(self.path, 'r') as log_file:
+            log_text = log_file.read()  # reads the whole text file
+            qp = re.findall(r""" ^QP \s+ : \s+ (\d+.\d+) $
+                                  """, log_text, re.M + re.X)
+        qp = qp[0]
         return (sequence, config, qp)
 
 
@@ -55,58 +52,57 @@ class EncLogHM(EncLog):
                            (\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+) # catch the fractional number (rate, PSNRs)
                       """, log_text, re.M + re.X)
 
-            data = {}
-            for summary in summaries:
-                summary_type = summary[0]
-                # Create upon first access
-                if summary_type not in data:
-                    data[summary_type] = {}
-                names = summary[1:7]
-                vals = summary[7:]
+        data = {}
+        for summary in summaries:
+            summary_type = summary[0]
+            # Create upon first access
+            if summary_type not in data:
+                data[summary_type] = {}
+            names = summary[1:7]
+            vals = summary[7:]
 
-                names = [name.strip() for name in names]  # remove leading and trailing space
-                vals = [float(val) for val in vals]  # convert to numbers
+            names = [name.strip() for name in names]  # remove leading and trailing space
+            vals = [float(val) for val in vals]  # convert to numbers
 
-                name_val_dict = dict(zip(names, vals))  # pack both together in a dict
-                # print(summary_type)
+            name_val_dict = dict(zip(names, vals))  # pack both together in a dict
+            # print(summary_type)
 
-                name_rate = 'Bitrate'
-                names.remove('Bitrate')
+            name_rate = 'Bitrate'
+            names.remove('Bitrate')
 
-                # now pack everything together
-                for name in names:
-                    if name not in data[summary_type]:  # create upon first access
-                        data[summary_type][name] = []
-                    # Reference all data to *self.qp*
-                    data[summary_type][name].append(
-                        (name_val_dict[name_rate], name_val_dict[name])
-                    )
-            return data
+            # now pack everything together
+            for name in names:
+                if name not in data[summary_type]:  # create upon first access
+                    data[summary_type][name] = []
+                # Reference all data to *self.qp*
+                data[summary_type][name].append(
+                    (name_val_dict[name_rate], name_val_dict[name])
+                )
+        return data
 
     def _parse_temporal_data(self):
         # this function extracts temporal values
         with open(self.path, 'r') as log_file:
             log_text = log_file.read()  # reads the whole text file
 
-            tempData = re.findall(r"""
-                ^POC \s+ (\d+) \s+ .+ \s+ \d+ \s+ . \s+ (.-\D+) ,  #Slice
-                \s .+ \) \s+ (\d+) \s+ (.+) \s+ \[ (\D+) \s+ (\d+.\d+) \s+ #Y PSNR
-                \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # U PSNR
-                \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # v PSNR
-                """, log_text, re.M + re.X)
+        tempData = re.findall(r"""
+            ^POC \s+ (\d+) \s+ .+ \s+ \d+ \s+ . \s+ (.-\D+) ,  #Slice
+            \s .+ \) \s+ (\d+) \s+ (.+) \s+ \[ (\D+) \s+ (\d+.\d+) \s+ #Y PSNR
+            \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # U PSNR
+            \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # v PSNR
+            """, log_text, re.M + re.X)
 
-            # Association between index of data in tempData and corresponding
-            # output key. Output shape definition is in one place.
-            names = {0: 'Frames', 2: 'Bits', 5: 'Y-PSNR', 7: 'U-PSNR',
-                     9: 'V-PSNR'}
+        # Association between index of data in tempData and corresponding
+        # output key. Output shape definition is in one place.
+        names = {0: 'Frames', 2: 'Bits', 5: 'Y-PSNR', 7: 'U-PSNR',
+                 9: 'V-PSNR'}
 
-            # Define output data dict and fill it with parsed values
-            data = {name: [] for (index, name) in names.items()}
-            for i in range(0, len(tempData)):
-                # As referencing to frame produces error, reference to index *i*
-                for (index, name) in names.items():
-                    data[name].append(
-                        (i, tempData[i][index])
-                    )
-            return data
-
+        # Define output data dict and fill it with parsed values
+        data = {name: [] for (index, name) in names.items()}
+        for i in range(0, len(tempData)):
+            # As referencing to frame produces error, reference to index *i*
+            for (index, name) in names.items():
+                data[name].append(
+                    (i, tempData[i][index])
+                )
+        return data
