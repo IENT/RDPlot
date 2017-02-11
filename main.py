@@ -11,13 +11,14 @@ from mpldatacursor import datacursor
 
 import numpy as np
 import math
+from os.path import sep
 
 from model import (SimDataItemTreeModel, OrderedDictModel,
                    VariableTreeModel, BdTableModel, dict_tree_from_sim_data_items)
 from view import (QRecursiveSelectionModel)
 
-Ui_MainWindow, QMainWindow = loadUiType('mainWindow.ui')
-Ui_PlotWidget, QWidget = loadUiType('plotWidget.ui')
+Ui_MainWindow, QMainWindow = loadUiType('ui' + sep + 'mainWindow.ui')
+Ui_PlotWidget, QWidget = loadUiType('ui' + sep + 'plotWidget.ui')
 
 
 class Main(QMainWindow, Ui_MainWindow):
