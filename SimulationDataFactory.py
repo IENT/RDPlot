@@ -21,12 +21,12 @@ class SimulationDataItemFactory:
 
     def _get_sim_type(self, path):
         try:
-            for pattern, enclog in self.simTypeDict:
+            for pattern, sim_data_item in self.simTypeDict:
                 with open(path, 'r') as log_file:
                     log_text = log_file.read()  # reads the whole text file
                     sim_type = re.search(pattern, log_text, re.M + re.X)
                 if sim_type:
-                    return enclog
+                    return sim_data_item
         except:
             print("Dont be foolish. Do something useful here")
 
@@ -41,8 +41,8 @@ class SimulationDataItemFactory:
 
     @classmethod
     def parse_directory(cls, directory_path):
-        """Parse a directory for all encoder log files and return generator
-           yielding :class: `EncLog`s"""
+        """Parse a directory for all sim data files and return generator
+           yielding sim data items"""
         if cls._get_log_type(directory_path) == 'encLog':
             paths = glob(join(directory_path, '*_enc.log'))
             return (cls._get_sim_type(cls, p)(p) for p in paths)
@@ -51,14 +51,14 @@ class SimulationDataItemFactory:
 
     @classmethod
     def parse_directory_for_sequence(cls, sequence_file_path):
-        """Parse a directory for encoder logs of a specific sequence given one
-           encoder log of this sequence returning a generator yielding parsed
-           encoder :class: `EncLog`s"""
+        """Parse a directory for sim data of a specific sequence given one
+           sim data item of this sequence returning a generator yielding parsed
+           sim data items"""
         filename = basename(sequence_file_path)
         directory = dirname(sequence_file_path)
         sequence = filename.rsplit('_QP', 1)[0]
 
-        # Search for other encoder logs in directory and parse them
+        # Search for other sim data items in directory and parse them
         # TODO hardcoded file ending, needed to prevent ambiguous occurence
         # exceptions due to *.csv or other files being parsed
         paths = glob(directory + sep + sequence + '*_enc.log')
