@@ -58,13 +58,13 @@ def bdrint(rate, dist, low, high):
 
 # function for bjontegaard
 def bdrateStd(rate1, dist1, rate2, dist2):
-    minPSNR = max(min(dist1), min(dist2))
-    maxPSNR = min(max(dist1), max(dist2))
+    min_psnr = max(min(dist1), min(dist2))
+    max_psnr = min(max(dist1), max(dist2))
 
-    vA = bdrint(rate1, dist1, minPSNR, maxPSNR)
-    vB = bdrint(rate2, dist2, minPSNR, maxPSNR)
+    v_a = bdrint(rate1, dist1, min_psnr, max_psnr)
+    v_b = bdrint(rate2, dist2, min_psnr, max_psnr)
 
-    avg = (vB - vA) / (maxPSNR - minPSNR)
+    avg = (v_b - v_a) / (max_psnr - min_psnr)
 
     bdrate = (10 ** avg - 1) * 100
 
@@ -103,16 +103,16 @@ def bdsnr(rate1, psnr1, rate2, psnr2, interpol, seq, directories, testmode):
         pp1 = np.polyfit(x1, y1, 3)
         pp2 = np.polyfit(x2, y2, 3)
 
-        def find_diff(poly1, poly2, maxInt, minInt):
+        def find_diff(poly1, poly2, max_int, min_int):
             # find integral
             p_int1 = np.polyint(poly1)
             p_int2 = np.polyint(poly2)
 
-            int1 = pv(p_int1, maxInt) - pv(p_int1, minInt)
-            int2 = pv(p_int2, maxInt) - pv(p_int2, minInt)
+            int1 = pv(p_int1, max_int) - pv(p_int1, min_int)
+            int2 = pv(p_int2, max_int) - pv(p_int2, min_int)
 
             # calculate average difference
-            out = (int2 - int1) / (maxInt - minInt)
+            out = (int2 - int1) / (max_int - min_int)
 
             return out
 
@@ -122,13 +122,13 @@ def bdsnr(rate1, psnr1, rate2, psnr2, interpol, seq, directories, testmode):
         pp1 = pchip(x1, y1)
         pp2 = pchip(x2, y2)
 
-        def find_diff(poly1, poly2, maxInt, minInt):
+        def find_diff(poly1, poly2, max_int, min_int):
             # find integrals
-            int1 = integrate.quad(poly1, minInt, maxInt)
-            int2 = integrate.quad(poly2, minInt, maxInt)
+            int1 = integrate.quad(poly1, min_int, max_int)
+            int2 = integrate.quad(poly2, min_int, max_int)
 
             # calculate average difference
-            out = (int2[0] - int1[0]) / (maxInt - minInt)
+            out = (int2[0] - int1[0]) / (max_int - min_int)
 
             return out
     else:
@@ -208,15 +208,15 @@ def brate(rate1, psnr1, rate2, psnr2, interpol, seq, directories, testmode):
         pp1 = np.polyfit(psnr1, rate1, 3)
         pp2 = np.polyfit(psnr2, rate2, 3)
 
-        def find_diff(poly1, poly2, maxInt, minInt):
+        def find_diff(poly1, poly2, max_int, min_int):
             # find integral
             p_int1 = np.polyint(poly1)
             p_int2 = np.polyint(poly2)
 
-            int1 = pv(p_int1, maxInt) - pv(p_int1, minInt)
-            int2 = pv(p_int2, maxInt) - pv(p_int2, minInt)
+            int1 = pv(p_int1, max_int) - pv(p_int1, min_int)
+            int2 = pv(p_int2, max_int) - pv(p_int2, min_int)
 
-            out = (int2 - int1) / (maxInt - minInt)
+            out = (int2 - int1) / (max_int - min_int)
 
             return out
 
@@ -226,13 +226,13 @@ def brate(rate1, psnr1, rate2, psnr2, interpol, seq, directories, testmode):
         pp1 = pchip(y1, x1)
         pp2 = pchip(y2, x2)
 
-        def find_diff(poly1, poly2, maxInt, minInt):
+        def find_diff(poly1, poly2, max_int, min_int):
             # find integrals
-            int1 = integrate.quad(poly1, minInt, maxInt)
-            int2 = integrate.quad(poly2, minInt, maxInt)
+            int1 = integrate.quad(poly1, min_int, max_int)
+            int2 = integrate.quad(poly2, min_int, max_int)
 
             # calculate average difference
-            out = (int2[0] - int1[0]) / (maxInt - minInt)
+            out = (int2[0] - int1[0]) / (max_int - min_int)
 
             return out
     else:
