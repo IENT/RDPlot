@@ -16,7 +16,7 @@ class EncLogHM(EncLog):
         except IndexError:
             raise EncLogParserError(
                 "Path {} can not be splitted into directories and filename"
-                    .format(filename, path)
+                .format(filename, path)
             )
 
         try:
@@ -43,7 +43,8 @@ class EncLogHM(EncLog):
     def _parse_summary_data(self):
         with open(self.path, 'r') as log_file:
             log_text = log_file.read()  # reads the whole text file
-            summaries = re.findall(r""" ^(\w*)-*.*$ # catch summary line
+            # catch summary line
+            summaries = re.findall(r""" ^(\w*)-*.*$
                            \s* # catch newline and space
                            (.*)\| # catch phrase Total Frames / I / P / B
                            (\s+\S+)(\s+\S+)(\s+\S+)(\s+\S+)(\s+\S+)# catch rest of the line
