@@ -1,6 +1,4 @@
-import re
-from glob import glob
-from os.path import (basename, dirname, abspath, join, sep, normpath, isdir,
+from os.path import (abspath, join, isdir,
                      isfile)
 from collections import deque
 import numpy as np
@@ -53,7 +51,7 @@ def dict_tree_from_sim_data_items(sim_data_item_collection):
     different :class: `PlotData` objects are added to the list for each
     :class: `EncLog` object.
 
-    :param encoder_log_collection: Iterable of :class: `EncLog`s
+    :param sim_data_item_collection: Iterable of :class: `EncLog`s
 
     :rtype: tree of :class: `dict`s with :class: `list`s of
         :class: `PlotData` objects as leafs
@@ -945,7 +943,7 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
         for enc_log in enc_logs:
 
             # Get *item* of the tree corresponding to *enc_log*
-            item = self.create_path(*(enc_log.tree_path))
+            item = self.create_path(*enc_log.tree_path)
 
             # This prevents an encoder log overwriting another one
             # with same *tree_path* but different absolute path
@@ -974,7 +972,7 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
 
         for enc_log in enc_logs:
             # Get *item* of the tree corresponding to *enc_log*
-            item = self.create_path(*(enc_log.tree_path))
+            item = self.create_path(*enc_log.tree_path)
             self.remove_item(item)
 
         self.items_changed.emit()

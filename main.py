@@ -1,5 +1,5 @@
 from PyQt5.uic import loadUiType
-from PyQt5.QtCore import QItemSelectionModel, Qt
+from PyQt5.QtCore import QItemSelectionModel
 
 from matplotlib.figure import Figure
 
@@ -14,7 +14,7 @@ import math
 
 from model import (EncoderLogTreeModel, OrderedDictModel,
                    VariableTreeModel, BdTableModel, dict_tree_from_sim_data_items)
-from view import (EncLogTreeView, QRecursiveSelectionModel)
+from view import (QRecursiveSelectionModel)
 
 Ui_MainWindow, QMainWindow = loadUiType('mainWindow.ui')
 Ui_PlotWidget, QWidget = loadUiType('plotWidget.ui')
@@ -398,7 +398,6 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
 if __name__ == '__main__':
     import sys
-    from PyQt5 import QtGui, QtWidgets
     from PyQt5 import QtWidgets
 
     app = QtWidgets.QApplication(sys.argv)

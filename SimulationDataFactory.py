@@ -1,5 +1,4 @@
-from os.path import (basename, dirname, abspath, join, sep, normpath, isdir,
-                     isfile)
+from os.path import (basename, dirname, join, sep)
 from glob import glob
 
 import EncLogHM
@@ -25,8 +24,8 @@ class SimulationDataItemFactory:
             for pattern, enclog in self.simTypeDict:
                 with open(path, 'r') as log_file:
                     log_text = log_file.read()  # reads the whole text file
-                    type = re.search(pattern, log_text, re.M + re.X)
-                if type:
+                    sim_type = re.search(pattern, log_text, re.M + re.X)
+                if sim_type:
                     return enclog
         except:
             print("Dont be foolish. Do something useful here")

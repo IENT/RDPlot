@@ -45,7 +45,7 @@ class EncLogTreeView(QtWidgets.QTreeView):
                 "Enocder Logs (*.log)")
 
             [directory, file_name] = result[0][0].rsplit('/', 1)
-            return (directory, file_name)
+            return directory, file_name
         except IndexError:
             return
         else:
