@@ -1,17 +1,18 @@
 from model import (EncLog, EncLogParserError)
 
-from os.path import (basename,sep, normpath)
+from os.path import (basename, sep, normpath)
 import re
+
 
 class EncLogSHM(EncLog):
     def __init__(self, path):
         super().__init__(path)
 
-    def _parse_path(self,path):
+    def _parse_path(self, path):
         try:
             # Assumes structure of .../<simulation_directory>/log/<basename>
             directories = normpath(path).split(sep)[0: -2]
-            filename    = basename(path)
+            filename = basename(path)
         except IndexError:
             raise EncLogParserError(
                 "Path {} can not be splitted into directories and filename"
@@ -47,18 +48,18 @@ class EncLogSHM(EncLog):
                         """, log_text, re.M + re.X)
 
         data = {}
-        layerQuantity = int(len(summaries) / 4)
-        headerNames = ['SUMMARY', 'I', 'P', 'B']
+        layer_quantity = int(len(summaries) / 4)
+        header_names = ['SUMMARY', 'I', 'P', 'B']
         names = {1: 'Frames', 2: 'Bitrate', 3: 'Y-PSNR', 4: 'U-PSNR',
                  5: 'V-PSNR', 6: 'YUV-PSNR'}
 
         for it in range(0, 4):  # iterate through Summary, I, P, B
             data2 = {}
-            for layer in range(0, layerQuantity):  # iterate through layers
+            for layer in range(0, layer_quantity):  # iterate through layers
                 layerstring = 'layer ' + str(layer)
                 data2[layerstring] = {}
                 data3 = {}
-                bitrate = summaries[layerQuantity * it + layer][2]
+                bitrate = summaries[layer_quantity * it + layer][2]
                 for (index, name) in names.items():
                     # convert string '-nan' to int 0 if necessary
                     data3[name] = []
@@ -68,38 +69,37 @@ class EncLogSHM(EncLog):
                         )
                     else:
                         data3[name].append(
-                            (float(bitrate), float(summaries[layerQuantity * it + layer][index]))
+                            (float(bitrate), float(summaries[layer_quantity * it + layer][index]))
                         )
                 data2[layerstring] = data3
-            data[headerNames[it]] = data2
+            data[header_names[it]] = data2
         return data
 
     def _parse_temporal_data(self):
-        #this function extracts temporal values
+        # this function extracts temporal values
         with open(self.path, 'r') as log_file:
             log_text = log_file.read()  # reads the whole text file
-            tempData = re.findall(r"""
+            temp_data = re.findall(r"""
                                 ^POC \s+ (\d+) .+? : \s+ (\d+) .+ (\D-\D+) \s \D+,  #Slice
                                 .+ \) \s+ (\d+) \s+ (.+) \s+ \[ (\D+) \s+ (\d+.\d+) \s+ #Y PSNR
                                 \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # U PSNR
                                 \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # v PSNR
                                 """, log_text, re.M + re.X)
 
-
-        #Association between index of data in tempData and corresponding
-        #output key. Output shape definition is in one place.
+        # Association between index of data in temp_data and corresponding
+        # output key. Output shape definition is in one place.
         names = {0: 'Frames', 3: 'Bits', 6: 'Y-PSNR', 8: 'U-PSNR',
                  10: 'V-PSNR'}
 
-        layerQuantity = int(max(tempData[i][1] for i in range(0, len(tempData)))) + 1
-        layerQuantity = int(layerQuantity)
+        layer_quantity = int(max(temp_data[i][1] for i in range(0, len(temp_data)))) + 1
+        layer_quantity = int(layer_quantity)
         data = {}
-        for layer in range(0, layerQuantity):  # iterate through layers
+        for layer in range(0, layer_quantity):  # iterate through layers
             data2 = {name: [] for (index, name) in names.items()}
-            for j in range(0, int(len(tempData)/layerQuantity)):  #iterate through frames (POCS)
+            for j in range(0, int(len(temp_data)/layer_quantity)):  # iterate through frames (POCS)
                 for (index, name) in names.items():
                     data2[name].append(
-                        (j, tempData[layerQuantity*j+layer][index])
+                        (j, temp_data[layer_quantity*j+layer][index])
                     )
             layerstring = 'layer ' + str(layer)
             data[layerstring] = data2

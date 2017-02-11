@@ -1,7 +1,8 @@
 from model import (EncLog, EncLogParserError)
 
-from os.path import (basename,sep, normpath)
+from os.path import (basename, sep, normpath)
 import re
+
 
 class EncLogHM(EncLog):
     def __init__(self, path):
@@ -26,9 +27,9 @@ class EncLogHM(EncLog):
             config = seperator.join(filename_splitted[0: -2])
         except IndexError:
             raise EncLogParserError((
-                            "Filename {} can not be splitted into config until '{}' and"
-                            " sequence between last '{}' and '_QP'"
-                        ).format(filename, seperator, seperator))
+                                        "Filename {} can not be splitted into config until '{}' and"
+                                        " sequence between last '{}' and '_QP'"
+                                    ).format(filename, seperator, seperator))
 
         # prepend simulation directory to config
         config = directories[-1] + ' ' + config
@@ -38,7 +39,6 @@ class EncLogHM(EncLog):
                                   """, log_text, re.M + re.X)
         qp = qp[0]
         return sequence, config, qp
-
 
     def _parse_summary_data(self):
         with open(self.path, 'r') as log_file:
@@ -85,24 +85,24 @@ class EncLogHM(EncLog):
         with open(self.path, 'r') as log_file:
             log_text = log_file.read()  # reads the whole text file
 
-        tempData = re.findall(r"""
+        temp_data = re.findall(r"""
             ^POC \s+ (\d+) \s+ .+ \s+ \d+ \s+ . \s+ (.-\D+) ,  #Slice
             \s .+ \) \s+ (\d+) \s+ (.+) \s+ \[ (\D+) \s+ (\d+.\d+) \s+ #Y PSNR
             \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # U PSNR
             \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # v PSNR
             """, log_text, re.M + re.X)
 
-        # Association between index of data in tempData and corresponding
+        # Association between index of data in temp_data and corresponding
         # output key. Output shape definition is in one place.
         names = {0: 'Frames', 2: 'Bits', 5: 'Y-PSNR', 7: 'U-PSNR',
                  9: 'V-PSNR'}
 
         # Define output data dict and fill it with parsed values
         data = {name: [] for (index, name) in names.items()}
-        for i in range(0, len(tempData)):
+        for i in range(0, len(temp_data)):
             # As referencing to frame produces error, reference to index *i*
             for (index, name) in names.items():
                 data[name].append(
-                    (i, tempData[i][index])
+                    (i, temp_data[i][index])
                 )
         return data

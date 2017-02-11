@@ -1,17 +1,18 @@
 from model import (EncLog, EncLogParserError)
 
-from os.path import (basename,sep, normpath)
+from os.path import (basename, sep, normpath)
 import re
+
 
 class EncLogHM360LibOld(EncLog):
     def __init__(self, path):
         super().__init__(path)
 
-    def _parse_path(self,path):
+    def _parse_path(self, path):
         try:
             # Assumes structure of .../<simulation_directory>/log/<basename>
             directories = normpath(path).split(sep)[0: -2]
-            filename    = basename(path)
+            filename = basename(path)
         except IndexError:
             raise EncLogParserError(
                 "Path {} can not be splitted into directories and filename"
@@ -51,7 +52,7 @@ class EncLogHM360LibOld(EncLog):
         data = {}
         names = {1: 'Frames', 2: 'Bitrate', 3: 'Y-PSNR', 4: 'U-PSNR',
                  5: 'V-PSNR', 6: 'YUV-PSNR', 7: 'Y-WSPSNR', 8: 'U-WSPSNR',
-                 9: 'V-WSPSNR', 10:'Y-CPPSNR', 11: 'U-CPPSNR', 12: 'V-CPPSNR',
+                 9: 'V-WSPSNR', 10: 'Y-CPPSNR', 11: 'U-CPPSNR', 12: 'V-CPPSNR',
                  13: 'Y-E2EWSPSNR', 14: 'U-E2EWSPSNR', 15: 'V-E2EWSPSNR'}
 
         for i in range(0, len(summaries)):  # iterate through Summary, I, P, B
@@ -74,10 +75,10 @@ class EncLogHM360LibOld(EncLog):
         return data
 
     def _parse_temporal_data(self):
-        #this function extracts temporal values
+        # this function extracts temporal values
         with open(self.path, 'r') as log_file:
             log_text = log_file.read()  # reads the whole text file
-            tempData = re.findall(r"""
+            temp_data = re.findall(r"""
                 ^POC \s+ (\d+) \s+ .+ \s+ \d+ \s+ . \s+ (.-\D+) ,  # POC, Slice
                 \s .+ \) \s+ (\d+) \s+ \S+ \s+  # bits
                 \[ \S \s (\S+) \s \S+ \s+ \S \s (\S+) \s \S+ \s+ \S \s (\S+) \s \S+ ] \s  # y-, u-, v-PSNR
@@ -86,7 +87,7 @@ class EncLogHM360LibOld(EncLog):
                 \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-E2EWSPSNR
                 """, log_text, re.M + re.X)
 
-        # Association between index of data in tempData and corresponding
+        # Association between index of data in temp_data and corresponding
         # output key. Output shape definition is in one place.
         names = {0: 'Frames', 2: 'Bits',
                  3: 'Y-PSNR', 4: 'U-PSNR', 5: 'V-PSNR',
@@ -97,10 +98,10 @@ class EncLogHM360LibOld(EncLog):
 
         # Define output data dict and fill it with parsed values
         data = {name: [] for (index, name) in names.items()}
-        for i in range(0, len(tempData)):
+        for i in range(0, len(temp_data)):
             # As referencing to frame produces error, reference to index *i*
             for (index, name) in names.items():
                 data[name].append(
-                    (i, tempData[i][index])
+                    (i, temp_data[i][index])
                 )
         return data
