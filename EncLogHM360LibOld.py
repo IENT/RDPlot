@@ -36,7 +36,7 @@ class EncLogHM360LibOld(EncLog):
             qp = re.findall(r""" ^QP \s+ : \s+ (\d+.\d+) $
                                   """, log_text, re.M + re.X)
         qp = qp[0]
-        return (sequence, config, qp)
+        return sequence, config, qp
 
     def _parse_summary_data(self):
         with open(self.path, 'r') as log_file:

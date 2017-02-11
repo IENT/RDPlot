@@ -9,7 +9,7 @@ import EncLogHM360LibOld
 import re
 
 
-class SimulationDataItemFactory():
+class SimulationDataItemFactory:
     # this dictionary stores the simulation types in a key value manner,
     # the key is a string which can be parsed from the log file and is unique
     # for a simulation type, the value is the class of the simulation type
