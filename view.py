@@ -8,6 +8,7 @@ from os.path import join
 import model
 from SimulationDataFactory import SimulationDataItemFactory
 
+
 class EncLogTreeView(QtWidgets.QTreeView):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -22,7 +23,7 @@ class EncLogTreeView(QtWidgets.QTreeView):
 
     def dropEvent(self, event):
         for url in event.mimeData().urls():
-            self.model().update( model.EncLog.parse_url( url.path() ) )
+            self.model().update(model.EncLog.parse_url(url.path()))
 
     # Keypress fix from
     # http://stackoverflow.com/questions/27475940/pyqt-connect-to-keypressevent
@@ -48,7 +49,7 @@ class EncLogTreeView(QtWidgets.QTreeView):
         except IndexError:
             return
         else:
-            #TODO usefull logging
+            # TODO usefull logging
             print("successfully added sequence")
             return
 
@@ -63,7 +64,7 @@ class EncLogTreeView(QtWidgets.QTreeView):
         except IndexError:
             return
         else:
-            #TODO usefull logging
+            # TODO usefull logging
             print("successfully added sequence")
             return
 
@@ -74,8 +75,8 @@ class EncLogTreeView(QtWidgets.QTreeView):
         except TypeError:
             return
         path = join(directory, file_name)
-        SimDataItem = SimulationDataItemFactory.create_instance_for_file(path)
-        self.model().add( SimDataItem )
+        sim_data_item = SimulationDataItemFactory.create_instance_for_file(path)
+        self.model().add(sim_data_item)
 
     # adds a all logfiles of a sequence from a directory to the treeview
     def add_sequence(self):
@@ -85,8 +86,8 @@ class EncLogTreeView(QtWidgets.QTreeView):
             return
         path = join(directory, file_name)
 
-        SimDataItems = list( SimulationDataItemFactory.parse_directory_for_sequence( path ) )
-        self.model().update(SimDataItems)
+        sim_data_items = list(SimulationDataItemFactory.parse_directory_for_sequence(path))
+        self.model().update(sim_data_items)
 
     # adds all logfiles and sequences from a directory to the treeview
     def add_folder(self):
@@ -95,10 +96,11 @@ class EncLogTreeView(QtWidgets.QTreeView):
         except TypeError:
             return
 
-        #TODO this uses the parse_directory method, thus, does not automatically
+        # TODO this uses the parse_directory method, thus, does not automatically
         # parse 'log'.subfolder. Should this be the case?
-        SimDataItems = list( SimulationDataItemFactory.parse_directory( path ) )
-        self.model().update(SimDataItems)
+        sim_data_items = list(SimulationDataItemFactory.parse_directory(path))
+        self.model().update(sim_data_items)
+
 
 class QRecursiveSelectionModel(QItemSelectionModel):
     """Custom selection model for recursive models. If an item is selected, all
@@ -110,12 +112,12 @@ class QRecursiveSelectionModel(QItemSelectionModel):
 
     def setModel(self, model):
         if self.model() is not None:
-            self.model().items_changed.disconnect(self.selectInsertedRows)
+            self.model().items_changed.disconnect(self.select_inserted_rows)
         super().setModel(model)
-        self.model().items_changed.connect(self.selectInsertedRows)
+        self.model().items_changed.connect(self.select_inserted_rows)
 
-    def selectInsertedRows(self):
-        self.select( self.selection(), QItemSelectionModel.Select)
+    def select_inserted_rows(self):
+        self.select(self.selection(), QItemSelectionModel.Select)
 
     def select(self, selection, command):
         """Extend behavior of inherited method. Add all sub items to selection
@@ -146,16 +148,16 @@ class QRecursiveSelectionModel(QItemSelectionModel):
            first and the last index in the range. Index ranges are used to
            describe selections effectively."""
         # `deque` is more efficient stack data structure
-        q_index_parent_queue = deque( q_index_parent_collection )
+        q_index_parent_queue = deque(q_index_parent_collection)
 
         # Output queue with all index ranges found
         index_ranges = deque()
-        while len( q_index_parent_queue ) != 0:
+        while len(q_index_parent_queue) != 0:
             q_index_parent = q_index_parent_queue.pop()
             # Get parent item from current `QModelIndex`
-            parent         = q_index_parent.internalPointer()
+            parent = q_index_parent.internalPointer()
             # Number of columns and rows of the current parent
-            count_row    = self.model().rowCount(q_index_parent)
+            count_row = self.model().rowCount(q_index_parent)
             count_column = self.model().columnCount(q_index_parent)
 
             # If the currently processed item contains items, then the index
@@ -166,17 +168,17 @@ class QRecursiveSelectionModel(QItemSelectionModel):
             # its own parent.
             if count_row > 0 or count_column > 0:
                 # Append index range tuple to output `index_ranges`
-                row     = count_row - 1
-                column  = count_column - 1
+                row = count_row - 1
+                column = count_column - 1
                 index_ranges.append((
-                    self.model().index(  0,     0, q_index_parent),
+                    self.model().index(0, 0, q_index_parent),
                     self.model().index(row, column, q_index_parent),
                 ))
                 # Append indexes of children to the queue `q_index_parent_queue`
-                for row in range( count_row ):
-                    for column in range( count_column ):
+                for row in range(count_row):
+                    for column in range(count_column):
                         q_index = self.model().index(row, column,
                                                      q_index_parent)
-                        q_index_parent_queue.append( q_index )
+                        q_index_parent_queue.append(q_index)
 
-        return list( index_ranges )
+        return list(index_ranges)
