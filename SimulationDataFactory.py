@@ -1,11 +1,8 @@
 from os.path import (basename, dirname, join, sep)
 from glob import glob
-
-import EncLogHM
-import EncLogSHM
-import EncLogHM360Lib
-import EncLogHM360LibOld
 import re
+
+from ParserClasses import (EncLogHM, EncLogSHM, EncLogHM360Lib, EncLogHM360LibOld)
 
 
 class SimulationDataItemFactory:
