@@ -12,7 +12,7 @@ from BD import bjontegaard
 # Functions
 #
 def dict_tree_from_sim_data_items(sim_data_item_collection):
-    """Combine the *data* of different encoder logs to a tree of
+    """Combine the *data* of different sim data items to a tree of
     :class: `dicts`, which is then used to display the data.
 
     An *encoder_log* provides a collection of 2-tuples ie. pairs as data.
@@ -23,13 +23,13 @@ def dict_tree_from_sim_data_items(sim_data_item_collection):
     the actual data as leafs. The data  is in the form of lists of 2-tuples
     containing, an x and the  corresponding y value.
 
-    Now, the dictionary trees of different encoder logs have to be combined
+    Now, the dictionary trees of different sim data items have to be combined
     to one dictionary tree. The resulting *dict_tree* is the union of the
-    trees of the encoder logs with :class: `list`s of :class: `PlotData`
+    trees of the sim data items with :class: `list`s of :class: `PlotData`
     objects as leafs.
 
     The leafs are created as follows: A :class: `PlotData` object is
-    created from the *identifiers* associated with the :class: `EncLog`
+    created from the *identifiers* associated with the :class: `SimDataItem`
     and the list of value pairs found at the current position. The current
     path in the dictionary tree is also added for convenience. Now, if there
     are already :class: `PlotData` objects present at the current leaf of
@@ -40,18 +40,18 @@ def dict_tree_from_sim_data_items(sim_data_item_collection):
         * if no :class: `PlotData` object is present with equal identifiers
             the new :class: `PlotData` object is added to the list
 
-    Why is this necessary? It might be, that different encoder logs provide
+    Why is this necessary? It might be, that different sim data items provide
     data, that has to be joined before it is displayed, eg. the summary
     data for one particular variable is usually provided by several
     encoder_logs. In this case, the correspondence of the data is coded
     in the identifier of the data ie. the identifier would be similar across
-    different encoder logs, and thus, the data can be joined by this
-    function. On the other hand, if several encoder logs just provide data
+    different sim data items, and thus, the data can be joined by this
+    function. On the other hand, if several sim data items just provide data
     for the same variable, then the data should be rendered separately, ie.
     different :class: `PlotData` objects are added to the list for each
-    :class: `EncLog` object.
+    :class: `SimDataItem` object.
 
-    :param sim_data_item_collection: Iterable of :class: `EncLog`s
+    :param sim_data_item_collection: Iterable of :class: `SimDataItem`s
 
     :rtype: tree of :class: `dict`s with :class: `list`s of
         :class: `PlotData` objects as leafs
@@ -166,12 +166,12 @@ class PlotData:
         self.path = path
 
 
-class EncLogParserError(Exception):
+class SimDataItemParserError(Exception):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
 
-class EncLog:
+class SimDataItem:
     def __init__(self, path):
         # Path is unique identifier
         self.path = abspath(path)
@@ -181,7 +181,6 @@ class EncLog:
         self.sequence, self.config, self.qp = self._parse_path(self.path)
 
         # Dictionaries holding the parsed values
-        # TODO select parsing functions depending on codec type,
         self.summary_data = self._parse_summary_data()
         self.temporal_data = self._parse_temporal_data()
 
@@ -201,8 +200,8 @@ class EncLog:
     def legend(self):
         return " ".join(self.sequence, self.config, self.qp)
 
-    def __eq__(self, enc_log):
-        return self.path == enc_log.path
+    def __eq__(self, sim_data_item):
+        return self.path == sim_data_item.path
 
     # TODO remove if usefull 'set' is implemented
     def __hash__(self):
@@ -210,7 +209,7 @@ class EncLog:
 
     def __str__(self):
         return str((
-                       "Encoder Log of sequence '{}' from config '{}' with qp '{}'"
+                       "Sim Data Item of sequence '{}' from config '{}' with qp '{}'"
                        " at path {}"
                    ).format(self.sequence, self.config, self.qp, self.path))
 
@@ -220,32 +219,32 @@ class EncLog:
     # Conctructors
     @classmethod
     def parse_url(cls, url):
-        """Parse a url and return either all encoder logs in the folder, all
-           logs in a subfolder log or all encoder logs with the same sequence as
+        """Parse a url and return either all sim data items in the folder, all
+           logs in a subfolder log or all sim data items with the same sequence as
            the file."""
         # Parse url as directory. Check for encoder log files in directory and
         # in a possible 'log' subdirectory
         if isdir(url):
-            enc_logs = list(cls.parse_directory(url))
-            if len(enc_logs) != 0:
-                return enc_logs
+            sim_data_items = list(cls.parse_directory(url))
+            if len(sim_data_items) != 0:
+                return sim_data_items
 
             url_log = join(url, 'log')
             if isdir(url_log):
-                enc_logs = list(cls.parse_directory(url_log))
-                if len(enc_logs) != 0:
-                    return enc_logs
+                sim_data_items = list(cls.parse_directory(url_log))
+                if len(sim_data_items) != 0:
+                    return sim_data_items
 
         # Parse url as encoder log path. Search in same directory for encoder
         # logs with same sequence
         if isfile(url):
-            enc_logs = list(cls.parse_directory_for_sequence(url))
-            if len(enc_logs) != 0:
-                return enc_logs
+            sim_data_items = list(cls.parse_directory_for_sequence(url))
+            if len(sim_data_items) != 0:
+                return sim_data_items
 
         # No parsing scheme succeeded
-        raise EncLogParserError("Could not parse url {} for encoder logs"
-                                .format(url))
+        raise SimDataItemParserError("Could not parse url {} for sim data items"
+                                     .format(url))
 
 
 # -------------------------------------------------------------------------------
@@ -260,8 +259,8 @@ class ModelError(Exception):
         super().__init__(*args, **kwargs)
 
 
-class AmbiguousEncoderLogs(ModelError):
-    """Error class for ambiguous encoder logs"""
+class AmbiguousSimDataItems(ModelError):
+    """Error class for ambiguous sim data items"""
     pass
 
 
@@ -901,8 +900,8 @@ class OrderedDictTreeModel(QAbstractItemModel):
         return str(self.root.dict_tree)
 
 
-class EncoderLogTreeModel(OrderedDictTreeModel):
-    """Tree model specific to encoder logs, specifying methods to add them to
+class SimDataItemTreeModel(OrderedDictTreeModel):
+    """Tree model specific to sim data items, specifying methods to add them to
     the tree, how to store their data at the tree and how to access them, using
     the tree. Implements *item_changed* signal, which is emitted after the
     tree model has been altered. With :func: `add`, :func: `update` and :func:
@@ -919,60 +918,60 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    # Implement *add*, *update* and remove to add/remove encoder logs to the
+    # Implement *add*, *update* and remove to add/remove sim data items to the
     # tree.
     # Note, that *add* is implemented using update, so *items_changed* is
     # emitted efficiently.
 
-    def add(self, enc_log):
-        """Like update, but for a single *enc_log*. *items_changed* is issued
+    def add(self, sim_data_item):
+        """Like update, but for a single *sim_data_item*. *items_changed* is issued
         by calling :func: `update` .
 
-        :param enc_log: :class: `EncLog` to be added to tree
+        :param sim_data_item: :class: `SimDataItem` to be added to tree
         """
-        self.update([enc_log])
+        self.update([sim_data_item])
 
-    def update(self, enc_logs):
-        """Adds all elements in the iterable *enc_logs* to the tree or
+    def update(self, sim_data_items):
+        """Adds all elements in the iterable *sim_data_items* to the tree or
         replaces them if they are already present. Issues the *items_changed*
-        signal, after all encoder logs are added/replaced.
+        signal, after all sim data items are added/replaced.
 
-        :param enc_logs: Iterable collection of :class: `EncLog`s to be added
+        :param sim_data_items: Iterable collection of :class: `SimDataItem`s to be added
         """
 
-        for enc_log in enc_logs:
+        for sim_data_item in sim_data_items:
 
-            # Get *item* of the tree corresponding to *enc_log*
-            item = self.create_path(*enc_log.tree_path)
+            # Get *item* of the tree corresponding to *sim_data_item*
+            item = self.create_path(*sim_data_item.tree_path)
 
-            # This prevents an encoder log overwriting another one
+            # This prevents an sim data item overwriting another one
             # with same *tree_path* but different absolute path
             for value in item.values:
                 condition = (
-                    value.tree_path == enc_log.tree_path
-                    and value.path != enc_log.path
+                    value.tree_path == sim_data_item.tree_path
+                    and value.path != sim_data_item.path
                 )
                 if condition:
-                    raise AmbiguousEncoderLogs((
-                                                   "Ambigious encoder logs: Encoder log {} and {}"
+                    raise AmbiguousSimDataItems((
+                                                   "Ambigious sim data items: Sim Data Item {} and {}"
                                                    " have differen absolute paths but the same"
                                                    " position at the tree {}"
                                                ).format(encoder_log, value, encoder_log.tree_path))
-            # Add *enc_log* to the set of values of the tree item *item*
-            item.values.add(enc_log)
+            # Add *sim_data_item* to the set of values of the tree item *item*
+            item.values.add(sim_data_item)
 
         self.items_changed.emit()
 
-    def remove(self, enc_logs):
-        """Remove all elements in iterable collection *enc_logs* from the tree.
-        Emit *items_changed* signal after all encoder logs are removed.
+    def remove(self, sim_data_items):
+        """Remove all elements in iterable collection *sim_data_items* from the tree.
+        Emit *items_changed* signal after all sim data items are removed.
 
-        :param enc_logs: Iterable collection of :class: `EncLog`s to be removed
+        :param sim_data_items: Iterable collection of :class: `SimDataItem`s to be removed
         """
 
-        for enc_log in enc_logs:
-            # Get *item* of the tree corresponding to *enc_log*
-            item = self.create_path(*enc_log.tree_path)
+        for sim_data_item in sim_data_items:
+            # Get *item* of the tree corresponding to *sim_data_item*
+            item = self.create_path(*sim_data_item.tree_path)
             self.remove_item(item)
 
         self.items_changed.emit()
@@ -980,9 +979,9 @@ class EncoderLogTreeModel(OrderedDictTreeModel):
 
 class VariableTreeModel(OrderedDictTreeModel):
     """Tree model to store the parsed data, which corresponds to the currently
-    selected encoder logs. The data is stored in lists at the leafs of the tree.
+    selected sim data items. The data is stored in lists at the leafs of the tree.
     The tree itself corresponds to a structure of variables, which is exported
-    by the encoder logs. The model implements the *item_changed* signal to
+    by the sim data items. The model implements the *item_changed* signal to
     be compatible to the :class: `QRecursiveSelectionModel` class.
     """
 

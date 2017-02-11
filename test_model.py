@@ -8,7 +8,7 @@ from pdb import set_trace
 from matplotlib.pyplot import plot, show
 from pprint import pprint
 
-from model import (EncLog, EncLogCollectionModel, summary_data_from_enc_logs,
+from model import (SimDataItem, EncLogCollectionModel, summary_data_from_enc_logs,
                    sort_dict_of_lists_by_key, OrderedDictTreeItem)
 
 
@@ -22,7 +22,7 @@ SEQUENCE = ("HM16.7-Orig-glacier_vr_2880x1920_24_encoder+randomaccess+main"
             "_FTBE240_IBD8_IBD8")
 
 def parse_configs():
-    return list(EncLog.parse_directory(join(PATH, CONFIGS[0])))
+    return list(SimDataItem.parse_directory(join(PATH, CONFIGS[0])))
 
 def test_enc_log():
     encLogs = parse_configs()

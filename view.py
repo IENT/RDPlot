@@ -9,7 +9,7 @@ import model
 from SimulationDataFactory import SimulationDataItemFactory
 
 
-class EncLogTreeView(QtWidgets.QTreeView):
+class SimDataItemTreeView(QtWidgets.QTreeView):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -23,7 +23,7 @@ class EncLogTreeView(QtWidgets.QTreeView):
 
     def dropEvent(self, event):
         for url in event.mimeData().urls():
-            self.model().update(model.EncLog.parse_url(url.path()))
+            self.model().update(model.SimDataItem.parse_url(url.path()))
 
     # Keypress fix from
     # http://stackoverflow.com/questions/27475940/pyqt-connect-to-keypressevent

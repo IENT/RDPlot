@@ -106,7 +106,7 @@
      </item>
      <item>
       <widget class="QComboBox" name="combo_interp">
-       <property name="currentText" stdset="0">
+       <property name="currentText">
         <string/>
        </property>
       </widget>
@@ -164,7 +164,7 @@
    <widget class="QWidget" name="dockWidgetContents">
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <item>
-      <widget class="EncLogTreeView" name="encoderLogTreeView">
+      <widget class="SimDataItemTreeView" name="simDataItemTreeView">
        <property name="dragEnabled">
         <bool>false</bool>
        </property>
@@ -204,7 +204,7 @@
    <widget class="QWidget" name="dockWidgetContents_3">
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
-      <widget class="QListView" name="encoderLogListView"/>
+      <widget class="QListView" name="simDataItemListView"/>
      </item>
     </layout>
    </widget>
@@ -274,7 +274,7 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>EncLogTreeView</class>
+   <class>SimDataItemTreeView</class>
    <extends>QTreeView</extends>
    <header>view.h</header>
   </customwidget>

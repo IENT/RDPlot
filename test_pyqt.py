@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from main import Main
-from model import EncLog
+from model import SimDataItem
 
 if __name__ == '__main__':
     import sys
@@ -11,11 +11,11 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     main = Main()
 
-    main.encoderLogTreeModel.update(
-        EncLog.parse_url('../simulation_examples/HEVC/')
+    main.simDataItemTreeModel.update(
+        SimDataItem.parse_url('../simulation_examples/HEVC/')
     )
-    # main.encoderLogTreeModel.update(
-    #     EncLog.parse_url('../simulation_examples/hm360Lib/')
+    # main.simDataItemTreeModel.update(
+    #     SimDataItem.parse_url('../simulation_examples/hm360Lib/')
     # )
 
     main.show()

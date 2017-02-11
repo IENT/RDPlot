@@ -1,10 +1,10 @@
-from model import (EncLog, EncLogParserError)
+from model import (SimDataItem, SimDataItemParserError)
 
 from os.path import (basename, sep, normpath)
 import re
 
 
-class EncLogHM(EncLog):
+class EncLogHM(SimDataItem):
     def __init__(self, path):
         super().__init__(path)
 
@@ -14,7 +14,7 @@ class EncLogHM(EncLog):
             directories = normpath(path).split(sep)[0: -2]
             filename = basename(path)
         except IndexError:
-            raise EncLogParserError(
+            raise SimDataItemParserError(
                 "Path {} can not be splitted into directories and filename"
                 .format(filename, path)
             )
@@ -26,7 +26,7 @@ class EncLogHM(EncLog):
             sequence = filename_splitted[-1]
             config = seperator.join(filename_splitted[0: -2])
         except IndexError:
-            raise EncLogParserError((
+            raise SimDataItemParserError((
                                         "Filename {} can not be splitted into config until '{}' and"
                                         " sequence between last '{}' and '_QP'"
                                     ).format(filename, seperator, seperator))

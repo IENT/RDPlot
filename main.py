@@ -12,7 +12,7 @@ from mpldatacursor import datacursor
 import numpy as np
 import math
 
-from model import (EncoderLogTreeModel, OrderedDictModel,
+from model import (SimDataItemTreeModel, OrderedDictModel,
                    VariableTreeModel, BdTableModel, dict_tree_from_sim_data_items)
 from view import (QRecursiveSelectionModel)
 
@@ -32,10 +32,10 @@ class Main(QMainWindow, Ui_MainWindow):
         # add a widget for previewing plots, they can then be added to the actual plot
         self.plotPreview = PlotWidget()
         self.plotAreaVerticalLayout.addWidget(self.plotPreview)
-        # Create tree model to store encoder logs and connect it to views
-        self.encoderLogTreeModel = EncoderLogTreeModel()
+        # Create tree model to store sim data items and connect it to views
+        self.simDataItemTreeModel = SimDataItemTreeModel()
         self.bdTableModel = BdTableModel()
-        self.encoderLogTreeView.setModel(self.encoderLogTreeModel)
+        self.simDataItemTreeView.setModel(self.simDataItemTreeModel)
         self.plotPreview.tableView.setModel(self.bdTableModel)
 
         # connect a double clicked section of the bd table to a change of the anchor
@@ -43,12 +43,12 @@ class Main(QMainWindow, Ui_MainWindow):
 
         # Set custom selection model, so that sub items are automatically
         # selected if parent is selected
-        self._selection_model = QRecursiveSelectionModel(self.encoderLogTreeView.model())
-        self.encoderLogTreeView.setSelectionModel(self._selection_model)
+        self._selection_model = QRecursiveSelectionModel(self.simDataItemTreeView.model())
+        self.simDataItemTreeView.setSelectionModel(self._selection_model)
 
         # Connect list view with model for the selected values of tree view
         self.selectedSimulationDataItemListModel = OrderedDictModel()
-        self.encoderLogListView.setModel(self.selectedSimulationDataItemListModel)
+        self.simDataItemListView.setModel(self.selectedSimulationDataItemListModel)
         self._selection_model.selectionChanged.connect(self.change_list)
 
         # set up signals and slots
@@ -58,13 +58,13 @@ class Main(QMainWindow, Ui_MainWindow):
 
         # Connect signals of menues
         self.actionOpen_File.triggered.connect(
-            self.encoderLogTreeView.add_sim_data_item
+            self.simDataItemTreeView.add_sim_data_item
         )
         self.actionOpen_Sequence.triggered.connect(
-            self.encoderLogTreeView.add_sequence
+            self.simDataItemTreeView.add_sequence
         )
         self.actionOpen_Directory.triggered.connect(
-            self.encoderLogTreeView.add_folder
+            self.simDataItemTreeView.add_folder
         )
         self.actionHide_PlotSettings.triggered.connect(
             self.set_plot_settings_visibility
@@ -117,7 +117,7 @@ class Main(QMainWindow, Ui_MainWindow):
             self.actionHide_PlotSettings.setChecked(False)
         self._variable_tree_selection_model.selectionChanged.connect(self.update_plot)
 
-        self.encoderLogTreeView.deleteKey.connect(self.remove)
+        self.simDataItemTreeView.deleteKey.connect(self.remove)
 
     # sets Visibility for the Sequence Widget
     def set_sequence_widget_visibility(self):
@@ -153,7 +153,7 @@ class Main(QMainWindow, Ui_MainWindow):
         values = self.selectedSimulationDataItemListModel.values()
         # List call necessary to avoid runtime error because of elements changing
         # during iteration
-        self.encoderLogTreeModel.remove(list(values))
+        self.simDataItemTreeModel.remove(list(values))
 
     def change_list(self, q_selected, q_deselected):
         """Extend superclass behavior by automatically adding the values of
@@ -162,17 +162,17 @@ class Main(QMainWindow, Ui_MainWindow):
         selected_q_indexes = q_deselected.indexes()
 
         q_reselect_indexes = []
-        for q_index in self.encoderLogTreeView.selectedIndexes():
+        for q_index in self.simDataItemTreeView.selectedIndexes():
             if q_index not in selected_q_indexes:
                 q_reselect_indexes.append(q_index)
 
         # Find all all values that are contained by selected tree items
         tuples = []
         for q_index in q_selected.indexes() + q_reselect_indexes:
-            # Add values, ie. encoder logs stored at the item, to the list
+            # Add values, ie. sim data items stored at the item, to the list
             # model.
-            encoder_logs = q_index.internalPointer().values
-            tuples.extend((e.path, e) for e in encoder_logs)
+            sim_data_items = q_index.internalPointer().values
+            tuples.extend((e.path, e) for e in sim_data_items)
 
         # Overwrite all elements in dictionary by selected values
         # Note, that ovrewriting only issues one `updated` signal, and thus,
@@ -334,7 +334,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
             [xs, ys] = list(zip(*sorted_value_pairs))
 
-            # Create legend from variable path and encoder log identifiers
+            # Create legend from variable path and sim data items identifiers
             legend = " ".join([plot_data.identifiers[0].split('_')[0]] + [plot_data.identifiers[1]] + plot_data.path)
 
             # plot the current plotdata and set the legend
