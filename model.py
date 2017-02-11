@@ -5,7 +5,7 @@ import numpy as np
 from PyQt5.Qt import Qt, QVariant, QModelIndex
 from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel, QAbstractTableModel, pyqtSignal
 
-from BD import bjontegaard
+from lib.BD import bjontegaard
 
 
 #
