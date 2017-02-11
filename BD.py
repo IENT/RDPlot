@@ -10,6 +10,7 @@ from scipy import integrate
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import show
 
+
 def bdrint(rate, dist, low, high):
     log_rate = sorted([log10(t) for t in rate])
     log_dist = sorted(dist)
@@ -54,9 +55,9 @@ def bdrint(rate, dist, low, high):
 
     return result
 
+
 # function for bjontegaard
 def bdrateStd(rate1, dist1, rate2, dist2):
-
     minPSNR = max(min(dist1), min(dist2))
     maxPSNR = min(max(dist1), max(dist2))
 
@@ -68,6 +69,7 @@ def bdrateStd(rate1, dist1, rate2, dist2):
     bdrate = (10 ** avg - 1) * 100
 
     return bdrate
+
 
 def bdsnr(rate1, psnr1, rate2, psnr2, interpol, seq, directories, testmode):
     """"
@@ -101,7 +103,6 @@ def bdsnr(rate1, psnr1, rate2, psnr2, interpol, seq, directories, testmode):
         pp1 = np.polyfit(x1, y1, 3)
         pp2 = np.polyfit(x2, y2, 3)
 
-
         def find_diff(poly1, poly2, maxInt, minInt):
             # find integral
             p_int1 = np.polyint(poly1)
@@ -131,14 +132,11 @@ def bdsnr(rate1, psnr1, rate2, psnr2, interpol, seq, directories, testmode):
 
             return out
     else:
-        print ("Wrong interpolation method.")
+        print("Wrong interpolation method.")
         return 0
-
 
     p1 = pv(pp1, xi1)
     p2 = pv(pp2, xi2)
-
-
 
     ptmp1 = pv(pp1, tmpx)
     ptmp2 = pv(pp2, tmpx)
@@ -149,10 +147,7 @@ def bdsnr(rate1, psnr1, rate2, psnr2, interpol, seq, directories, testmode):
     y1max = pv(pp1, max_int)
     y2max = pv(pp2, max_int)
 
-
     avg_diff = find_diff(pp1, pp2, max_int, min_int)
-
-
 
     if not testmode:
         plt.figure(seq)
@@ -177,17 +172,15 @@ def bdsnr(rate1, psnr1, rate2, psnr2, interpol, seq, directories, testmode):
 
         plt.grid()
 
-
         suptitle = u'\u0394 PSNR = {diff}'.format(diff=avg_diff)
         plt.suptitle(suptitle)
 
         show(block=False)
 
-
     return avg_diff
 
-def brate(rate1, psnr1, rate2, psnr2, interpol, seq, directories, testmode):
 
+def brate(rate1, psnr1, rate2, psnr2, interpol, seq, directories, testmode):
     # integration interval
     min_int = max([min(psnr1), min(psnr2)])
     max_int = min([max(psnr1), max(psnr2)])
@@ -233,8 +226,6 @@ def brate(rate1, psnr1, rate2, psnr2, interpol, seq, directories, testmode):
         pp1 = pchip(y1, x1)
         pp2 = pchip(y2, x2)
 
-
-
         def find_diff(poly1, poly2, maxInt, minInt):
             # find integrals
             int1 = integrate.quad(poly1, minInt, maxInt)
@@ -245,7 +236,7 @@ def brate(rate1, psnr1, rate2, psnr2, interpol, seq, directories, testmode):
 
             return out
     else:
-        print ("Wrong interpolation method.")
+        print("Wrong interpolation method.")
         return 0
 
     p1 = pv(pp1, xi1)
@@ -295,6 +286,7 @@ def brate(rate1, psnr1, rate2, psnr2, interpol, seq, directories, testmode):
             show(block=False)
     return avg_diff
 
+
 def bjontegaard(curve1, curve2, mode='dsnr', interpol='pol', seq='', d=list(), testmode=False):
     """
     Bjontegaard metric calculation
@@ -321,10 +313,9 @@ def bjontegaard(curve1, curve2, mode='dsnr', interpol='pol', seq='', d=list(), t
     """
 
     if interpol not in ['pol', 'pchip']:
-        print ("Wrong interpolation type was given. Use 'pol' for polynomial and 'pchip' for piecewise cubic " \
+        print("Wrong interpolation type was given. Use 'pol' for polynomial and 'pchip' for piecewise cubic " \
               "interpolation.")
         exit(1)
-
 
     # sort rate
     curve1 = sorted(curve1, key=lambda tup: tup[1])
@@ -347,10 +338,8 @@ def bjontegaard(curve1, curve2, mode='dsnr', interpol='pol', seq='', d=list(), t
         else:
             return brate(rate1, psnr1, rate2, psnr2, interpol, seq, d, testmode)
     else:
-        print ("Wrong mode was given. Use either 'dsnr' or 'rate' mode.")
+        print("Wrong mode was given. Use either 'dsnr' or 'rate' mode.")
         exit(1)
-
-
 
 # if __name__ == '__main__':
 #     c1 = [(1000, 28.47), (1200, 32.07), (1400, 34.77), (1600, 36.87)]
@@ -367,5 +356,3 @@ def bjontegaard(curve1, curve2, mode='dsnr', interpol='pol', seq='', d=list(), t
 #
 #     # plt.show()
 #     # print x
-
-
