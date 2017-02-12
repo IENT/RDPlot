@@ -305,6 +305,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         # add the toolbar for the plot
         self.toolbar = NavigationToolbar(self.plotAreaWidget.canvas,
                                          self.plotAreaWidget, coordinates=True)
+        self.toolbar.pan()
         self.verticalLayout_3.addWidget(self.toolbar)
 
     # refreshes the figure according to new changes done
