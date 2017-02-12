@@ -274,17 +274,6 @@ class Main(QMainWindow, Ui_MainWindow):
         pass
 
 
-class NestedDict(dict):
-    """
-    Provides the nested dict used to store all the sequence data.
-    """
-
-    def __getitem__(self, key):
-        if key in self:
-            return self.get(key)
-        return self.setdefault(key, NestedDict())
-
-
 class PlotWidget(QWidget, Ui_PlotWidget):
     def __init__(self, ):
         super(PlotWidget, self).__init__()
