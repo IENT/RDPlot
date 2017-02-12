@@ -264,7 +264,8 @@ class Main(QMainWindow, Ui_MainWindow):
         if self.bdTableModel.rowCount(self) == 0:
             return
         filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save Table as')[0]
-        self.bdTableModel.export_to_latex(filename)
+        if not len(filename) == 0:
+            self.bdTableModel.export_to_latex(filename)
 
     def on_combo_box(self):
         # just update the bd table but do not change the anchor
