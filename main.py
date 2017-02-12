@@ -253,7 +253,6 @@ class Main(QMainWindow, Ui_MainWindow):
                                  self.combo_interp.currentText())
 
     def update_bd_table(self, index):
-
         # update bd table, the index determines the anchor,
         # if it is non integer per default the first config is regarded as
         # anchor
@@ -297,8 +296,6 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
         # set some properties for canvas
         self.plotAreaWidget.canvas = FigureCanvas(self.plotAreaWidget.fig)
-        # self.plotAreaWidget.canvas.setParent(self.plotAreaWidget)
-        # self.plotAreaWidget.canvas.setFocusPolicy(Qt.StrongFocus)
 
         # connect scroll and double click event to canvas
         self.plotAreaWidget.canvas.mpl_connect('scroll_event', self.on_wheel)
