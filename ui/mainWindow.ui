@@ -135,10 +135,7 @@
     <addaction name="actionOpen_Directory"/>
     <addaction name="separator"/>
     <addaction name="actionSave_Table"/>
-    <addaction name="actionSave_Plot"/>
-    <addaction name="actionSave_all_Plots"/>
     <addaction name="separator"/>
-    <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
