@@ -124,8 +124,21 @@ class QRecursiveSelectionModel(QItemSelectionModel):
            """
         # if the selection is a QModelIndex return und don do anything
         if isinstance(selection, QModelIndex):
-            self.clearSelection()
-            return
+            if not selection.isValid():
+                self.clearSelection()
+                return
+            indexes_selected = [selection]
+            # If the selection is an index, a range only containing this index
+            # has to be created
+            recursive_selection = QItemSelection()
+
+            q_index_parent = self.model().parent(selection)
+            q_index_first = selection
+            q_index_last = self.model().index(selection.row(),
+                                              selection.column(),
+                                              q_index_parent)
+            recursive_selection.select(q_index_first, q_index_last)
+
         # Handle selections and single indexes
         if isinstance(selection, QItemSelection):
             indexes_selected = selection.indexes()
