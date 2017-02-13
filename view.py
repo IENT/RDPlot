@@ -58,7 +58,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         try:
             result = QtWidgets.QFileDialog.getExistingDirectory(
                 self,
-                "Open Sequence Encoder Log",
+                "Open Directory",
                 "/home/ient/Software/rd-plot-gui/examplLogs")
             return result
         except IndexError:
