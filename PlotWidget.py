@@ -53,9 +53,6 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         # this is some workaround for PyQt similar to tight layout
         self.plotAreaWidget.fig.clear()
         axis = self.plotAreaWidget.fig.add_subplot(111)
-        self.plotAreaWidget.fig.subplots_adjust(left=0.05, right=0.95,
-                                                bottom=0.1, top=0.95,
-                                                hspace=0.2, wspace=0.2)
 
         for plot_data in plot_data_collection:
             # Convert list of pairs of strings to two sorted lists of floats
@@ -73,14 +70,14 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             # add datacursor for the curve
             datacursor(curve)
 
-            # set grid and default y tick in 0.5 spacing
-            axis.grid(True)
-            start, end = axis.get_ylim()
-            start = math.floor(start)
-            end = math.ceil(end)
-            axis.yaxis.set_ticks(np.arange(start, end, 0.5))
+        # set grid and default y tick in 0.5 spacing
+        axis.grid(True)
+        start, end = axis.get_ylim()
+        start = math.floor(start)
+        end = math.ceil(end)
+        axis.yaxis.set_ticks(np.arange(start, end, 0.5))
 
-            self.plotAreaWidget.canvas.draw()
+        self.plotAreaWidget.canvas.draw()
 
     # this function enables zoom with mousewheel
     # see also: http://stackoverflow.com/questions/11551049/matplotlib-plot-zooming-with-scroll-wheel
@@ -118,8 +115,8 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         if event.dblclick:
             axis = self.plotAreaWidget.fig.gca()
             if not axis.has_data():
-                self.plotAreaWidget.canvas.draw()  # force re-draw
                 axis.remove()
+                self.plotAreaWidget.canvas.draw()  # force re-draw
                 return
             axis.autoscale()
             self.plotAreaWidget.canvas.draw()  # force re-draw
