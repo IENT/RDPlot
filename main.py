@@ -84,7 +84,6 @@ class Main(QMainWindow, Ui_MainWindow):
         self.variableTreeView.setSelectionModel(
             self._variable_tree_selection_model
         )
-        self.variableTreeView.selectionModel().selectionChanged.connect(self.update_plot)
 
         # set up combo boxes for rate/psnr and interpolation options
         self.combo_interp.addItems(["pchip", "pol"])
