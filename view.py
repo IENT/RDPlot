@@ -124,6 +124,7 @@ class QRecursiveSelectionModel(QItemSelectionModel):
            """
         # if the selection is a QModelIndex return und don do anything
         if isinstance(selection, QModelIndex):
+            self.clearSelection()
             return
         # Handle selections and single indexes
         if isinstance(selection, QItemSelection):
