@@ -24,6 +24,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
         # set some properties for canvas
         self.plotAreaWidget.canvas = FigureCanvas(self.plotAreaWidget.fig)
+        self.splitter.setSizes([680, 50])
 
         # connect scroll and double click event to canvas
         self.plotAreaWidget.canvas.mpl_connect('scroll_event', self.on_wheel)
