@@ -89,6 +89,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         axis = self.plotAreaWidget.fig.gca()
         if not axis.has_data():
             axis.remove()
+            self.plotAreaWidget.canvas.draw()  # force re-draw
             return
         # get the current x and y limits
         cur_xlim = axis.get_xlim()
@@ -117,9 +118,12 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         if event.dblclick:
             axis = self.plotAreaWidget.fig.gca()
             if not axis.has_data():
+                self.plotAreaWidget.canvas.draw()  # force re-draw
                 axis.remove()
                 return
             axis.autoscale()
             self.plotAreaWidget.canvas.draw()  # force re-draw
         else:
             return
+
+
