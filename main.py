@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 from PyQt5.uic import loadUiType
 from PyQt5.QtCore import QItemSelectionModel, QSize
 from PyQt5 import QtGui
