@@ -19,6 +19,10 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.setupUi(self)
         self.fig_dict = {}
 
+        # store copies of call backs, so that they are not garbage collected
+        self.on_wheel_cpy = self.on_wheel
+        self.on_db_click_cpy = self.on_db_click
+
         # set figure and backgroung to transparent
         self.plotAreaWidget.fig = Figure(facecolor="white")
 
@@ -27,8 +31,8 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.splitter.setSizes([680, 50])
 
         # connect scroll and double click event to canvas
-        self.plotAreaWidget.canvas.mpl_connect('scroll_event', self.on_wheel)
-        self.plotAreaWidget.canvas.mpl_connect('button_press_event', self.on_db_click)
+        self.plotAreaWidget.canvas.mpl_connect('scroll_event', self.on_wheel_cpy)
+        self.plotAreaWidget.canvas.mpl_connect('button_press_event', self.on_db_click_cpy)
 
         self.verticalLayout_3.addWidget(self.plotAreaWidget.canvas)
         # add the toolbar for the plot
@@ -86,7 +90,6 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         axis = self.plotAreaWidget.fig.gca()
         if not axis.has_data():
             axis.remove()
-            self.plotAreaWidget.canvas.draw()  # force re-draw
             return
         # get the current x and y limits
         cur_xlim = axis.get_xlim()
@@ -116,7 +119,6 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             axis = self.plotAreaWidget.fig.gca()
             if not axis.has_data():
                 axis.remove()
-                self.plotAreaWidget.canvas.draw()  # force re-draw
                 return
             axis.autoscale()
             self.plotAreaWidget.canvas.draw()  # force re-draw
