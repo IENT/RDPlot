@@ -1,5 +1,6 @@
 from PyQt5.uic import loadUiType
-from PyQt5.QtCore import QItemSelectionModel
+from PyQt5.QtCore import QItemSelectionModel, QSize
+from PyQt5 import QtGui
 from PlotWidget import PlotWidget
 
 from os.path import sep
@@ -266,6 +267,17 @@ if __name__ == '__main__':
     from PyQt5 import QtWidgets
 
     app = QtWidgets.QApplication(sys.argv)
+
+    app_icon = QtGui.QIcon()
+    app_icon.addFile('logo/PLOT1024.png', QSize(1024, 1024))
+    app_icon.addFile('logo/PLOT512.png', QSize(512, 512))
+    app_icon.addFile('logo/PLOT256.png', QSize(256, 256))
+    app_icon.addFile('logo/PLOT128.png', QSize(128, 128))
+    app_icon.addFile('logo/PLOT64.png', QSize(64, 64))
+    app_icon.addFile('logo/PLOT32.png', QSize(32, 32))
+    app_icon.addFile('logo/PLOT16.png', QSize(16, 16))
+
+    app.setWindowIcon(app_icon)
     main = Main()
     main.show()
     sys.exit(app.exec_())
