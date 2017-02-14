@@ -10,7 +10,7 @@ It can:
 - Plot rd plot over time (rate over time, psnr over time)
 - Exporting plots (through matplotlib interface)
 - Calculate and display table of bjontegaard delta measurement
-- export tables as latex style table code
+- Export tables as latex style table code
 
 
 # Installation 
