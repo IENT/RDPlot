@@ -27,6 +27,7 @@ class ParserWorkThread(QThread):
         for path in self.pathlist:
             sim_data_items = list(SimulationDataItemFactory.parse_directory(path))
             self.newParsedData.emit(sim_data_items)
+        self.pathlist.clear()
 
 
 
