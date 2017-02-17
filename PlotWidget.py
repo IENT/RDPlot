@@ -25,6 +25,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
         # set figure and backgroung to transparent
         self.plotAreaWidget.fig = Figure(facecolor="white")
+        self.plotAreaWidget.fig.set_tight_layout(True)
 
         # set some properties for canvas
         self.plotAreaWidget.canvas = FigureCanvas(self.plotAreaWidget.fig)
@@ -54,7 +55,6 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             return
 
         # put a subplot into the figure and set the margins a little bit tighter than the defaults
-        # this is some workaround for PyQt similar to tight layout
         self.plotAreaWidget.fig.clear()
         axis = self.plotAreaWidget.fig.add_subplot(111)
 
