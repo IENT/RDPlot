@@ -1,6 +1,8 @@
 from PyQt5 import QtWidgets
 from PyQt5.Qt import Qt
-from PyQt5.QtCore import QItemSelectionModel, QItemSelection, QModelIndex, pyqtSignal
+from PyQt5.QtCore import QObject,QItemSelectionModel, QItemSelection, QModelIndex, pyqtSignal, QThread
+from PyQt5.QtWidgets import QMessageBox
+
 
 from collections import deque
 from os.path import join
@@ -8,10 +10,35 @@ from os.path import join
 import model
 from SimulationDataFactory import SimulationDataItemFactory
 
+class ParserWorkThread(QThread):
+    newParsedData = pyqtSignal([list])
+
+    def __init__(self, pathlist=[]):
+        QThread.__init__(self)
+        self.pathlist = pathlist
+
+    def __del__(self):
+        self.wait()
+
+    def addPath(self,path):
+        self.pathlist.append(path)
+
+    def run(self):
+        for path in self.pathlist:
+            sim_data_items = list(SimulationDataItemFactory.parse_directory(path))
+            self.newParsedData.emit(sim_data_items)
+
+
 
 class SimDataItemTreeView(QtWidgets.QTreeView):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.parserThread = ParserWorkThread()
+        self.parserThread.newParsedData.connect(self._update_model)
+        self.msg = QMessageBox(self) # use self as parent here
+        self.msg.setIcon(QMessageBox.Information)
+        self.msg.setText("Parsing Directory...")
+        self.msg.setWindowTitle("Info")
 
     def dragEnterEvent(self, event):
         # Consider only url/path events
@@ -98,9 +125,14 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
 
         # TODO this uses the parse_directory method, thus, does not automatically
         # parse 'log'.subfolder. Should this be the case?
-        sim_data_items = list(SimulationDataItemFactory.parse_directory(path))
+        #sim_data_items = list(SimulationDataItemFactory.parse_directory(path))
+        #self.model().update(sim_data_items)
+        self.msg.show()
+        self.parserThread.addPath(path)
+        self.parserThread.start()
+    def _update_model(self,sim_data_items):
+        self.msg.hide()
         self.model().update(sim_data_items)
-
 
 class QRecursiveSelectionModel(QItemSelectionModel):
     """Custom selection model for recursive models. If an item is selected, all
