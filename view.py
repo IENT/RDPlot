@@ -10,6 +10,7 @@ from os.path import join
 import model
 from SimulationDataFactory import SimulationDataItemFactory
 
+
 class ParserWorkThread(QThread):
     newParsedData = pyqtSignal([list])
 
@@ -28,7 +29,6 @@ class ParserWorkThread(QThread):
             sim_data_items = list(SimulationDataItemFactory.parse_directory(path))
             self.newParsedData.emit(sim_data_items)
         self.pathlist.clear()
-
 
 
 class SimDataItemTreeView(QtWidgets.QTreeView):
@@ -134,6 +134,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
     def _update_model(self,sim_data_items):
         self.msg.hide()
         self.model().update(sim_data_items)
+
 
 class QRecursiveSelectionModel(QItemSelectionModel):
     """Custom selection model for recursive models. If an item is selected, all
