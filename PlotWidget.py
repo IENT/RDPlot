@@ -1,6 +1,8 @@
 from PyQt5.uic import loadUiType
 
 from matplotlib.figure import Figure
+from matplotlib.axis import Axis
+from matplotlib.lines import Line2D
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar)
@@ -31,6 +33,10 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.plotAreaWidget.canvas = FigureCanvas(self.plotAreaWidget.fig)
         self.splitter.setSizes([680, 50])
 
+        self.ax = self.plotAreaWidget.fig.add_subplot(111)
+        self.ax.grid(True)
+        self.current_identifiers = []
+
         # connect scroll and double click event to canvas
         self.plotAreaWidget.canvas.mpl_connect('scroll_event', self.on_wheel_cpy)
         self.plotAreaWidget.canvas.mpl_connect('button_press_event', self.on_db_click_cpy)
@@ -54,32 +60,46 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         if len(plot_data_collection) == 0:
             return
 
-        # put a subplot into the figure and set the margins a little bit tighter than the defaults
-        self.plotAreaWidget.fig.clear()
-        axis = self.plotAreaWidget.fig.add_subplot(111)
-
+        # get the identifiers (in this case legends as they are unique) from plot_data_collection
+        identifiers = []
         for plot_data in plot_data_collection:
+            # Create legend from variable path and sim data items identifiers
+            legend = " ".join([i.split('_', 1)[0] for i in plot_data.identifiers] + plot_data.path)
+            identifiers.append(legend)
+
+        # remove all lines which are not wanted anymore
+        for curve in self.ax.get_lines():
+            if curve.get_label() not in identifiers:
+                self.current_identifiers.remove(curve.get_label())
+                curve.remove()
+
+        # plot all the lines which are missing yet
+        for plot_data in plot_data_collection:
+            # Create legend from variable path and sim data items identifiers
+            legend = " ".join([i.split('_', 1)[0] for i in plot_data.identifiers] + plot_data.path)
+            if legend in self.current_identifiers:
+                continue
+
             # Convert list of pairs of strings to two sorted lists of floats
             values = ((float(x), float(y)) for (x, y) in plot_data.values)
             sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
             [xs, ys] = list(zip(*sorted_value_pairs))
 
-            # Create legend from variable path and sim data items identifiers
-            legend = " ".join([i.split('_', 1)[0] for i in plot_data.identifiers] + plot_data.path)
-
             # plot the current plotdata and set the legend
-            curve = axis.plot(xs, ys, '-x', label=legend)
-            axis.legend(loc='lower right')
+            self.ax.plot(xs, ys, '-x', label=legend)
+            self.ax.legend(loc='lower right')
 
-            # add datacursor for the curve
-            datacursor(curve)
+            # append legend to current identifiers
+            self.current_identifiers.append(legend)
 
-        # set grid and default y tick in 0.5 spacing
-        axis.grid(True)
-        start, end = axis.get_ylim()
+        # set  y tick in 0.5 spacing
+        self.ax.relim()
+        self.ax.autoscale()
+
+        start, end = self.ax.get_ylim()
         start = math.floor(start)
         end = math.ceil(end)
-        axis.yaxis.set_ticks(np.arange(start, end, 0.5))
+        self.ax.yaxis.set_ticks(np.arange(start, end, 0.5))
 
         self.plotAreaWidget.canvas.draw()
 
@@ -124,5 +144,3 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             self.plotAreaWidget.canvas.draw()  # force re-draw
         else:
             return
-
-
