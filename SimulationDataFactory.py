@@ -2,65 +2,169 @@ from os.path import (basename, dirname, join, sep)
 from glob import glob
 import re
 
-from ParserClasses import (EncLogHM, EncLogSHM, EncLogHM360Lib, EncLogHM360LibOld)
 
 
 class SimulationDataItemFactory:
-    # this dictionary stores the simulation types in a key value manner,
-    # the key is a string which can be parsed from the log file and is unique
-    # for a simulation type, the value is the class of the simulation type
-    # for non unique keys, the order plays an important role!
-    simTypeDict = [(r'Y-PSNR_VP0', EncLogHM360Lib.EncLogHM360Lib),
-                   (r'^-----360 \s video \s parameters----', EncLogHM360LibOld.EncLogHM360LibOld),
-                   (r'^SHM \s software', EncLogSHM.EncLogSHM),
-                   (r'^HM \s software', EncLogHM.EncLogHM)
-                   ]
+    """This class is a factory for all sub classes of the :class:
+    `AbstractSimulationDataItem` class.
 
-    def _get_sim_type(self, path):
-        try:
-            for pattern, sim_data_item in self.simTypeDict:
-                with open(path, 'r') as log_file:
-                    log_text = log_file.read()  # reads the whole text file
-                    sim_type = re.search(pattern, log_text, re.M + re.X)
-                if sim_type:
-                    return sim_data_item
-        except:
-            print("Dont be foolish. Do something useful here")
+    Sub classes can be passed, to the constructor or added by the
+    :func: `add_class` method. Additionally, a class method constructor
+    :func: `from_path` creates a factory instance from all sub classes found in
+    all python files in a directory.
 
-    # Check whether we have to parse dat directory or encoder logs
-    # note, that it is only checked whether we are in a directory called 'dat'
-    def _get_log_type(path):
-        if basename(path) == 'dat':
-            sim_data_type = 'dat'
-        else:
-            sim_data_type = 'encLog'
-        return sim_data_type
+    Multiple methods are provided to create simulation data items and
+    collections of simulation data items from paths using the sub classes known
+    to the factory. The factory determines, if it can create a simulation data
+    item using a class, by checking the class method *can_parse_file* of this
+    class. Note, that the order of the classes is therefore important, as the
+    first matching class will be used to create the item. Thus, more general
+    items should be tried at last.
+    """
+
+    # Constructors
+
+    def __init__(self, classes=None):
+        self._classes = set()
+
+        if classes is not None:
+            for cls in classes:
+                self.add_class( cls )
 
     @classmethod
-    def parse_directory(cls, directory_path):
-        """Parse a directory for all sim data files and return generator
-           yielding sim data items"""
-        if cls._get_log_type(directory_path) == 'encLog':
-            paths = glob(join(directory_path, '*_enc.log'))
-            return (cls._get_sim_type(cls, p)(p) for p in paths)
-        else:
-            print("Dont be foolish. Do something useful here")
+    def from_path(cls, directory_path):
+        """Create a *SimulationDataItemFactory* by parsing a directory at
+        *directory_path* for sub classes of *AbstractSimulationDataItem*. All
+        python modules in the directory are parsed, and all sub classes are
+        passed to the factory. Packages are NOT parsed.
 
-    @classmethod
-    def parse_directory_for_sequence(cls, sequence_file_path):
-        """Parse a directory for sim data of a specific sequence given one
-           sim data item of this sequence returning a generator yielding parsed
-           sim data items"""
-        filename = basename(sequence_file_path)
-        directory = dirname(sequence_file_path)
-        sequence = filename.rsplit('_QP', 1)[0]
+        :param directory_path String: Path to parse for
+            *AbstractSimulationDataItem* sub classes
 
-        # Search for other sim data items in directory and parse them
-        # TODO hardcoded file ending, needed to prevent ambiguous occurence
-        # exceptions due to *.csv or other files being parsed
-        paths = glob(directory + sep + sequence + '*_enc.log')
-        return (cls._get_sim_type(cls, p)(p) for p in paths)
+        :rtype: :class: `SimulationDataItemFactory` with sub classes of
+            :class: `AbstractSimulationDataItem` from *directory_path*
+        """
 
-    @classmethod
-    def create_instance_for_file(cls, file_path):
-        return cls._get_sim_type(cls, file_path)(file_path)
+        simulationDataItemFactory = cls()
+
+        # TODO Stackoverflow refs
+
+        # Parse *directory_path* for sub classes of *AbstractSimulationDataItem*
+        classes = []
+        for importer, name, _ in pkgutil.iter_modules( [directory_path] ):
+            # Import a module from *directory_path*
+            module = importer.find_module( name ).load_module( name )
+
+            # Add all sub classes of AbstractSimulationDataItem from the module
+            # to the factory
+            for _, module_item in module.__dict__.items():
+                if is_class( module_item ):
+                    try:
+                        simulationDataItemFactory.add_class( module_item )
+                        # TODO usefull logging
+                        print((
+                            "Added sub class '{}' to simualtion data item "
+                            " factory"
+                        ).format(module_item))
+                    except IsNotAnAbstractSimulationDataItemSubClassError:
+                        pass
+
+        return simulationDataItemFactory
+
+
+    # Interface to Set of Classes
+
+    def add_class(self, cls):
+        """Add a sub class *cls* of :class: `AbstractSimulationDataItem` to the
+        factory.
+        """
+        if not issubclass(cls, AbstractSimulationDataItem):
+            raise IsNotAnAbstractSimulationDataItemSubClassError((
+                "Can not add class '{}' to SimulationDataItemFactory, as it is "
+                "not a sub class of AbstractSimulationDataItem"
+            ).format(cls))
+
+        self._classes.add( cls )
+
+
+    # Factory Methods
+
+    def create_item_from_file(self, file_path):
+        """Create an item of a AbstractSimulationDataItem sub class for the
+        file specified by *file_path*.
+
+        :param file_path: File which should be parsed as simulation data
+            item_generator
+
+        :rtype: object of sub class of :class: `AbstractSimulationDataItem`
+        """
+
+        # Create simulatin data item of the first class which says, it can parse
+        # the file
+        for cls in self._classes:
+            if cls.can_parse_file( file_path ):
+                return cls( file_path )
+
+        raise SimulationDataItemError((
+            "Could not create a simulation data item from file at '{}' using"
+            " the sub classes of *AbstractSimulationDataItem* known to the"
+            " SimulationDataItemFactory."
+        ).format(file_path))
+
+    def create_item_list_from_directory(self, directory_path):
+        """Try to create simulation data items for all files in a directory at
+        *directory_path*. Ignore if files can not be parsed.
+
+        :param directory_path: :class: `str` of directory path
+
+        :rtype: :class: `list` of simulation data items
+        """
+
+        item_list = []
+        for file_name in listdir(directory_path):
+            path = join(directory_path, file_name)
+            try:
+                item_list.append( self.create_item_from_file( path ) )
+            except SimulationDataItemError as error:
+                print((
+                    "Could not create simulation data item from file '{}'"
+                    " due to {}"
+                ).format(path, error))
+
+        return item_list
+
+    def create_item_list_from_path(self, path):
+        """Create a list of simulation data items from a path. The path can
+        either be a file or a directory and is parsed accordingly. The
+        method fails if not at least one simulation data item can be
+        created.
+
+        :param path: :class: `str` path
+
+        :rtype: :class: `list` of simulation data items
+        """
+
+        if isfile(path):
+            return [ self.create_item_from_file( path ) ]
+        if isdir(path):
+            item_list = self.create_item_list_from_directory( path )
+            if len( item_list ) == 0:
+                raise SimulationDataItemError()
+            return item_list
+
+        raise SimulationDataItemError((
+            "Not at least one simulation data item can be created from path"
+            " '{}'"
+        ).format(path))
+
+
+    # Magic Methods
+
+    def __str__(self):
+        return str( self._classes )
+
+    def __repr__(self):
+        return str(
+            "SimulationDataItemFactory with loaded classes: "
+            .format( str(self) )
+        )
