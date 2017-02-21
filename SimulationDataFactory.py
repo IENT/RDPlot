@@ -4,6 +4,121 @@ import re
 
 
 
+class AbstractSimulationDataItem(metaclass=ABCMeta):
+    """Abstract base class for simulation data item classes. The abstract
+    method :func: `can_parse_file` and the properties *data*, and
+    *tree_identifier_list* have to be implemented by sub classes.
+
+    :param path: Path of associated file in file systems. Is used as unique
+        identifier.
+    :type path: :class: `str`
+    """
+
+    # Constructor
+
+    def __init__(self, path):
+        # Path is unique identifier
+        self.path = abspath(path)
+
+
+    # Abstract Methods/Properties
+
+    @classmethod
+    @abstractmethod
+    def can_parse_file(cls, path):
+        """Check, if the file at *path* can be parsed by the class. The class
+        can can for example check, if the file name or the file extension
+        matches a certain pattern, or inspect the contents of the file. Note,
+        that the first class which returns ``True`` with respect to a file on
+        this method, will be be used to parse the file. Thus, classes should
+        implement this method as specific as possible.
+
+        :param path:  path to file
+        :type path: :class: `String`
+
+        :rtype: :class: `Bool`
+        """
+        pass
+
+    @abstractproperty
+    def data(self):
+        """Property to access the parsed data. The data is given as a list of
+        pairs. The first element are the identifiers associated with the data,
+        eg. *sequence* and  *config* for summary data. The second element is the
+        data itself, in the form of a dictionary tree. The  dictionary tree
+        has the variables which are provided by the *encoder_log* as keys, and
+        the actual data as leafs. The data  is in the form of lists of 2-tuples
+        containing, an x and the  corresponding y value.
+
+
+        Now, the dictionary trees of different sim data items have to be
+        combined to one dictionary tree. The resulting *dict_tree* is the union
+        of the trees of the sim data items with :class: `list`s of
+        :class: `PlotData` objects as leafs.
+
+        The leafs are created as follows: A :class: `PlotData` object is
+        created from the *identifiers* associated with the :class: `SimDataItem`
+        and the list of value pairs found at the current position. The current
+        path in the dictionary tree is also added for convenience. Now, if there
+        are already :class: `PlotData` objects present at the current leaf of
+        the *dict_tree*, then:
+            * if the identifiers of the current :class: `PlotData` object equal
+                the one of an already present one, the values are just added
+                to the values of the :class: `PlotData` object already present.
+            * if no :class: `PlotData` object is present with equal identifiers
+                the new :class: `PlotData` object is added to the list
+
+        Why is this necessary? It might be, that different sim data items
+        provide data, that has to be joined before it is displayed, eg. the
+        summary data for one particular variable is usually provided by several
+        encoder_logs. In this case, the correspondence of the data is coded
+        in the identifier of the data ie. the identifier would be similar across
+        different sim data items, and thus, the data can be joined by this
+        function. On the other hand, if several sim data items just provide data
+        for the same variable, then the data should be rendered separately, ie.
+        different :class: `PlotData` objects are added to the list for each
+        :class: `SimDataItem` object.
+
+        :rtype: :class: `list` of :class: `tuple`s with a :class: `list` of
+            :class: `str` identifiers as first, and a nested :"""
+        pass
+
+    @abstractproperty
+    def tree_identifier_list(self):
+        """Property to acces a list of identifiers, used to specify the position
+        of simulation data items in the tree view.
+
+        :rtype: :class: `list` of :class: `str`
+        """
+        pass
+
+
+    # Magic Methods
+
+    # TODO remove if usefull 'set' is implemented
+    def __hash__(self):
+        return hash(self.path)
+
+    def __str__(self):
+        return str( "SimulationDataItem at path {}".format(self.path) )
+
+    def __repr__(self):
+        return str(self)
+
+
+    # Helper Methods
+
+    @classmethod
+    def _is_file_text_matching_re_pattern(cls, path, pattern):
+        """Check, if the file at *path* matches the given regex *pattern*
+        """
+        with open(path, 'r') as simulation_data_item_file:
+            text = simulation_data_item_file.read()
+            return bool( re.search(pattern, text, re.M + re.X) )
+        raise SimulationDataItemError( "Could not open file {}".format(path) )
+
+
+
 class SimulationDataItemFactory:
     """This class is a factory for all sub classes of the :class:
     `AbstractSimulationDataItem` class.
