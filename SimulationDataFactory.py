@@ -1,6 +1,22 @@
-from os.path import (basename, dirname, join, sep)
-from glob import glob
+import pkgutil
 import re
+
+from abc import ABCMeta, abstractmethod, abstractproperty
+from os.path import basename, dirname, join, abspath, isfile, isdir
+from os import listdir
+from collections import deque
+
+
+
+#
+# Classes
+#
+
+class SimulationDataItemError(Exception):
+    pass
+
+class IsNotAnAbstractSimulationDataItemSubClassError(SimulationDataItemError):
+    pass
 
 
 
