@@ -710,13 +710,13 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
         for sim_data_item in sim_data_items:
 
             # Get *item* of the tree corresponding to *sim_data_item*
-            item = self.create_path(*sim_data_item.tree_path)
+            item = self.create_path(*sim_data_item.tree_identifier_list)
 
             # This prevents an sim data item overwriting another one
-            # with same *tree_path* but different absolute path
+            # with same *tree_identifier_list* but different absolute path
             for value in item.values:
                 condition = (
-                    value.tree_path == sim_data_item.tree_path
+                    value.tree_identifier_list == sim_data_item.tree_identifier_list
                     and value.path != sim_data_item.path
                 )
                 if condition:
@@ -724,7 +724,7 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                                                    "Ambigious sim data items: Sim Data Item {} and {}"
                                                    " have differen absolute paths but the same"
                                                    " position at the tree {}"
-                                               ).format(encoder_log, value, encoder_log.tree_path))
+                                               ).format(encoder_log, value, encoder_log.tree_identifier_list))
             # Add *sim_data_item* to the set of values of the tree item *item*
             item.values.add(sim_data_item)
 
@@ -739,7 +739,7 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
 
         for sim_data_item in sim_data_items:
             # Get *item* of the tree corresponding to *sim_data_item*
-            item = self.create_path(*sim_data_item.tree_path)
+            item = self.create_path(*sim_data_item.tree_identifier_list)
             self.remove_item(item)
 
         self.items_changed.emit()
