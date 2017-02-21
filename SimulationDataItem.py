@@ -19,10 +19,133 @@ def is_class(cls):
     return hasattr(cls, '__bases__')
 
 
+def dict_tree_from_sim_data_items(sim_data_item_collection):
+    """Combine the *data* of different sim data items to a tree of
+    :class: `dicts`, which is then used to display the data. To understand, why
+    this is necessary, and what this method does, take a look at the
+    documentation of the :class: `SimulationDataItem` *data* property.
+
+    :param sim_data_item_collection: Iterable of :class: `SimDataItem`s
+
+    :rtype: tree of :class: `dict`s with :class: `list`s of
+        :class: `PlotData` objects as leafs
+    """
+
+    dict_tree = {}
+
+    for sim_data_item in sim_data_item_collection:
+        for (identifiers, sim_data_item_dict_tree) in sim_data_item.data:
+
+            # Process all items of the *encoder_log*'s dictionary tree ie.
+            # create corresponding keys in the output *dict_tree* and
+            # copy the data at the corresponding position in PlotData
+            # objects.
+
+            # Note, that tuple in queue are pairs of path ie. a list of
+            # strings/keys of the encoder_log_dict_tree, and the tree itself.
+            # deque has to be initialized with iterable, thus, pair is wrapped
+            # with list.
+            tree_queue = deque([([], sim_data_item_dict_tree)])
+
+            while len(tree_queue) > 0:
+                (keys, parent) = tree_queue.pop()
+
+                # Dictionary items are added to the queue to be processed
+                # themselves
+                if isinstance(parent, dict):
+                    for key, item in parent.items():
+                        tree_queue.appendleft((keys + [key], item))
+                    continue
+
+                # Non dictionary items are processed ie. their data is
+                # added as PlotData object to the output *dict_tree*
+                dict_tree = append_value_to_dict_tree_at_path(
+                    dict_tree,
+                    keys,
+                    PlotData(identifiers, parent, keys),
+                )
+
+    return dict_tree
+
+
+def append_value_to_dict_tree_at_path(dict_tree, path, plot_data):
+    """Add a *plot_data* object to a *dict_tree* at a certain *path*.
+
+    :param dict_tree: Tree of nested :class: `dict`s
+    :param path: :class: `list` of keys describing a path in the *dict_tree*
+    :param plot_data: :class: `PlotData` object to be added to the *dict_tree*
+
+    :rtype: Altered tree of nested :class: `dict`s
+    """
+
+    # Walk the *path* down at the *dict_tree* and create not existing keys
+    # on the way.
+    # Note, that the last key of the path is excluded, as the data has
+    # to be written to this key.
+    item = dict_tree
+    for key in path[:-1]:
+        # Create nested dictionaries if they do not exist already
+        if key not in item:
+            item[key] = {}
+
+        item = item[key]
+
+    # If the last element of the path does not exist, create a list on the
+    # corresponding position in the *dict_tree* with the *plot_data* object
+    # as only member so far. Return.
+    if path[-1] not in item:
+        item[path[-1]] = [plot_data]
+        return dict_tree
+
+    # If the last element does exist, retrieve the list stored at its position
+    plot_data_list = item[path[-1]]
+
+    # Iterate over the existing PlotData objects and check, if one has equal
+    # identifiers to the current one. If this is the case, append the values
+    # stored in the current *plot_data* object to one already present. Return.
+    for plot_data_other in plot_data_list:
+        if plot_data_other.identifiers == plot_data.identifiers:
+            plot_data_other.values.extend(plot_data.values)
+            return dict_tree
+
+    # If the last element exists, but no PlotData object with the same
+    # identifiers is present, append the PlotData object *plot_data* to the
+    # list.
+    plot_data_list.append(plot_data)
+    return dict_tree
+
+#-------------------------------------------------------------------------------
+
+
 
 #
 # Classes
 #
+
+# TODO replace this by named tuple
+# TODO remove path and implement functionality in main
+
+class PlotData:
+    """Class encapsulating data to be plotted. It is used to join data from
+    different simulation data items together, if they export data
+    at the same position in the variable tree, and with the same *identifiers* .
+
+    :param identifiers: Used to decide, if a list of values should be
+        associated with a certain plot data object.
+    :type identifiers: :class: `list`
+
+    :param values: The actual data ie. a list of x, y pairs
+    :type values: :class: `list` of :class: `tuples` of double/int/...
+
+    :param path: Path of the plot data object in the variable tree
+    :type path: :class: `list` of :class: `str`
+    """
+
+    def __init__(self, identifiers, values, path):
+        self.identifiers    = identifiers
+        self.values         = values
+        self.path           = path
+
 
 class SimulationDataItemError(Exception):
     pass
