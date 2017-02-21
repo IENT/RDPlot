@@ -15,27 +15,6 @@ from lib.BD import bjontegaard
 def compare_strings_case_insensitive(first, second):
     return first.casefold() > second.casefold()
 
-
-# -------------------------------------------------------------------------------
-#
-# Classes
-#
-
-
-class PlotData:
-    """Class encapsulating data to be plotted
-
-    :param legend: Legend of the line, plotted from *values*
-    :param values: Iterable collection of values, which should be plotted
-    :param path: Path in the variable tree. Not needed, but there for
-        convenience.
-    """
-
-    def __init__(self, identifiers, values, path):
-        self.identifiers = identifiers
-        self.values = values
-        self.path = path
-
 # -------------------------------------------------------------------------------
 
 
