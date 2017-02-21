@@ -6,9 +6,17 @@ from os.path import join
 from os import listdir
 
 from PyQt5 import QtWidgets
-from main import Main
 
+from os import path
 
+from pathlib import Path
+
+p =  path.abspath(path.join(__file__ ,"../../.."))
+
+print(p)
+sys.path.append(p)
+
+from rdplot import Main
 
 EXAMPLE_SIMULATION_DATA_PATH = "example_simulation_data"
 
