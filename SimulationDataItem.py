@@ -394,10 +394,12 @@ class SimulationDataItemFactory:
             try:
                 item_list.append( self.create_item_from_file( path ) )
             except SimulationDataItemError as error:
-                print((
-                    "Could not create simulation data item from file '{}'"
-                    " due to {}"
-                ).format(path, error))
+                pass
+                # We definitely cannot accept thousands of execptions on the command line
+                #print((
+                #    "Could not create simulation data item from file '{}'"
+                #    " due to {}"
+                #).format(path, error))
 
         return item_list
 

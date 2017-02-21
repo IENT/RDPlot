@@ -134,6 +134,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         self.msg.show()
         self.parserThread.addPath(path)
         self.parserThread.start()
+
     def _update_model(self,sim_data_items):
         self.msg.hide()
         self.model().update(sim_data_items)

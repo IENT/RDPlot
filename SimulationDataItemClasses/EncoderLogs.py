@@ -7,7 +7,6 @@ from SimulationDataItem import (AbstractSimulationDataItem,
                                 SimulationDataItemError)
 
 
-
 class AbstractEncLog(AbstractSimulationDataItem):
     def __init__(self, path):
         super().__init__(path)
@@ -19,9 +18,6 @@ class AbstractEncLog(AbstractSimulationDataItem):
         # Dictionaries holding the parsed values
         self.summary_data = self._parse_summary_data()
         self.temporal_data = self._parse_temporal_data()
-
-
-    #
 
     def _parse_path(self, path):
         try:
@@ -73,9 +69,7 @@ class AbstractEncLog(AbstractSimulationDataItem):
             ),
         ]
 
-
     # Non-abstract Helper Functions
-
     @classmethod
     def _enc_log_file_matches_re_pattern(cls, path, pattern):
         """"""

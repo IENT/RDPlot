@@ -16,7 +16,6 @@ def compare_strings_case_insensitive(first, second):
 # -------------------------------------------------------------------------------
 
 
-
 #
 # Models
 #
