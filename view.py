@@ -19,13 +19,15 @@ SIMULATION_DATA_ITEM_CLASSES_PATH = "SimulationDataItemClasses"
 class ParserWorkThread(QThread):
     newParsedData = pyqtSignal([list])
 
-    def __init__(self, pathlist=[]):
+    def __init__(self, pathlist=None):
         QThread.__init__(self)
 
         self._factory = SimulationDataItemFactory.from_path(
             SIMULATION_DATA_ITEM_CLASSES_PATH
         )
 
+        if pathlist is None:
+            pathlist = []
         self.pathlist = pathlist
 
     def __del__(self):
