@@ -28,3 +28,9 @@ Now you should be able to run the project from the virtual env
     pip3 install mpldatacursor
 Now you are able to call main.py from the command line
 
+
+# Scripts
+Helper script to start the gui and load all files and folders from the
+*example_simulation_data*. Invoke the script with
+``` python -m script.start_gui_and_parse_simulation_examples ```
+from the project main folder ie. the folder, which contains this file.
