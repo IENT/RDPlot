@@ -53,9 +53,6 @@ class Main(QMainWindow, Ui_MainWindow):
         self.actionOpen_File.triggered.connect(
             self.simDataItemTreeView.add_sim_data_item
         )
-        self.actionOpen_Sequence.triggered.connect(
-            self.simDataItemTreeView.add_sequence
-        )
         self.actionOpen_Directory.triggered.connect(
             self.simDataItemTreeView.add_folder
         )

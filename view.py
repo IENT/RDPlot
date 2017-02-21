@@ -106,17 +106,6 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         sim_data_item = SimulationDataItemFactory.create_instance_for_file(path)
         self.model().add(sim_data_item)
 
-    # adds a all logfiles of a sequence from a directory to the treeview
-    def add_sequence(self):
-        try:
-            directory, file_name = self._get_open_file_names()
-        except TypeError:
-            return
-        path = join(directory, file_name)
-
-        sim_data_items = list(SimulationDataItemFactory.parse_directory_for_sequence(path))
-        self.model().update(sim_data_items)
-
     # adds all logfiles and sequences from a directory to the treeview
     def add_folder(self):
         try:
