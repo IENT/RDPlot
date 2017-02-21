@@ -313,7 +313,9 @@ class SimulationDataItemFactory:
 
         simulationDataItemFactory = cls()
 
-        # TODO Stackoverflow refs
+        # Automated loading of python modules from a directory adapted from
+        # Luca Invernizzi's answer to
+        # http://stackoverflow.com/questions/1057431/loading-all-modules-in-a-folder-in-python
 
         # Parse *directory_path* for sub classes of *AbstractSimulationDataItem*
         classes = []
