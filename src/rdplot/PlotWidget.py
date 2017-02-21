@@ -12,8 +12,10 @@ import numpy as np
 import math
 from os.path import sep
 
-Ui_PlotWidget, QWidget = loadUiType('ui' + sep + 'plotWidget.ui')
+import pkg_resources
 
+Ui_name = pkg_resources.resource_filename(__name__, 'ui' + sep + 'plotWidget.ui')
+Ui_PlotWidget, QWidget = loadUiType(Ui_name)
 
 class PlotWidget(QWidget, Ui_PlotWidget):
     def __init__(self, ):

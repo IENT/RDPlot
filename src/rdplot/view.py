@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QMessageBox
 
 
 from collections import deque
+from os import path
 from os.path import join
 
 import model
@@ -13,7 +14,8 @@ from SimulationDataItem import SimulationDataItemFactory
 
 # Path to the folder containing simulation data sub classes. The classes
 # are loaded by the simulation data item factory and used for parsing files
-SIMULATION_DATA_ITEM_CLASSES_PATH = "SimulationDataItemClasses"
+here = path.abspath(path.dirname(__file__))
+SIMULATION_DATA_ITEM_CLASSES_PATH = here + path.sep + "SimulationDataItemClasses"
 
 
 class ParserWorkThread(QThread):
