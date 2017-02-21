@@ -1,12 +1,16 @@
-class SimDataItemParserError(Exception):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+import re
+
+from os.path import abspath, join, isdir, isfile, normpath, basename, sep
+from abc import ABCMeta
+
+from SimulationDataItem import (AbstractSimulationDataItem,
+                                SimulationDataItemError)
 
 
-class SimDataItem:
+
+class AbstractEncLog(AbstractSimulationDataItem):
     def __init__(self, path):
-        # Path is unique identifier
-        self.path = abspath(path)
+        super().__init__(path)
 
         # Parse file path and set additional identifiers
         # self.logType = self._get_Type(path)
@@ -16,65 +20,65 @@ class SimDataItem:
         self.summary_data = self._parse_summary_data()
         self.temporal_data = self._parse_temporal_data()
 
+
+    #
+
+    def _parse_path(self, path):
+        try:
+            # Assumes structure of .../<simulation_directory>/log/<basename>
+            directories = normpath(path).split(sep)[0: -2]
+            filename = basename(path)
+        except IndexError:
+            raise SimulationDataItemError(
+                "Path {} can not be splitted into directories and filename"
+                .format(filename, path)
+            )
+
+        try:
+            seperator = '-'
+            filename_splitted = filename.split('_QP')[0].split(seperator)
+            sequence = filename_splitted[-1]
+            config = seperator.join(filename_splitted[0: -2])
+        except IndexError:
+            raise SimulationDataItemError((
+                "Filename {} can not be splitted into config until '{}' and"
+                " sequence between last '{}' and '_QP'"
+            ).format(filename, seperator, seperator))
+
+        # prepend simulation directory to config
+        config = directories[-1] + ' ' + config
+        with open(self.path, 'r') as log_file:
+            log_text = log_file.read()  # reads the whole text file
+            qp = re.findall(r""" ^QP \s+ : \s+ (\d+.\d+) $
+                                  """, log_text, re.M + re.X)
+        qp = qp[0]
+        return sequence, config, qp
+
     # Properties
+
     @property
-    def tree_path(self):
+    def tree_identifier_list(self):
         return [self.sequence, self.config, self.qp]
 
     @property
     def data(self):
         return [
-            ([self.sequence, self.config, self.qp], {'Temporal': self.temporal_data}),
-            ([self.sequence, self.config], {'Summary': self.summary_data}),
+            (
+                [self.sequence, self.config, self.qp],
+                {'Temporal': self.temporal_data}
+            ),
+            (
+                [self.sequence, self.config],
+                {'Summary': self.summary_data}
+            ),
         ]
 
-    # Magic methods
-    def legend(self):
-        return " ".join(self.sequence, self.config, self.qp)
 
-    def __eq__(self, sim_data_item):
-        return self.path == sim_data_item.path
+    # Non-abstract Helper Functions
 
-    # TODO remove if usefull 'set' is implemented
-    def __hash__(self):
-        return hash(self.path)
-
-    def __str__(self):
-        return str((
-                       "Sim Data Item of sequence '{}' from config '{}' with qp '{}'"
-                       " at path {}"
-                   ).format(self.sequence, self.config, self.qp, self.path))
-
-    def __repr__(self):
-        return str(self)
-
-    # Conctructors
     @classmethod
-    def parse_url(cls, url):
-        """Parse a url and return either all sim data items in the folder, all
-           logs in a subfolder log or all sim data items with the same sequence as
-           the file."""
-        # Parse url as directory. Check for encoder log files in directory and
-        # in a possible 'log' subdirectory
-        if isdir(url):
-            sim_data_items = list(cls.parse_directory(url))
-            if len(sim_data_items) != 0:
-                return sim_data_items
-
-            url_log = join(url, 'log')
-            if isdir(url_log):
-                sim_data_items = list(cls.parse_directory(url_log))
-                if len(sim_data_items) != 0:
-                    return sim_data_items
-
-        # Parse url as encoder log path. Search in same directory for encoder
-        # logs with same sequence
-        if isfile(url):
-            sim_data_items = list(cls.parse_directory_for_sequence(url))
-            if len(sim_data_items) != 0:
-                return sim_data_items
-
-        # No parsing scheme succeeded
-        raise SimDataItemParserError("Could not parse url {} for sim data items"
-                                     .format(url))
-
+    def _enc_log_file_matches_re_pattern(cls, path, pattern):
+        """"""
+        if path.endswith("enc.log"):
+            return cls._is_file_text_matching_re_pattern(path, pattern)
+        return False
