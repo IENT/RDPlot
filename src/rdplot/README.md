@@ -1,5 +1,5 @@
 # RD Plot
-![RD Plot logo](https://git.rwth-aachen.de/IENT-Software/rd-plot-gui/raw/master/logo/PLOT256.png)  
+![RD Plot logo](https://git.rwth-aachen.de/IENT-Software/rd-plot-gui/raw/master/src/rdplot/logo/PLOT256.png)  
 
 # Functionalties
 RD Plot is a plotting tool for visualizing rate-distortion data parsed from  
