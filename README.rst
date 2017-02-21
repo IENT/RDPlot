@@ -1,24 +1,29 @@
-A sample Python project
+RDPlot
 =======================
 
-A sample project that exists as an aid to the `Python Packaging User Guide
-<https://packaging.python.org>`_'s `Tutorial on Packaging and Distributing
-Projects <https://packaging.python.org/en/latest/distributing.html>`_.
+RdPlot is a tool for plotting rate distortion curves.  
 
-This projects does not aim to cover best practices for Python project
-development as a whole. For example, it does not provide guidance or tool
-recommendations for version control, documentation, or testing.
+Further information can be found in src/rdplot/README.md
 
 ----
 
-This is the README file for the project.
+On this level of the repository you can build a python package which is 
+installable via pip3.
 
-The file should use UTF-8 encoding and be written using ReStructured Text. It
-will be used to generate the project webpage on PyPI and will be displayed as
-the project homepage on common code-hosting services, and should be written for
-that purpose.
+----
 
-Typical contents for this file would include an overview of the project, basic
-usage examples, etc. Generally, including the project changelog in here is not
-a good idea, although a simple "What's New" section for the most recent version
-may be appropriate.
+Linux
+=======================
+
+Make sure that you are using python 3 and pip is up to date and then::
+
+    python setup.py sdist
+     
+    sudo pip3 install dist/rdplot-1.0.0.tar.gz 
+    
+Now you should be able to run rdplot from the command line and have a
+launcher in your favourite desktop enviroment.
+
+
+
+
