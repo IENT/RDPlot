@@ -1,6 +1,8 @@
 # Include the license file
 include LICENSE.txt
 
+include src/rdplot/ui/*
+
 # Include the data files
 recursive-include rdplot *.py
 
