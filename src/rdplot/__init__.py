@@ -5,9 +5,10 @@ from PyQt5 import QtGui
 from PyQt5 import QtWidgets
 
 import pkg_resources
-
-from pkgutil import extend_path
-__path__ = extend_path(__path__, __name__)
+from os import path
+import sys
+here = path.abspath(path.dirname(__file__))
+sys.path.append(here)
 
 from PlotWidget import PlotWidget
 
