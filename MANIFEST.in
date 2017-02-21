@@ -2,6 +2,9 @@
 include LICENSE.txt
 
 include src/rdplot/ui/*
+include src/rdplot/logo/*
+include src/rdplot/rdplot.desktop
+
 
 # Include the data files
 recursive-include rdplot *.py
@@ -9,3 +12,4 @@ recursive-include rdplot *.py
 # If using Python 2.6 or less, then have to include package data, even though
 # it's already declared in setup.py
 # include sample/*.dat
+
