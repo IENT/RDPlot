@@ -9,6 +9,18 @@ from collections import deque
 
 
 #
+# Functions
+#
+
+
+def is_class(cls):
+    """Check if *cls* is a class by trying to access its *__bases__* attribute
+    """
+    return hasattr(cls, '__bases__')
+
+
+
+#
 # Classes
 #
 
