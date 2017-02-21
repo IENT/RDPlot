@@ -6,8 +6,9 @@ from PlotWidget import PlotWidget
 
 from os.path import sep
 
+from SimulationDataItem import dict_tree_from_sim_data_items
 from model import (SimDataItemTreeModel, OrderedDictModel,
-                   VariableTreeModel, BdTableModel, dict_tree_from_sim_data_items)
+                   VariableTreeModel, BdTableModel)
 from view import (QRecursiveSelectionModel)
 
 Ui_MainWindow, QMainWindow = loadUiType('ui' + sep + 'mainWindow.ui')
