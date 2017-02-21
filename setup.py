@@ -69,12 +69,12 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=['rdplot','rdplot.lib','rdplot.ParserClasses'],
+    packages=['rdplot','rdplot.lib','rdplot.SimulationDataItemClasses'],
     package_dir={'': 'src'},
 
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
-    py_modules=["PlotWidget"],
+    #py_modules=["my_module"],
     include_package_data=True,
 
     # List run-time dependencies here.  These will be installed by pip when

@@ -14,13 +14,13 @@ from PlotWidget import PlotWidget
 
 from os.path import sep
 
+from SimulationDataItem import dict_tree_from_sim_data_items
 from model import (SimDataItemTreeModel, OrderedDictModel,
-                   VariableTreeModel, BdTableModel, dict_tree_from_sim_data_items)
+                   VariableTreeModel, BdTableModel)
 from view import (QRecursiveSelectionModel)
 
 Ui_name = pkg_resources.resource_filename(__name__, 'ui' + sep + 'mainWindow.ui')
 Ui_MainWindow, QMainWindow = loadUiType(Ui_name)
-
 
 class Main(QMainWindow, Ui_MainWindow):
     def __init__(self, ):
@@ -61,9 +61,6 @@ class Main(QMainWindow, Ui_MainWindow):
         # Connect signals of menues
         self.actionOpen_File.triggered.connect(
             self.simDataItemTreeView.add_sim_data_item
-        )
-        self.actionOpen_Sequence.triggered.connect(
-            self.simDataItemTreeView.add_sequence
         )
         self.actionOpen_Directory.triggered.connect(
             self.simDataItemTreeView.add_folder
@@ -293,5 +290,4 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-
 
