@@ -150,6 +150,7 @@ class PlotData:
 class SimulationDataItemError(Exception):
     pass
 
+
 class IsNotAnAbstractSimulationDataItemSubClassError(SimulationDataItemError):
     pass
 
