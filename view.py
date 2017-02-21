@@ -61,7 +61,9 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
 
     def dropEvent(self, event):
         for url in event.mimeData().urls():
-            self.model().update(model.SimDataItem.parse_url(url.path()))
+            self.msg.show()
+            self.parserThread.addPath( url.path() )
+            self.parserThread.start()
 
     # Keypress fix from
     # http://stackoverflow.com/questions/27475940/pyqt-connect-to-keypressevent
