@@ -1,9 +1,13 @@
 #!/usr/bin/python
 
 import sys
+
 from PyQt5 import QtWidgets
 from main import Main
 
+
+# Call this from rd-plot-gui folder with
+# >>> python -m script.start_gui_and_parse_simulation_examples
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
