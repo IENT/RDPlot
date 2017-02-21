@@ -8,7 +8,12 @@ from collections import deque
 from os.path import join
 
 import model
-from SimulationDataFactory import SimulationDataItemFactory
+from SimulationDataItem import SimulationDataItemFactory
+
+
+# Path to the folder containing simulation data sub classes. The classes
+# are loaded by the simulation data item factory and used for parsing files
+SIMULATION_DATA_ITEM_CLASSES_PATH = "SimulationDataItemClasses"
 
 
 class ParserWorkThread(QThread):
@@ -16,6 +21,11 @@ class ParserWorkThread(QThread):
 
     def __init__(self, pathlist=[]):
         QThread.__init__(self)
+
+        self._factory = SimulationDataItemFactory.from_path(
+            SIMULATION_DATA_ITEM_CLASSES_PATH
+        )
+
         self.pathlist = pathlist
 
     def __del__(self):
@@ -26,7 +36,7 @@ class ParserWorkThread(QThread):
 
     def run(self):
         for path in self.pathlist:
-            sim_data_items = list(SimulationDataItemFactory.parse_directory(path))
+            sim_data_items = self._factory.create_item_list_from_path(path)
             self.newParsedData.emit(sim_data_items)
         self.pathlist.clear()
 
