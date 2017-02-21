@@ -2,12 +2,14 @@
 from PyQt5.uic import loadUiType
 from PyQt5.QtCore import QItemSelectionModel, QSize
 from PyQt5 import QtGui
+from PyQt5 import QtWidgets
 from PlotWidget import PlotWidget
 
 from os.path import sep
 
+from SimulationDataItem import dict_tree_from_sim_data_items
 from model import (SimDataItemTreeModel, OrderedDictModel,
-                   VariableTreeModel, BdTableModel, dict_tree_from_sim_data_items)
+                   VariableTreeModel, BdTableModel)
 from view import (QRecursiveSelectionModel)
 
 Ui_MainWindow, QMainWindow = loadUiType('ui' + sep + 'mainWindow.ui')
@@ -52,9 +54,6 @@ class Main(QMainWindow, Ui_MainWindow):
         # Connect signals of menues
         self.actionOpen_File.triggered.connect(
             self.simDataItemTreeView.add_sim_data_item
-        )
-        self.actionOpen_Sequence.triggered.connect(
-            self.simDataItemTreeView.add_sequence
         )
         self.actionOpen_Directory.triggered.connect(
             self.simDataItemTreeView.add_folder
@@ -265,7 +264,6 @@ class Main(QMainWindow, Ui_MainWindow):
 
 if __name__ == '__main__':
     import sys
-    from PyQt5 import QtWidgets
 
     app = QtWidgets.QApplication(sys.argv)
 

@@ -1,5 +1,3 @@
-from os.path import (abspath, join, isdir,
-                     isfile)
 from collections import deque
 import numpy as np
 from PyQt5.Qt import Qt, QVariant, QModelIndex
@@ -11,243 +9,13 @@ from lib.BD import bjontegaard
 #
 # Functions
 #
-def dict_tree_from_sim_data_items(sim_data_item_collection):
-    """Combine the *data* of different sim data items to a tree of
-    :class: `dicts`, which is then used to display the data.
-
-    An *encoder_log* provides a collection of 2-tuples ie. pairs as data.
-    The first element are the identifiers associated with the data, eg.
-    *sequence* and  *config* for summary data. The second element is the
-    data itself, in the form of a dictionary tree. The  dictionary tree
-    has the variables which are provided by the *encoder_log* as keys, and
-    the actual data as leafs. The data  is in the form of lists of 2-tuples
-    containing, an x and the  corresponding y value.
-
-    Now, the dictionary trees of different sim data items have to be combined
-    to one dictionary tree. The resulting *dict_tree* is the union of the
-    trees of the sim data items with :class: `list`s of :class: `PlotData`
-    objects as leafs.
-
-    The leafs are created as follows: A :class: `PlotData` object is
-    created from the *identifiers* associated with the :class: `SimDataItem`
-    and the list of value pairs found at the current position. The current
-    path in the dictionary tree is also added for convenience. Now, if there
-    are already :class: `PlotData` objects present at the current leaf of
-    the *dict_tree*, then:
-        * if the identifiers of the current :class: `PlotData` object equal
-            the one of an already present one, the values are just added
-            to the values of the :class: `PlotData` object already present.
-        * if no :class: `PlotData` object is present with equal identifiers
-            the new :class: `PlotData` object is added to the list
-
-    Why is this necessary? It might be, that different sim data items provide
-    data, that has to be joined before it is displayed, eg. the summary
-    data for one particular variable is usually provided by several
-    encoder_logs. In this case, the correspondence of the data is coded
-    in the identifier of the data ie. the identifier would be similar across
-    different sim data items, and thus, the data can be joined by this
-    function. On the other hand, if several sim data items just provide data
-    for the same variable, then the data should be rendered separately, ie.
-    different :class: `PlotData` objects are added to the list for each
-    :class: `SimDataItem` object.
-
-    :param sim_data_item_collection: Iterable of :class: `SimDataItem`s
-
-    :rtype: tree of :class: `dict`s with :class: `list`s of
-        :class: `PlotData` objects as leafs
-    """
-
-    dict_tree = {}
-
-    for sim_data_item in sim_data_item_collection:
-        for (identifiers, sim_data_item_dict_tree) in sim_data_item.data:
-
-            # Process all items of the *encoder_log*'s dictionary tree ie.
-            # create corresponding keys in the output *dict_tree* and
-            # copy the data at the corresponding position in PlotData
-            # objects.
-
-            # Note, that tuple in queue are pairs of path ie. a list of
-            # strings/keys of the encoder_log_dict_tree, and the tree itself.
-            # deque has to be initialized with iterable, thus, pair is wrapped
-            # with list.
-            tree_queue = deque([([], sim_data_item_dict_tree)])
-
-            while len(tree_queue) > 0:
-                (keys, parent) = tree_queue.pop()
-
-                # Dictionary items are added to the queue to be processed
-                # themselves
-                if isinstance(parent, dict):
-                    for key, item in parent.items():
-                        tree_queue.appendleft((keys + [key], item))
-                    continue
-
-                # Non dictionary items are processed ie. their data is
-                # added as PlotData object to the output *dict_tree*
-                dict_tree = append_value_to_dict_tree_at_path(
-                    dict_tree,
-                    keys,
-                    PlotData(identifiers, parent, keys),
-                )
-
-    return dict_tree
-
-
-def append_value_to_dict_tree_at_path(dict_tree, path, plot_data):
-    """Add a *plot_data* object to a *dict_tree* at a certain *path*.
-
-    :param dict_tree: Tree of nested :class: `dict`s
-    :param path: :class: `list` of keys describing a path in the *dict_tree*
-    :param plot_data: :class: `PlotData` object to be added to the *dict_tree*
-
-    :rtype: Altered tree of nested :class: `dict`s
-    """
-
-    # Walk the *path* down at the *dict_tree* and create not existing keys
-    # on the way.
-    # Note, that the last key of the path is excluded, as the data has
-    # to be written to this key.
-    item = dict_tree
-    for key in path[:-1]:
-        # Create nested dictionaries if they do not exist already
-        if key not in item:
-            item[key] = {}
-
-        item = item[key]
-
-    # If the last element of the path does not exist, create a list on the
-    # corresponding position in the *dict_tree* with the *plot_data* object
-    # as only member so far. Return.
-    if path[-1] not in item:
-        item[path[-1]] = [plot_data]
-        return dict_tree
-
-    # If the last element does exist, retrieve the list stored at its position
-    plot_data_list = item[path[-1]]
-
-    # Iterate over the existing PlotData objects and check, if one has equal
-    # identifiers to the current one. If this is the case, append the values
-    # stored in the current *plot_data* object to one already present. Return.
-    for plot_data_other in plot_data_list:
-        if plot_data_other.identifiers == plot_data.identifiers:
-            plot_data_other.values.extend(plot_data.values)
-            return dict_tree
-
-    # If the last element exists, but no PlotData object with the same
-    # identifiers is present, append the PlotData object *plot_data* to the
-    # list.
-    plot_data_list.append(plot_data)
-    return dict_tree
-
 
 def compare_strings_case_insensitive(first, second):
     return first.casefold() > second.casefold()
 
-
 # -------------------------------------------------------------------------------
-#
-# Classes
-#
 
 
-class PlotData:
-    """Class encapsulating data to be plotted
-
-    :param legend: Legend of the line, plotted from *values*
-    :param values: Iterable collection of values, which should be plotted
-    :param path: Path in the variable tree. Not needed, but there for
-        convenience.
-    """
-
-    def __init__(self, identifiers, values, path):
-        self.identifiers = identifiers
-        self.values = values
-        self.path = path
-
-
-class SimDataItemParserError(Exception):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
-class SimDataItem:
-    def __init__(self, path):
-        # Path is unique identifier
-        self.path = abspath(path)
-
-        # Parse file path and set additional identifiers
-        # self.logType = self._get_Type(path)
-        self.sequence, self.config, self.qp = self._parse_path(self.path)
-
-        # Dictionaries holding the parsed values
-        self.summary_data = self._parse_summary_data()
-        self.temporal_data = self._parse_temporal_data()
-
-    # Properties
-    @property
-    def tree_path(self):
-        return [self.sequence, self.config, self.qp]
-
-    @property
-    def data(self):
-        return [
-            ([self.sequence, self.config, self.qp], {'Temporal': self.temporal_data}),
-            ([self.sequence, self.config], {'Summary': self.summary_data}),
-        ]
-
-    # Magic methods
-    def legend(self):
-        return " ".join(self.sequence, self.config, self.qp)
-
-    def __eq__(self, sim_data_item):
-        return self.path == sim_data_item.path
-
-    # TODO remove if usefull 'set' is implemented
-    def __hash__(self):
-        return hash(self.path)
-
-    def __str__(self):
-        return str((
-                       "Sim Data Item of sequence '{}' from config '{}' with qp '{}'"
-                       " at path {}"
-                   ).format(self.sequence, self.config, self.qp, self.path))
-
-    def __repr__(self):
-        return str(self)
-
-    # Conctructors
-    @classmethod
-    def parse_url(cls, url):
-        """Parse a url and return either all sim data items in the folder, all
-           logs in a subfolder log or all sim data items with the same sequence as
-           the file."""
-        # Parse url as directory. Check for encoder log files in directory and
-        # in a possible 'log' subdirectory
-        if isdir(url):
-            sim_data_items = list(cls.parse_directory(url))
-            if len(sim_data_items) != 0:
-                return sim_data_items
-
-            url_log = join(url, 'log')
-            if isdir(url_log):
-                sim_data_items = list(cls.parse_directory(url_log))
-                if len(sim_data_items) != 0:
-                    return sim_data_items
-
-        # Parse url as encoder log path. Search in same directory for encoder
-        # logs with same sequence
-        if isfile(url):
-            sim_data_items = list(cls.parse_directory_for_sequence(url))
-            if len(sim_data_items) != 0:
-                return sim_data_items
-
-        # No parsing scheme succeeded
-        raise SimDataItemParserError("Could not parse url {} for sim data items"
-                                     .format(url))
-
-
-# -------------------------------------------------------------------------------
 
 #
 # Models
@@ -942,13 +710,13 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
         for sim_data_item in sim_data_items:
 
             # Get *item* of the tree corresponding to *sim_data_item*
-            item = self.create_path(*sim_data_item.tree_path)
+            item = self.create_path(*sim_data_item.tree_identifier_list)
 
             # This prevents an sim data item overwriting another one
-            # with same *tree_path* but different absolute path
+            # with same *tree_identifier_list* but different absolute path
             for value in item.values:
                 condition = (
-                    value.tree_path == sim_data_item.tree_path
+                    value.tree_identifier_list == sim_data_item.tree_identifier_list
                     and value.path != sim_data_item.path
                 )
                 if condition:
@@ -956,7 +724,7 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                                                    "Ambigious sim data items: Sim Data Item {} and {}"
                                                    " have differen absolute paths but the same"
                                                    " position at the tree {}"
-                                               ).format(encoder_log, value, encoder_log.tree_path))
+                                               ).format(encoder_log, value, encoder_log.tree_identifier_list))
             # Add *sim_data_item* to the set of values of the tree item *item*
             item.values.add(sim_data_item)
 
@@ -971,7 +739,7 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
 
         for sim_data_item in sim_data_items:
             # Get *item* of the tree corresponding to *sim_data_item*
-            item = self.create_path(*sim_data_item.tree_path)
+            item = self.create_path(*sim_data_item.tree_identifier_list)
             self.remove_item(item)
 
         self.items_changed.emit()

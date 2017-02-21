@@ -106,7 +106,7 @@
      </item>
      <item>
       <widget class="QComboBox" name="combo_interp">
-       <property name="currentText">
+       <property name="currentText" stdset="0">
         <string/>
        </property>
       </widget>
@@ -123,7 +123,7 @@
      <x>0</x>
      <y>0</y>
      <width>1250</width>
-     <height>25</height>
+     <height>28</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -131,7 +131,7 @@
      <string>Fi&amp;le</string>
     </property>
     <addaction name="actionOpen_File"/>
-    <addaction name="actionOpen_Sequence"/>
+    <addaction name="separator"/>
     <addaction name="actionOpen_Directory"/>
     <addaction name="separator"/>
     <addaction name="actionSave_Table"/>

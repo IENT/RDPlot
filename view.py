@@ -8,14 +8,26 @@ from collections import deque
 from os.path import join
 
 import model
-from SimulationDataFactory import SimulationDataItemFactory
+from SimulationDataItem import SimulationDataItemFactory
+
+
+# Path to the folder containing simulation data sub classes. The classes
+# are loaded by the simulation data item factory and used for parsing files
+SIMULATION_DATA_ITEM_CLASSES_PATH = "SimulationDataItemClasses"
 
 
 class ParserWorkThread(QThread):
     newParsedData = pyqtSignal([list])
 
-    def __init__(self, pathlist=[]):
+    def __init__(self, pathlist=None):
         QThread.__init__(self)
+
+        self._factory = SimulationDataItemFactory.from_path(
+            SIMULATION_DATA_ITEM_CLASSES_PATH
+        )
+
+        if pathlist is None:
+            pathlist = []
         self.pathlist = pathlist
 
     def __del__(self):
@@ -26,7 +38,7 @@ class ParserWorkThread(QThread):
 
     def run(self):
         for path in self.pathlist:
-            sim_data_items = list(SimulationDataItemFactory.parse_directory(path))
+            sim_data_items = self._factory.create_item_list_from_path(path)
             self.newParsedData.emit(sim_data_items)
         self.pathlist.clear()
 
@@ -51,7 +63,9 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
 
     def dropEvent(self, event):
         for url in event.mimeData().urls():
-            self.model().update(model.SimDataItem.parse_url(url.path()))
+            self.msg.show()
+            self.parserThread.addPath( url.path() )
+            self.parserThread.start()
 
     # Keypress fix from
     # http://stackoverflow.com/questions/27475940/pyqt-connect-to-keypressevent
@@ -105,17 +119,6 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         path = join(directory, file_name)
         sim_data_item = SimulationDataItemFactory.create_instance_for_file(path)
         self.model().add(sim_data_item)
-
-    # adds a all logfiles of a sequence from a directory to the treeview
-    def add_sequence(self):
-        try:
-            directory, file_name = self._get_open_file_names()
-        except TypeError:
-            return
-        path = join(directory, file_name)
-
-        sim_data_items = list(SimulationDataItemFactory.parse_directory_for_sequence(path))
-        self.model().update(sim_data_items)
 
     # adds all logfiles and sequences from a directory to the treeview
     def add_folder(self):
