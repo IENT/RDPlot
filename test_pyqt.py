@@ -1,22 +1,27 @@
 #!/usr/bin/python
 
+import sys
+from PyQt5 import QtWidgets
 from main import Main
-from model import SimDataItem
+
 
 if __name__ == '__main__':
-    import sys
-    from PyQt5 import QtGui
-    from PyQt5 import QtWidgets
-
     app = QtWidgets.QApplication(sys.argv)
     main = Main()
 
-    main.simDataItemTreeModel.update(
-        SimDataItem.parse_url('../simulation_examples/HEVC/')
+
+    main.simDataItemTreeView.parserThread.addPath(
+        '../simulation_examples/HEVC/log'
     )
-    # main.simDataItemTreeModel.update(
-    #     SimDataItem.parse_url('../simulation_examples/hm360Lib/')
-    # )
+    main.simDataItemTreeView.parserThread.addPath(
+        '../simulation_examples/hm360Lib/log'
+    )
+    main.simDataItemTreeView.parserThread.addPath(
+        '../simulation_examples/SHVC/log'
+    )
+
+    main.simDataItemTreeView.parserThread.run()
+
 
     main.show()
     sys.exit(app.exec_())

@@ -2,6 +2,7 @@
 from PyQt5.uic import loadUiType
 from PyQt5.QtCore import QItemSelectionModel, QSize
 from PyQt5 import QtGui
+from PyQt5 import QtWidgets
 from PlotWidget import PlotWidget
 
 from os.path import sep
@@ -263,7 +264,6 @@ class Main(QMainWindow, Ui_MainWindow):
 
 if __name__ == '__main__':
     import sys
-    from PyQt5 import QtWidgets
 
     app = QtWidgets.QApplication(sys.argv)
 
