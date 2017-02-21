@@ -1,5 +1,3 @@
-from os.path import (abspath, join, isdir,
-                     isfile)
 from collections import deque
 import numpy as np
 from PyQt5.Qt import Qt, QVariant, QModelIndex
