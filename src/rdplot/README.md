@@ -26,7 +26,7 @@ Now you should be able to run the project from the virtual env
 ## on Ubuntu
     sudo apt get python3-pyqt5 python3-matplotlib python3-pip python3-scipy
     pip3 install mpldatacursor
-Now you are able to call main.py from the command line
+Now you are able to call __init__.py from the command line
 
 
 # Scripts
