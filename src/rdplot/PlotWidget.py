@@ -66,7 +66,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         identifiers = []
         for plot_data in plot_data_collection:
             # Create legend from variable path and sim data items identifiers
-            legend = " ".join([i.split('_', 1)[0] for i in plot_data.identifiers] + plot_data.path)
+            legend = " ".join([i for i in plot_data.identifiers] + plot_data.path)
             identifiers.append(legend)
 
         # remove all lines which are not wanted anymore
@@ -78,7 +78,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         # plot all the lines which are missing yet
         for plot_data in plot_data_collection:
             # Create legend from variable path and sim data items identifiers
-            legend = " ".join([i.split('_', 1)[0] for i in plot_data.identifiers] + plot_data.path)
+            legend = " ".join([i for i in plot_data.identifiers] + plot_data.path)
             if legend in self.current_identifiers:
                 continue
 
