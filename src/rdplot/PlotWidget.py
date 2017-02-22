@@ -3,6 +3,7 @@ from PyQt5.uic import loadUiType
 from matplotlib.figure import Figure
 from matplotlib.axis import Axis
 from matplotlib.lines import Line2D
+from matplotlib import cycler
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar)
@@ -61,6 +62,8 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
         if len(plot_data_collection) == 0:
             return
+
+        self.ax.set_prop_cycle(cycler('color', ['r', 'b', 'y', 'k', 'c', 'm', 'g']))
 
         # get the identifiers (in this case legends as they are unique) from plot_data_collection
         identifiers = []
