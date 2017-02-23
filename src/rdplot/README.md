@@ -21,7 +21,7 @@ It can:
 - -> pip install --upgrade pip
 - -> pip install -r requirements.txt
 
-Now you should be able to run the project from the virtual env
+Now you should be able to run the project from the virtual env by running __init__.py.
 
 ## on Ubuntu
     sudo apt get python3-pyqt5 python3-matplotlib python3-pip python3-scipy
