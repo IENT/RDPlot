@@ -38,6 +38,20 @@ launcher in your favourite desktop enviroment.
 if you do not build the distribution and simply install run::
     
     sudo python setup.py install
+    
+Docker
+=======================
+If you prefer to run RDPlot in a Docker container, no problem::
+    
+    docker build rd-plot-gui/
+    docker run -ti --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix CONTAINERID
+    
+Make sure that you added your user to the docker group. If the container cannot connect to the display run::
+    
+    xhost local:docker
+    
+and try again. It should work.
+
 
 
 
