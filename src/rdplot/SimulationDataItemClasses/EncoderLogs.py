@@ -54,7 +54,7 @@ class AbstractEncLog(AbstractSimulationDataItem):
 
     @property
     def tree_identifier_list(self):
-        return [self.sequence, self.config, self.qp]
+        return [self.__class__.__name__, self.sequence, self.config, self.qp]
 
     @property
     def data(self):
