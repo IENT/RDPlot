@@ -155,6 +155,55 @@ class EncLogHM(AbstractEncLog):
         return data
 
 
+class EncLogHM14(EncLogHM):
+    @classmethod
+    def can_parse_file(cls, path):
+        return cls._enc_log_file_matches_re_pattern(
+            path,
+            r'^HM \s software: \s Encoder \s Version \s \[14'
+        )
+
+    def _parse_summary_data(self):
+        with open(self.path, 'r') as log_file:
+            log_text = log_file.read()  # reads the whole text file
+            # catch summary line
+            summaries = re.findall(r""" ^(\w*)-*.*$
+                               \s* # catch newline and space
+                               (.*)\| # catch phrase Total Frames / I / P / B
+                               (\s+\S+)(\s+\S+)(\s+\S+)(\s+\S+)# catch rest of the line
+                               \s* # catch newline and space
+                               (\d+\s+)\w # catch frame number
+                               (\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+) # catch the fractional number (rate, PSNRs)
+                          """, log_text, re.M + re.X)
+
+        data = {}
+        for summary in summaries:
+            summary_type = summary[0]
+            # Create upon first access
+            if summary_type not in data:
+                data[summary_type] = {}
+            names = summary[1:6]
+            vals = summary[6:]
+
+            names = [name.strip() for name in names]  # remove leading and trailing space
+            vals = [float(val) for val in vals]  # convert to numbers
+
+            name_val_dict = dict(zip(names, vals))  # pack both together in a dict
+            # print(summary_type)
+
+            name_rate = 'Bitrate'
+            names.remove('Bitrate')
+
+            # now pack everything together
+            for name in names:
+                if name not in data[summary_type]:  # create upon first access
+                    data[summary_type][name] = []
+                # Reference all data to *self.qp*
+                data[summary_type][name].append(
+                    (name_val_dict[name_rate], name_val_dict[name])
+                )
+        return data
+
 
 class EncLogHM360Lib(AbstractEncLog):
     @classmethod

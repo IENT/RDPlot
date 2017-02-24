@@ -369,9 +369,11 @@ class SimulationDataItemFactory:
 
         # Create simulatin data item of the first class which says, it can parse
         # the file
+        cls_list = []
         for cls in self._classes:
             if cls.can_parse_file( file_path ):
-                return cls( file_path )
+                cls_list.append( cls( file_path ))
+        return cls_list
 
         raise SimulationDataItemError((
             "Could not create a simulation data item from file at '{}' using"
@@ -392,11 +394,11 @@ class SimulationDataItemFactory:
         for file_name in listdir(directory_path):
             path = join(directory_path, file_name)
             try:
-                item_list.append( self.create_item_from_file( path ) )
+                item_list.extend( self.create_item_from_file( path ) )
             except SimulationDataItemError as error:
                 pass
                 # We definitely cannot accept thousands of execptions on the command line
-                #print((
+                #print((AbstractEncLog
                 #    "Could not create simulation data item from file '{}'"
                 #    " due to {}"
                 #).format(path, error))
