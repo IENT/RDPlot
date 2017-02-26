@@ -35,7 +35,7 @@ If you already have the tool installed run::
 Now you should be able to run rdplot from the command line and have a
 launcher in your favourite desktop enviroment.
 
-if you do not build the distribution and simply install run::
+If you do not want to build the distribution but a simple install run::
     
     sudo python setup.py install
     
