@@ -3,14 +3,19 @@ RDPlot
 
 RdPlot is a tool for plotting rate distortion curves.  
 
-Further information can be found in src/rdplot/README.md
+Further information can be found in `src/rdplot/README.md
+<https://git.rwth-aachen.de/IENT-Software/rd-plot-gui/blob/master/src/rdplot/README.md>`_.
 
 ----
+
+In the following sections different installation strategies are outlined:
+----
+
 
 On this level of the repository you can build a python package which is 
 installable via pip3.
 
-----
+You can also build an app for OS X.
 
 Linux
 =======================
