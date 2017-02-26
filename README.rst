@@ -52,6 +52,8 @@ Make sure that you added your user to the docker group. If the container cannot 
     
 and try again. It should work.
 
+**Note:** Most probably the dockerized version is something for enthusiasts. 
+The image needs approx. 1.4 GB of disk-space. If you wanna spend that, enjoy!
 
 Mac OS X
 =======================
