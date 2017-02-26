@@ -53,6 +53,42 @@ Make sure that you added your user to the docker group. If the container cannot 
 and try again. It should work.
 
 
+Mac OS X
+=======================
+
+First of all you need to install python3.
+You can get it `here  
+<https://www.python.org/downloads/>`_. 
+
+Moreover, install all the requirements::
+    
+    cd src/rdplot
+    pip3 install -r requirements.txt
+
+Addtionally install py2app::
+    
+    pip3 install py2app
+
+Then navigate back to the top level and build an app in alias mode::
+    
+    cd ../..
+    python3 setup.py py2app -A
+    
+Now you should have an app in the dist folder.
+
+**Note:** This app contains hard links to the directory with the source.
+It is strongly recommended to clone the whole directory to your Applications folder.
+Then you can simply build the app and launch it from the internal search.
+Another possibility is to put an alias in your Applications folder and/or attach it to the Dock.
+
+If you want to update the app, it is fairly easy:
+Navigate to the local copy of the repository (now most probably in your Applications folder) and then::
+
+    git pull
+    python3 setup.py py2app -A
+    
+Done!
+    
 
 
 
