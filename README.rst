@@ -88,6 +88,8 @@ Navigate to the local copy of the repository (now most probably in your Applicat
     python3 setup.py py2app -A
     
 Done!
+
+Unistall is also simple: Just delete the local copy of the repositories and all aliases.
     
 
 
