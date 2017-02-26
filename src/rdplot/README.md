@@ -24,9 +24,9 @@ It can:
 Now you should be able to run the project from the virtual env by running \_\_init\_\_.py.
 
 ## on Ubuntu
-    sudo apt get python3-pyqt5 python3-matplotlib python3-pip python3-scipy
-    pip3 install mpldatacursor
-Now you are able to call init_.py from the command line
+    sudo apt get python3-tk
+    pip3 install -r requirements.txt
+Now you are able to call \_\_init\_\_.py from the command line.
 
 
 # Scripts
