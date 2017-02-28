@@ -2,8 +2,8 @@ from collections import deque
 import numpy as np
 from PyQt5.Qt import Qt, QVariant, QModelIndex
 from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel, QAbstractTableModel, pyqtSignal
-from SimulationDataItemClasses.EncoderLogs import AbstractEncLog
-from lib.BD import bjontegaard
+from rdplot.SimulationDataItemClasses.EncoderLogs import AbstractEncLog
+from rdplot.lib.BD import bjontegaard
 
 
 #
@@ -723,7 +723,7 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                                                    "Ambigious sim data items: Sim Data Item {} and {}"
                                                    " have differen absolute paths but the same"
                                                    " position at the tree {}"
-                                               ).format(encoder_log, value, encoder_log.tree_identifier_list))
+                                               ).format(AbstractEncLog, value, AbstractEncLog.tree_identifier_list))
             # Add *sim_data_item* to the set of values of the tree item *item*
             item.values.add(sim_data_item)
 

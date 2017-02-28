@@ -8,7 +8,6 @@ from collections import deque
 from os import path
 from os.path import join
 
-import rdplot.model
 from rdplot.SimulationDataItem import SimulationDataItemFactory
 
 
