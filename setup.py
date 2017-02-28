@@ -18,7 +18,20 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
+APP = ['src/rdplot/__init__.py']	
+OPTIONS = {'iconfile':'src/rdplot/logo/PLOT1024.icns',
+    'plist': {
+        'CFBundleName': 'RDPlot',
+        'CFBundleDisplayName': 'RDPlot',
+        'CFBundleGetInfoString': "Making Sandwiches",
+        'CFBundleIdentifier': "com.metachris.osx.sandwich",
+        'CFBundleVersion': "0.1.0",
+        'CFBundleShortVersionString': "0.1.0"}
+        }
+
 setup(
+    app=APP,
+    options={'py2app':OPTIONS},
     name='rdplot',
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
