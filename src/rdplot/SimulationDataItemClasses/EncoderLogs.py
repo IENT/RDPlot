@@ -243,7 +243,7 @@ class EncLogHM360Lib(AbstractEncLog):
             data2 = {name: [] for (index, name) in names.items()}
             for (index, name) in names.items():
                 data2[name].append(
-                    (summaries[i][2], summaries[i][index])
+                    (float(summaries[i][2]), float(summaries[i][index]))
                 )
             data[summaries[i][0]] = data2
 
@@ -395,7 +395,7 @@ class EncLogHM360LibOld(AbstractEncLog):
             data2 = {name: [] for (index, name) in names.items()}
             for (index, name) in names.items():
                 data2[name].append(
-                    (summaries[i][2], summaries[i][index])
+                    (float(summaries[i][2]), float(summaries[i][index]))
                 )
             data[summaries[i][0]] = data2
 
