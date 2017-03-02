@@ -8,7 +8,8 @@ from collections import deque
 from os import path
 from os.path import join
 
-from rdplot.SimulationDataItem import SimulationDataItemFactory
+import model
+from SimulationDataItem import SimulationDataItemFactory
 
 
 # Path to the folder containing simulation data sub classes. The classes
