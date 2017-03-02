@@ -2,8 +2,7 @@ import re
 
 from os.path import abspath, join, isdir, isfile, normpath, basename, sep
 from abc import ABCMeta
-
-from SimulationDataItem import (AbstractSimulationDataItem,
+from rdplot.SimulationDataItem import (AbstractSimulationDataItem,
                                 SimulationDataItemError)
 
 

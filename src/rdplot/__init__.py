@@ -10,14 +10,14 @@ import sys
 here = path.abspath(path.dirname(__file__))
 sys.path.append(here)
 
-from PlotWidget import PlotWidget
+from rdplot.PlotWidget import PlotWidget
 
 from os.path import sep
 
-from SimulationDataItem import dict_tree_from_sim_data_items
-from model import (SimDataItemTreeModel, OrderedDictModel,
+from rdplot.SimulationDataItem import dict_tree_from_sim_data_items
+from rdplot.model import (SimDataItemTreeModel, OrderedDictModel,
                    VariableTreeModel, BdTableModel)
-from view import (QRecursiveSelectionModel)
+from rdplot.view import (QRecursiveSelectionModel)
 
 Ui_name = pkg_resources.resource_filename(__name__, 'ui' + sep + 'mainWindow.ui')
 Ui_MainWindow, QMainWindow = loadUiType(Ui_name)
