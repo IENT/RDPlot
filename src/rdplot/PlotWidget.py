@@ -1,4 +1,5 @@
 from PyQt5.uic import loadUiType
+from PyQt5.QtWidgets import (QDialog, QPushButton, QLabel)
 
 from matplotlib.figure import Figure
 from matplotlib.axis import Axis
@@ -38,7 +39,6 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
         self.ax = self.plotAreaWidget.fig.add_subplot(111)
         self.ax.grid(True)
-        self.current_identifiers = []
 
         # connect scroll and double click event to canvas
         self.plotAreaWidget.canvas.mpl_connect('scroll_event', self.on_wheel_cpy)
@@ -63,27 +63,32 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         if len(plot_data_collection) == 0:
             return
 
+        if len(plot_data_collection) > 10:
+            dialog = QDialog()
+            dialog.setWindowTitle("Info")
+            dialog.setMinimumSize(300,200)
+            dialog_label = QLabel("Your selection intends to plot more that 10 curves, do you really want to continue?", dialog)
+            dialog_label.setWordWrap(True)
+            button_continue = QPushButton("ok", dialog)
+            button_continue.move(50, 100)
+            button_cancel = QPushButton("cancel", dialog)
+            button_cancel.move(150, 100)
+            button_continue.clicked.connect(dialog.accept)
+            button_cancel.clicked.connect(dialog.reject)
+            dialog.exec()
+
+            if dialog.result() == QDialog.Rejected:
+                return
+
+
+        self.ax.clear()
+        self.ax.grid(True)
         self.ax.set_prop_cycle(cycler('color', ['r', 'b', 'y', 'k', 'c', 'm', 'g']))
-
-        # get the identifiers (in this case legends as they are unique) from plot_data_collection
-        identifiers = []
-        for plot_data in plot_data_collection:
-            # Create legend from variable path and sim data items identifiers
-            legend = " ".join([i for i in plot_data.identifiers] + plot_data.path)
-            identifiers.append(legend)
-
-        # remove all lines which are not wanted anymore
-        for curve in self.ax.get_lines():
-            if curve.get_label() not in identifiers:
-                self.current_identifiers.remove(curve.get_label())
-                curve.remove()
 
         # plot all the lines which are missing yet
         for plot_data in plot_data_collection:
             # Create legend from variable path and sim data items identifiers
             legend = " ".join([i for i in plot_data.identifiers] + plot_data.path)
-            if legend in self.current_identifiers:
-                continue
 
             # Convert list of pairs of strings to two sorted lists of floats
             values = ((float(x), float(y)) for (x, y) in plot_data.values)
@@ -93,13 +98,6 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             # plot the current plotdata and set the legend
             self.ax.plot(xs, ys, '-x', label=legend)
             self.ax.legend(loc='lower right')
-
-            # append legend to current identifiers
-            self.current_identifiers.append(legend)
-
-        # set  y tick in 0.5 spacing
-        self.ax.relim()
-        self.ax.autoscale()
 
         start, end = self.ax.get_ylim()
         start = math.floor(start)
