@@ -83,7 +83,9 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
         self.ax.clear()
         self.ax.grid(True)
-        self.ax.set_prop_cycle(cycler('color', ['r', 'b', 'y', 'k', 'c', 'm', 'g']))
+        self.ax.set_prop_cycle(cycler('color', ['r', 'b', 'y', 'k', 'c', 'm', 'g', 'r', 'b', 'y', 'k', 'c', 'm', 'g']) +
+                               cycler('marker', ['x', 'x', 'x', 'x', 'x', 'x', 'x', 'o', 'o', 'o', 'o', 'o', 'o', 'o']))
+
 
         # plot all the lines which are missing yet
         for plot_data in plot_data_collection:
@@ -96,7 +98,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             [xs, ys] = list(zip(*sorted_value_pairs))
 
             # plot the current plotdata and set the legend
-            self.ax.plot(xs, ys, '-x', label=legend)
+            self.ax.plot(xs, ys, label=legend)
             self.ax.legend(loc='lower right')
 
         start, end = self.ax.get_ylim()
