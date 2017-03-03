@@ -97,14 +97,15 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             [xs, ys] = list(zip(*sorted_value_pairs))
 
             # plot the current plotdata and set the legend
-            curve = self.ax.plot(xs, ys, label=legend, picker=True)
+            curve = self.ax.plot(xs, ys, label=legend)
             self.ax.legend(loc='lower right')
-            DataCursor(curve)
+        DataCursor(self.ax.get_lines())
 
         start, end = self.ax.get_ylim()
         start = math.floor(start)
         end = math.ceil(end)
-        self.ax.yaxis.set_ticks(np.arange(start, end, 0.5))
+        if abs(start-end)<20:
+            self.ax.yaxis.set_ticks(np.arange(start, end, 0.5))
 
         self.plotAreaWidget.canvas.draw()
 
@@ -155,7 +156,7 @@ class DataCursor(object):
     matplotlib artist when it is selected.
     This is according to http://stackoverflow.com/questions/4652439/is-there-a-matplotlib-equivalent-of-matlabs-datacursormode"""
     def __init__(self, artists, tolerance=5, offsets=(-20, 20),
-                 template='x: %0.2f\ny: %0.2f', display_all=True):
+                 template='rate: %0.2f\npsnr: %0.2f', display_all=True):
         """Create the data cursor and connect it to the relevant figure.
         "artists" is the matplotlib artist or sequence of artists that will be
             selected.
