@@ -151,6 +151,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         else:
             return
 
+
 class DataCursor(object):
     """A simple data cursor widget that displays the x,y location of a
     matplotlib artist when it is selected.
