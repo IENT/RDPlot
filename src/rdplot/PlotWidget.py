@@ -80,16 +80,27 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             if dialog.result() == QDialog.Rejected:
                 return
 
-
         self.ax.clear()
         self.ax.grid(True)
         self.ax.set_prop_cycle(cycler('color', ['r', 'b', 'y', 'k', 'c', 'm', 'g', 'r', 'b', 'y', 'k', 'c', 'm', 'g']) +
                                cycler('marker', ['x', 'x', 'x', 'x', 'x', 'x', 'x', 'o', 'o', 'o', 'o', 'o', 'o', 'o']))
 
+        # Now lets create a legend only containing informative
+        # content (no duplicates)
+        tmp_legend = []
+        tmp_legend += [plot_data.identifiers + plot_data.path for plot_data in plot_data_collection]
+        legend = []
+        for c in tmp_legend:
+            result = list(filter(lambda x: all(x in l for l in tmp_legend) == False, c))
+            legend.append(" ".join(result))
+        if len(tmp_legend) == 1:
+            legend = tmp_legend
+
         # plot all the lines which are missing yet
+        plot_count = 0
         for plot_data in plot_data_collection:
             # Create legend from variable path and sim data items identifiers
-            legend = " ".join([i for i in plot_data.identifiers] + plot_data.path)
+            l =  legend[plot_count] #" ".join([i for i in plot_data.identifiers] + plot_data.path)
 
             # Convert list of pairs of strings to two sorted lists of floats
             values = ((float(x), float(y)) for (x, y) in plot_data.values)
@@ -97,8 +108,11 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             [xs, ys] = list(zip(*sorted_value_pairs))
 
             # plot the current plotdata and set the legend
-            curve = self.ax.plot(xs, ys, label=legend)
-            self.ax.legend(loc='lower right')
+            curve = self.ax.plot(xs, ys, label=l)
+
+            plot_count += 1
+
+        self.ax.legend(loc='lower right')
         DataCursor(self.ax.get_lines())
 
         start, end = self.ax.get_ylim()
