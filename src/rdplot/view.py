@@ -9,7 +9,7 @@ from os import path
 from os.path import join
 
 import model
-from SimulationDataItem import SimulationDataItemFactory
+from SimulationDataItem import (SimulationDataItemFactory, SimulationDataItemError)
 
 
 # Path to the folder containing simulation data sub classes. The classes
@@ -40,7 +40,11 @@ class ParserWorkThread(QThread):
 
     def run(self):
         for path in self.pathlist:
-            sim_data_items = self._factory.create_item_list_from_path(path)
+            try:
+                sim_data_items = self._factory.create_item_list_from_path(path)
+            except SimulationDataItemError:
+                return
+
             self.newParsedData.emit(sim_data_items)
         self.pathlist.clear()
 
