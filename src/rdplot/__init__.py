@@ -174,7 +174,7 @@ class Main(QMainWindow, Ui_MainWindow):
             tuples.extend((e.path, e) for e in sim_data_items)
 
         # Overwrite all elements in dictionary by selected values
-        # Note, that ovrewriting only issues one `updated` signal, and thus,
+        # Note, that overwriting only issues one `updated` signal, and thus,
         # only rerenders the plots one time. Therefore, simply overwriting
         # is much more efficient, despite it would seem, that selectively
         # overwriting keys is.
@@ -218,7 +218,9 @@ class Main(QMainWindow, Ui_MainWindow):
         # Join the data of all currently selected items to a dictionary
         # tree
         sim_data_items = self.get_selected_simulation_data_items()
-        dict_tree = dict_tree_from_sim_data_items(sim_data_items)
+        import copy
+        tmp = copy.deepcopy(sim_data_items)
+        dict_tree = dict_tree_from_sim_data_items(tmp)
         # Reset variable tree and update it with *dict_tree*
         self.variableTreeModel.clear_and_update_from_dict_tree(dict_tree)
 
