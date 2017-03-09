@@ -1,5 +1,6 @@
 from PyQt5 import QtWidgets
-from PyQt5.Qt import Qt
+from PyQt5.Qt import Qt, QApplication
+from PyQt5.QtGui import QKeySequence, QKeyEvent
 from PyQt5.QtCore import QObject,QItemSelectionModel, QItemSelection, QModelIndex, pyqtSignal, QThread
 from PyQt5.QtWidgets import QMessageBox
 
@@ -145,6 +146,19 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
     def _update_model(self,sim_data_items):
         self.msg.hide()
         self.model().update(sim_data_items)
+
+class PlottedFilesListView(QtWidgets.QListView):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def keyPressEvent(self, q_key_event):
+        """Catches the CTRL+C KeyPressEvent"""
+        if q_key_event.count() == 1 and q_key_event.matches(QKeySequence.Copy):
+            str_list = []
+            for q_index in self.selectedIndexes():
+                str_list.append(q_index.data())
+
+            QApplication.clipboard().setText("\n".join(str_list))
 
 
 class QRecursiveSelectionModel(QItemSelectionModel):
