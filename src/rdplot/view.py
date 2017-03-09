@@ -147,7 +147,9 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         self.msg.hide()
         self.model().update(sim_data_items)
 
+
 class PlottedFilesListView(QtWidgets.QListView):
+    """Implements the view for plotted files"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
