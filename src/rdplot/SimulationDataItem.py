@@ -5,7 +5,7 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 from os.path import basename, dirname, join, abspath, isfile, isdir
 from os import listdir
 from collections import deque
-
+from copy import copy
 
 
 #
@@ -62,7 +62,7 @@ def dict_tree_from_sim_data_items(sim_data_item_collection):
                 dict_tree = append_value_to_dict_tree_at_path(
                     dict_tree,
                     keys,
-                    PlotData(identifiers, parent, keys),
+                    PlotData(identifiers, copy(parent), keys),
                 )
 
     return dict_tree

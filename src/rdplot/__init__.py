@@ -218,9 +218,7 @@ class Main(QMainWindow, Ui_MainWindow):
         # Join the data of all currently selected items to a dictionary
         # tree
         sim_data_items = self.get_selected_simulation_data_items()
-        import copy
-        tmp = copy.deepcopy(sim_data_items)
-        dict_tree = dict_tree_from_sim_data_items(tmp)
+        dict_tree = dict_tree_from_sim_data_items(sim_data_items)
         # Reset variable tree and update it with *dict_tree*
         self.variableTreeModel.clear_and_update_from_dict_tree(dict_tree)
 
