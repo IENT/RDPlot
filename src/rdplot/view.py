@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets
-from PyQt5.Qt import Qt
+from PyQt5.Qt import Qt, QApplication
 from PyQt5.QtGui import QKeySequence, QKeyEvent
 from PyQt5.QtCore import QObject,QItemSelectionModel, QItemSelection, QModelIndex, pyqtSignal, QThread
 from PyQt5.QtWidgets import QMessageBox
@@ -152,11 +152,13 @@ class PlottedFilesListView(QtWidgets.QListView):
         super().__init__(*args, **kwargs)
 
     def keyPressEvent(self, q_key_event):
+        """Catches the CTRL+C KeyPressEvent"""
         if q_key_event.count() == 1 and q_key_event.matches(QKeySequence.Copy):
+            str_list = []
             for q_index in self.selectedIndexes():
-                q_index.internalPointer()
+                str_list.append(q_index.data())
 
-        super().keyPressEvent(q_key_event)
+            QApplication.clipboard().setText("\n".join(str_list))
 
 
 class QRecursiveSelectionModel(QItemSelectionModel):
