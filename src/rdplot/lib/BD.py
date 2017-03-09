@@ -4,6 +4,7 @@
 #   All Rights Reserved.
 
 import math
+from  math import log10
 import numpy as np
 from scipy.interpolate import pchip
 from scipy import integrate
@@ -17,7 +18,7 @@ def bdrint(rate, dist, low, high):
 
     h = [0] * 3
     delta = [0] * 3
-    for i in xrange(0, 3):
+    for i in range(0, 3):
         h[i] = log_dist[i + 1] - log_dist[i]
         delta[i] = (log_rate[i + 1] - log_rate[i]) / h[i]
 
@@ -25,7 +26,7 @@ def bdrint(rate, dist, low, high):
     d[0] = ((2 * h[0] + h[1]) * delta[0] - h[0] * delta[1]) / (h[0] + h[1])
     if d[0] * delta[0] < 0:
         d[0] = 0
-    for i in xrange(1, 3):
+    for i in range(1, 3):
         d[i] = (3 * h[i - 1] + 3 * h[i]) / ((2 * h[i] + h[i - 1]) / delta[i - 1] + (h[i] + 2 * h[i - 1]) / delta[i])
     d[3] = ((2 * h[2] + h[1]) * delta[2] - h[2] * delta[1]) / (h[2] + h[1])
     if d[3] * delta[2] < 0:
@@ -33,7 +34,7 @@ def bdrint(rate, dist, low, high):
 
     c = [0] * 3
     b = [0] * 3
-    for i in xrange(0, 3):
+    for i in range(0, 3):
         c[i] = (3 * delta[i] - 2 * d[i] - d[i + 1]) / h[i]
         b[i] = (d[i] - 2 * delta[i] + d[i + 1]) / (h[i] * h[i])
 
@@ -44,7 +45,7 @@ def bdrint(rate, dist, low, high):
     '''
     result = 0
 
-    for i in xrange(0, 3):
+    for i in range(0, 3):
         s0 = max(log_dist[i], low) - log_dist[i]
         s1 = min(log_dist[i + 1], high) - log_dist[i]
 
