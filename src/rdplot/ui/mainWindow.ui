@@ -123,7 +123,7 @@
      <x>0</x>
      <y>0</y>
      <width>1250</width>
-     <height>25</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -201,7 +201,11 @@
    <widget class="QWidget" name="dockWidgetContents_3">
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
-      <widget class="QListView" name="simDataItemListView"/>
+      <widget class="PlottedFilesListView" name="simDataItemListView">
+       <property name="selectionMode">
+        <enum>QAbstractItemView::ExtendedSelection</enum>
+       </property>
+      </widget>
      </item>
     </layout>
    </widget>
@@ -276,6 +280,11 @@
   <customwidget>
    <class>SimDataItemTreeView</class>
    <extends>QTreeView</extends>
+   <header>view.h</header>
+  </customwidget>
+  <customwidget>
+   <class>PlottedFilesListView</class>
+   <extends>QListView</extends>
    <header>view.h</header>
   </customwidget>
  </customwidgets>
