@@ -44,6 +44,7 @@ class ParserWorkThread(QThread):
             try:
                 sim_data_items = self._factory.create_item_list_from_path(path)
             except SimulationDataItemError:
+                self.newParsedData.emit([])
                 self.pathlist.clear()
                 return
 
@@ -137,6 +138,12 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
 
     def _update_model(self,sim_data_items):
         self.msg.hide()
+        if not sim_data_items:
+            msg = QMessageBox(self)  # use self as parent here
+            msg.setIcon(QMessageBox.Information)
+            msg.setText("I cannot find any simulation data item in your favourized directory")
+            msg.setWindowTitle("Info")
+            msg.show()
         self.model().update(sim_data_items)
 
 

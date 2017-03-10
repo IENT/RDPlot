@@ -1,6 +1,6 @@
 from collections import deque
 import numpy as np
-from PyQt5.Qt import Qt, QVariant, QModelIndex
+from PyQt5.Qt import Qt, QVariant, QModelIndex, QDialog, QLabel
 from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel, QAbstractTableModel, pyqtSignal
 from SimulationDataItemClasses.EncoderLogs import AbstractEncLog
 from lib.BD import bjontegaard
