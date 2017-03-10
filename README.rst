@@ -70,6 +70,9 @@ The image needs approx. 1.4 GB of disk-space. If you wanna spend that, enjoy!
 Mac OS X
 =======================
 
+**Note:** things are not tested for Mac. You may have to fiddle a little bit.
+Please contribute, if you have idead for improvements.
+
 First of all you need to install python3.
 You can get it `here  
 <https://www.python.org/downloads/>`_. 
