@@ -352,7 +352,7 @@ class SimulationDataItemFactory:
                 "not a sub class of AbstractSimulationDataItem"
             ).format(cls))
 
-        self._classes.add( cls )
+        self._classes.add(cls)
 
 
     # Factory Methods
@@ -371,8 +371,8 @@ class SimulationDataItemFactory:
         # the file
         cls_list = []
         for cls in self._classes:
-            if cls.can_parse_file( file_path ):
-                cls_list.append( cls( file_path ))
+            if cls.can_parse_file(file_path):
+                cls_list.append(cls(file_path))
         return cls_list
 
         raise SimulationDataItemError((
@@ -394,7 +394,7 @@ class SimulationDataItemFactory:
         for file_name in listdir(directory_path):
             path = join(directory_path, file_name)
             try:
-                item_list.extend( self.create_item_from_file( path ) )
+                item_list.extend(self.create_item_from_file(path))
             except SimulationDataItemError as error:
                 pass
                 # We definitely cannot accept thousands of execptions on the command line
@@ -417,10 +417,10 @@ class SimulationDataItemFactory:
         """
 
         if isfile(path):
-            return [ self.create_item_from_file( path ) ]
+            return [self.create_item_from_file(path)]
         if isdir(path):
-            item_list = self.create_item_list_from_directory( path )
-            if len( item_list ) == 0:
+            item_list = self.create_item_list_from_directory(path)
+            if len(item_list) == 0:
                 raise SimulationDataItemError()
             return item_list
 
@@ -433,10 +433,10 @@ class SimulationDataItemFactory:
     # Magic Methods
 
     def __str__(self):
-        return str( self._classes )
+        return str(self._classes)
 
     def __repr__(self):
         return str(
             "SimulationDataItemFactory with loaded classes: "
-            .format( str(self) )
+            .format(str(self))
         )

@@ -47,7 +47,12 @@ class AbstractEncLog(AbstractSimulationDataItem):
             log_text = log_file.read()  # reads the whole text file
             qp = re.findall(r""" ^QP \s+ : \s+ (\d+.\d+) $
                                   """, log_text, re.M + re.X)
-        qp = qp[0]
+        # join all found qps together, that is necessary
+        # for SHM
+        qp = " ".join([str(q) for q in qp])
+        if qp == "":
+            raise SimulationDataItemError
+
         return sequence, config, qp
 
     # Properties
