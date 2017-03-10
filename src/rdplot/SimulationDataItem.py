@@ -295,7 +295,7 @@ class SimulationDataItemFactory:
 
         if classes is not None:
             for cls in classes:
-                self.add_class( cls )
+                self.add_class(cls)
 
     @classmethod
     def from_path(cls, directory_path):
@@ -319,16 +319,16 @@ class SimulationDataItemFactory:
 
         # Parse *directory_path* for sub classes of *AbstractSimulationDataItem*
         classes = []
-        for importer, name, _ in pkgutil.iter_modules( [directory_path] ):
+        for importer, name, _ in pkgutil.iter_modules([directory_path]):
             # Import a module from *directory_path*
-            module = importer.find_module( name ).load_module( name )
+            module = importer.find_module(name).load_module(name)
 
             # Add all sub classes of AbstractSimulationDataItem from the module
             # to the factory
             for _, module_item in module.__dict__.items():
-                if is_class( module_item ):
+                if is_class(module_item):
                     try:
-                        simulationDataItemFactory.add_class( module_item )
+                        simulationDataItemFactory.add_class(module_item)
                         # TODO usefull logging
                         print((
                             "Added sub class '{}' to simualtion data item "
