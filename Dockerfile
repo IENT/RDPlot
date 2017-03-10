@@ -8,6 +8,8 @@ RUN apt-get -y update && \
     apt-get -y install python3-pip && \
     apt-get -y install python3-pyqt5 && \
     apt-get -y install python3-tk && \
+    apt-get -y install python3-jsonpickle && \
+
     pip3 install --upgrade pip
 
 # Install app dependencies
