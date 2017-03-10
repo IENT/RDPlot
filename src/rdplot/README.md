@@ -24,9 +24,13 @@ It can:
 Now you should be able to run the project from the virtual env by running \_\_init\_\_.py.
 
 ## on Ubuntu
-    sudo apt get python3-tk
+    sudo apt get install python3-tk
+    sudo apt-get install python3-jsonpickle
     pip3 install -r requirements.txt
-Now you are able to call \_\_init\_\_.py from the command line.
+    
+The install of the requirements via the requirements file may will fail because of
+jsonpickle. 
+But now you should be able to call \_\_init\_\_.py from the command line.
 
 
 # Scripts
