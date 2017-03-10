@@ -14,6 +14,8 @@ from PlotWidget import PlotWidget
 
 from os.path import sep
 
+import jsonpickle
+
 from SimulationDataItem import dict_tree_from_sim_data_items
 from model import (SimDataItemTreeModel, OrderedDictModel,
                    VariableTreeModel, BdTableModel)
@@ -77,6 +79,14 @@ class Main(QMainWindow, Ui_MainWindow):
 
         self.actionSave_Table.triggered.connect(
             self.save_bd_table
+        )
+
+        self.actionSave_Data.triggered.connect(
+            self.save_current_selection
+        )
+
+        self.actionLoad_Data.triggered.connect(
+            self.load_rd_data
         )
 
         self.variableTreeModel = VariableTreeModel()
@@ -260,13 +270,33 @@ class Main(QMainWindow, Ui_MainWindow):
     def save_bd_table(self):
         if self.bdTableModel.rowCount(self) == 0:
             return
-        filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save Table as')[0]
+        filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save Table as', '.', 'tex')
+        filename = ''.join(filename)
         if not len(filename) == 0:
             self.bdTableModel.export_to_latex(filename)
 
     def on_combo_box(self):
         # just update the bd table but do not change the anchor
         self.update_bd_table(-1)
+
+    def save_current_selection(self):
+        if not self.get_selected_simulation_data_items():
+            return
+        filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save RD data as', '.', '.rd')
+        filename = ''.join(filename)
+        if not len(filename) == 0:
+            f = open(filename, 'w')
+            f.write(jsonpickle.encode(self.get_selected_simulation_data_items()))
+            f.close()
+
+    def load_rd_data(self):
+        filename = QtWidgets.QFileDialog.getOpenFileName(self, 'Load RD data', '.', '*.rd')[0]
+        if not len(filename) == 0:
+            f = open(filename, 'r')
+            json_str = f.read()
+            sim_data_items = jsonpickle.decode(json_str)
+            self.simDataItemTreeModel.update(sim_data_items)
+            f.close()
 
 
 def main(args=None):

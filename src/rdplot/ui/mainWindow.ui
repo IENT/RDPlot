@@ -136,6 +136,8 @@
     <addaction name="separator"/>
     <addaction name="actionSave_Table"/>
     <addaction name="separator"/>
+    <addaction name="actionLoad_Data"/>
+    <addaction name="actionSave_Data"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -273,6 +275,16 @@
   <action name="actionSave_Table">
    <property name="text">
     <string>&amp;Save Table</string>
+   </property>
+  </action>
+  <action name="actionLoad_Data">
+   <property name="text">
+    <string>Load RD Data</string>
+   </property>
+  </action>
+  <action name="actionSave_Data">
+   <property name="text">
+    <string>Save selected data ... as</string>
    </property>
   </action>
  </widget>
