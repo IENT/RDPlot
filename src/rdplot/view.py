@@ -10,7 +10,7 @@ from os import path
 from os.path import join
 
 import model
-from SimulationDataItem import (SimulationDataItemFactory, SimulationDataItemError)
+from SimulationDataItem import SimulationDataItemFactory, SimulationDataItemError
 
 
 # Path to the folder containing simulation data sub classes. The classes
@@ -117,8 +117,8 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         except TypeError:
             return
         path = join(directory, file_name)
-        sim_data_item = SimulationDataItemFactory.create_instance_for_file(path)
-        self.model().add(sim_data_item)
+        self.parserThread.addPath(path)
+        self.parserThread.start()
 
     # adds all logfiles and sequences from a directory to the treeview
     def add_folder(self):

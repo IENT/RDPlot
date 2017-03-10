@@ -417,7 +417,7 @@ class SimulationDataItemFactory:
         """
 
         if isfile(path):
-            return [self.create_item_from_file(path)]
+            return self.create_item_from_file(path)
         if isdir(path):
             item_list = self.create_item_list_from_directory(path)
             if len(item_list) == 0:
