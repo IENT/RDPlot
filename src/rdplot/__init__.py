@@ -3,6 +3,8 @@ from PyQt5.uic import loadUiType
 from PyQt5.QtCore import QItemSelectionModel, QSize
 from PyQt5 import QtGui
 from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QMessageBox
+
 
 import pkg_resources
 from os import path
@@ -281,6 +283,12 @@ class Main(QMainWindow, Ui_MainWindow):
 
     def save_current_selection(self):
         if not self.get_selected_simulation_data_items():
+            msg = QMessageBox(self)  # use self as parent here
+            msg.setIcon(QMessageBox.Information)
+            msg.setText("You did not select any simualtion data item to store\n"
+                        "Please make a selection and try again.")
+            msg.setWindowTitle("Info")
+            msg.show()
             return
         filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save RD data as', '.', '.rd')
         filename = ''.join(filename)
