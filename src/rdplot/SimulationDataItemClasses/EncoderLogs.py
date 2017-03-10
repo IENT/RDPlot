@@ -290,7 +290,6 @@ class EncLogHM360Lib(AbstractEncLog):
         return data
 
 
-
 class EncLogSHM(AbstractEncLog):
     @classmethod
     def can_parse_file(cls, path):
@@ -364,7 +363,6 @@ class EncLogSHM(AbstractEncLog):
             layerstring = 'layer ' + str(layer)
             data[layerstring] = data2
         return data
-
 
 
 class EncLogHM360LibOld(AbstractEncLog):
