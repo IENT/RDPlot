@@ -4,23 +4,20 @@ from PyQt5.QtCore import QItemSelectionModel, QSize
 from PyQt5 import QtGui
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMessageBox
-
-
-import pkg_resources
-from os import path
-import sys
-here = path.abspath(path.dirname(__file__))
-sys.path.append(here)
-
 from PlotWidget import PlotWidget
-
 from os.path import sep
-
-import jsonpickle
+from os import path
 
 from SimulationDataItem import dict_tree_from_sim_data_items
 from model import SimDataItemTreeModel, OrderedDictModel, VariableTreeModel, BdTableModel
 from view import QRecursiveSelectionModel
+
+import jsonpickle
+import pkg_resources
+
+import sys
+here = path.abspath(path.dirname(__file__))
+sys.path.append(here)
 
 Ui_name = pkg_resources.resource_filename(__name__, 'ui' + sep + 'mainWindow.ui')
 Ui_MainWindow, QMainWindow = loadUiType(Ui_name)
