@@ -141,7 +141,9 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         if not sim_data_items:
             msg = QMessageBox(self)  # use self as parent here
             msg.setIcon(QMessageBox.Information)
-            msg.setText("I cannot find any simulation data item in your favourized directory")
+            msg.setText("I cannot find any simulation data item in your favourized directory.\n"
+                        "If you are really sure that there should be some valid item, "
+                        "you should consider writing a new parser.")
             msg.setWindowTitle("Info")
             msg.show()
         self.model().update(sim_data_items)
