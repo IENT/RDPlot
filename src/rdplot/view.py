@@ -98,10 +98,6 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
             return directory, file_name
         except IndexError:
             return
-        else:
-            # TODO usefull logging
-            print("successfully added sequence")
-            return
 
     def _get_folder(self):
         # extract folder and filename
@@ -112,10 +108,6 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
                 "/home/ient/Software/rd-plot-gui/examplLogs")
             return result
         except IndexError:
-            return
-        else:
-            # TODO usefull logging
-            print("successfully added sequence")
             return
 
     # adds a logfile to the treeview
