@@ -26,7 +26,14 @@ Ubuntu and matplotlib installed from pip.
 RDPlot will only work with matplotlib
 directly installed from pip and python3-matplotlib not installed on the system.
 
-Make sure that you are using python 3 and pip is up to date and then::
+Make sure that you are using python 3 and pip is up to date.
+
+Sadly but true, we need a dependency called jsonpickle.  
+You need to install that by::
+
+    sudo apt-get install python3-jsonpickle
+    
+and then::
 
     python setup.py sdist
      
