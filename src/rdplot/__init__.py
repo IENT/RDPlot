@@ -19,9 +19,8 @@ from os.path import sep
 import jsonpickle
 
 from SimulationDataItem import dict_tree_from_sim_data_items
-from model import (SimDataItemTreeModel, OrderedDictModel,
-                   VariableTreeModel, BdTableModel)
-from view import (QRecursiveSelectionModel)
+from model import SimDataItemTreeModel, OrderedDictModel, VariableTreeModel, BdTableModel
+from view import QRecursiveSelectionModel
 
 Ui_name = pkg_resources.resource_filename(__name__, 'ui' + sep + 'mainWindow.ui')
 Ui_MainWindow, QMainWindow = loadUiType(Ui_name)
