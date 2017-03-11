@@ -47,6 +47,7 @@ class AbstractDatLog(AbstractSimulationDataItem):
             try:
                 xml = dat_log.read()
                 sim_data = xmltodict.parse(xml)
+                # TODO support for layer specific qp
                 qp = sim_data['Logfile']['QP']['Value']
             except (IndexError, ExpatError):
                 raise SimulationDataItemError
@@ -61,6 +62,8 @@ class AbstractDatLog(AbstractSimulationDataItem):
 
     @property
     def data(self):
+        # TODO we may want to have more data than summary and temporal
+        # e.g. runtime over qp
         return [
             (
                 [self.sequence, self.config, self.qp],
