@@ -278,6 +278,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.update_bd_table(-1)
 
     def save_current_selection(self):
+        """Saves the current selected sim data item collection"""
         if not self.get_selected_simulation_data_items():
             msg = QMessageBox(self)  # use self as parent here
             msg.setIcon(QMessageBox.Information)
@@ -294,6 +295,7 @@ class Main(QMainWindow, Ui_MainWindow):
             f.close()
 
     def load_rd_data(self):
+        """Loads rd data from file"""
         filename = QtWidgets.QFileDialog.getOpenFileName(self, 'Load RD data', '.', '*.rd')[0]
         if not len(filename) == 0:
             f = open(filename, 'r')
@@ -304,10 +306,10 @@ class Main(QMainWindow, Ui_MainWindow):
 
 
 def main(args=None):
-    import sys
 
     app = QtWidgets.QApplication(sys.argv)
 
+    # set icon of application
     app_icon = QtGui.QIcon()
     app_icon.addFile(pkg_resources.resource_filename(__name__,'logo/PLOT1024.png'), QSize(1024, 1024))
     app_icon.addFile(pkg_resources.resource_filename(__name__,'logo/PLOT512.png'), QSize(512, 512))
@@ -316,12 +318,12 @@ def main(args=None):
     app_icon.addFile(pkg_resources.resource_filename(__name__,'logo/PLOT64.png'), QSize(64, 64))
     app_icon.addFile(pkg_resources.resource_filename(__name__,'logo/PLOT32.png'), QSize(32, 32))
     app_icon.addFile(pkg_resources.resource_filename(__name__,'logo/PLOT16.png'), QSize(16, 16))
-
     app.setWindowIcon(app_icon)
-    main = Main()
-    main.show()
+
+    main_window = Main()
+    main_window.show()
     sys.exit(app.exec_())
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv)
 
