@@ -1,5 +1,5 @@
 from PyQt5.uic import loadUiType
-from PyQt5.QtWidgets import (QDialog, QPushButton, QLabel)
+from PyQt5.QtWidgets import QDialog, QPushButton, QLabel, QMessageBox
 
 from matplotlib.figure import Figure
 from matplotlib import cbook
@@ -64,20 +64,14 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             return
 
         if len(plot_data_collection) > 10:
-            dialog = QDialog()
-            dialog.setWindowTitle("Info")
-            dialog.setMinimumSize(300,200)
-            dialog_label = QLabel("Your selection intends to plot more that 10 curves, do you really want to continue?", dialog)
-            dialog_label.setWordWrap(True)
-            button_continue = QPushButton("ok", dialog)
-            button_continue.move(50, 100)
-            button_cancel = QPushButton("cancel", dialog)
-            button_cancel.move(150, 100)
-            button_continue.clicked.connect(dialog.accept)
-            button_cancel.clicked.connect(dialog.reject)
-            dialog.exec()
+            msg = QMessageBox(self)
+            msg.setIcon(QMessageBox.Information)
+            msg.setText("Your selection intends to plot more that 10 curves, do you really want to continue?")
+            msg.setWindowTitle("Info")
+            msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+            result = msg.exec()
 
-            if dialog.result() == QDialog.Rejected:
+            if result == QMessageBox.Cancel:
                 return
 
         self.ax.clear()
