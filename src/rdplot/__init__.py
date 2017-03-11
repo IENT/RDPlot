@@ -5,8 +5,9 @@ from PyQt5 import QtGui
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMessageBox
 from PlotWidget import PlotWidget
-from os.path import sep
+from os.path import sep, isfile, isdir
 from os import path
+
 
 from SimulationDataItem import dict_tree_from_sim_data_items
 from model import SimDataItemTreeModel, OrderedDictModel, VariableTreeModel, BdTableModel
@@ -304,6 +305,23 @@ class Main(QMainWindow, Ui_MainWindow):
             self.simDataItemTreeModel.update(sim_data_items)
             f.close()
 
+    def process_cmd_line_args(self, args):
+        """Processes cmd line arguments. Those are only pathes or files."""
+        for path in args[1:]:
+            if not isdir(path) and not isfile(path):
+                continue
+            if path.endswith('.rd'):
+                f = open(path, 'r')
+                json_str = f.read()
+                sim_data_items = jsonpickle.decode(json_str)
+                self.simDataItemTreeModel.update(sim_data_items)
+                f.close()
+                continue
+
+            self.simDataItemTreeView.msg.show()
+            self.simDataItemTreeView.parserThread.addPath(path)
+            self.simDataItemTreeView.parserThread.start()
+
 
 def main(args=None):
 
@@ -322,6 +340,10 @@ def main(args=None):
 
     main_window = Main()
     main_window.show()
+
+    args = app.arguments()
+    main_window.process_cmd_line_args(args)
+
     sys.exit(app.exec_())
 
 if __name__ == '__main__':
