@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=RDPlot
 Type=Application
-Exec=rdplot
+Exec=rdplot %F
 Terminal=false
 Icon=/usr/share/pixmaps/PLOT64.png
 Comment=RDPlot tool
