@@ -16,6 +16,8 @@ from os.path import sep
 
 import pkg_resources
 
+from model import long_sub_str # todo: move to lib/tools/whatever
+
 Ui_name = pkg_resources.resource_filename(__name__, 'ui' + sep + 'plotWidget.ui')
 Ui_PlotWidget, QWidget = loadUiType(Ui_name)
 
@@ -83,6 +85,17 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         # content (no duplicates)
         tmp_legend = []
         tmp_legend += [plot_data.identifiers + plot_data.path for plot_data in plot_data_collection]
+        if len(tmp_legend) > 1:
+            # several configurations. remove common part of path
+            common_path_part = long_sub_str([elem[1] for elem in tmp_legend])
+            for elem in tmp_legend:
+                elem[1] = elem[1].replace(common_path_part,'')
+        else:
+            # only one configuration
+            path = str(tmp_legend[0][1]).split(sep)
+            if len(path) > 2:
+                # shorten path if it is very long
+                tmp_legend[0][1] = sep.join(path[-2:])
         legend = []
         for c in tmp_legend:
             result = list(filter(lambda x: all(x in l for l in tmp_legend) == False, c))

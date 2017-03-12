@@ -16,14 +16,14 @@ def compare_strings_case_insensitive(first, second):
     return first.casefold() > second.casefold()
 
 
-def long_substr(data):
-    substr = ''
+def long_sub_str(data):
+    sub_str = ''
     if len(data) > 1 and len(data[0]) > 0:
         for i in range(len(data[0])):
             for j in range(len(data[0]) - i + 1):
-                if j > len(substr) and is_substr(data[0][i:i + j], data):
-                    substr = data[0][i:i + j]
-    return substr
+                if j > len(sub_str) and is_substr(data[0][i:i + j], data):
+                    sub_str = data[0][i:i + j]
+    return sub_str
 
 
 def is_substr(find, data):
@@ -454,7 +454,7 @@ class OrderedDictTreeModel(QAbstractItemModel):
                         siblings = q_parent_index.internalPointer().parent.children
                         if len(siblings) > 1:
                             sibling_identifiers = [sibling.identifier for sibling in siblings]
-                            longest_common_str = long_substr(sibling_identifiers)
+                            longest_common_str = long_sub_str(sibling_identifiers)
                             unique_part = str(q_parent_index.internalPointer()).replace(longest_common_str,'')
                             return unique_part
                         else:
