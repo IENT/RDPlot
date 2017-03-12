@@ -322,7 +322,7 @@ class Main(QMainWindow, Ui_MainWindow):
             self.simDataItemTreeView.parserThread.start()
 
 
-def main(args=None):
+def main():
 
     app = QtWidgets.QApplication(sys.argv)
 
@@ -346,5 +346,5 @@ def main(args=None):
     sys.exit(app.exec_())
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()
 
