@@ -1,6 +1,6 @@
 import re
 
-from os.path import abspath, join, isdir, isfile, normpath, basename, sep
+from os.path import abspath, join, isdir, isfile, normpath, basename, sep, dirname
 from abc import ABCMeta
 
 from SimulationDataItem import (AbstractSimulationDataItem,
@@ -22,7 +22,6 @@ class AbstractEncLog(AbstractSimulationDataItem):
     def _parse_path(self, path):
         try:
             # Assumes structure of .../<simulation_directory>/log/<basename>
-            directories = normpath(path).split(sep)[0: -2]
             filename = basename(path)
         except IndexError:
             raise SimulationDataItemError(
@@ -31,18 +30,18 @@ class AbstractEncLog(AbstractSimulationDataItem):
             )
 
         try:
-            seperator = '-'
-            filename_splitted = filename.split('_QP')[0].split(seperator)
+            separator = '-'
+            filename_splitted = filename.split('_QP')[0].split(separator)
             sequence = filename_splitted[-1]
-            config = seperator.join(filename_splitted[0: -2])
+            config = separator.join(filename_splitted[0: -2])
         except IndexError:
             raise SimulationDataItemError((
                 "Filename {} can not be splitted into config until '{}' and"
                 " sequence between last '{}' and '_QP'"
-            ).format(filename, seperator, seperator))
+            ).format(filename, separator, separator))
 
         # prepend simulation directory to config
-        config = directories[-1] + ' ' + config
+        config = dirname(normpath(path)) + config
         with open(self.path, 'r') as log_file:
             log_text = log_file.read()  # reads the whole text file
             qp = re.findall(r""" ^QP \s+ : \s+ (\d+.\d+) $

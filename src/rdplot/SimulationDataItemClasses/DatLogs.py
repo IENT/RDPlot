@@ -1,6 +1,6 @@
 import xmltodict
 from xml.parsers.expat import ExpatError
-from os.path import normpath, basename, sep
+from os.path import normpath, basename, sep, dirname
 
 from SimulationDataItem import (AbstractSimulationDataItem,
                                 SimulationDataItemError)
@@ -20,14 +20,6 @@ class AbstractDatLog(AbstractSimulationDataItem):
 
     def _parse_path(self, path):
         filename = basename(path)
-        try:
-            # Assumes structure of .../<simulation_directory>/log/<basename>
-            directories = normpath(path).split(sep)[0: -2]
-        except IndexError:
-            raise SimulationDataItemError(
-                "Path {} can not be split into directories and filename"
-                .format(filename, path)
-            )
 
         separator = '-'
         try:
@@ -41,7 +33,7 @@ class AbstractDatLog(AbstractSimulationDataItem):
             ).format(filename, separator, separator))
 
         # prepend simulation directory to config
-        config = directories[-1] + ' ' + config
+        config = dirname(normpath(path)) + config
         qp = None
         with open(self.path, 'r') as dat_log:
             try:

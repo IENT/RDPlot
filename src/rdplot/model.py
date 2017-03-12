@@ -1,9 +1,11 @@
 from collections import deque
+from os.path import sep
 import numpy as np
 from PyQt5.Qt import Qt, QVariant, QModelIndex, QDialog, QLabel
 from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel, QAbstractTableModel, pyqtSignal
 from SimulationDataItemClasses.EncoderLogs import AbstractEncLog
 from lib.BD import bjontegaard
+from SimulationDataItem import AbstractSimulationDataItem
 
 
 #
@@ -12,6 +14,26 @@ from lib.BD import bjontegaard
 
 def compare_strings_case_insensitive(first, second):
     return first.casefold() > second.casefold()
+
+
+def long_substr(data):
+    substr = ''
+    if len(data) > 1 and len(data[0]) > 0:
+        for i in range(len(data[0])):
+            for j in range(len(data[0]) - i + 1):
+                if j > len(substr) and is_substr(data[0][i:i + j], data):
+                    substr = data[0][i:i + j]
+    return substr
+
+
+def is_substr(find, data):
+    if len(data) < 1 and len(find) < 1:
+        return False
+    for i in range(len(data)):
+        if find not in data[i]:
+            return False
+    return True
+
 
 # -------------------------------------------------------------------------------
 
@@ -420,6 +442,36 @@ class OrderedDictTreeModel(QAbstractItemModel):
 
     def data(self, q_parent_index, q_role):
         if q_parent_index.isValid() and q_role == Qt.DisplayRole:
+            # t = list(q_parent_index.internalPointer().values)[0]
+            # t2 = t.values
+            index_values = q_parent_index.internalPointer().values
+            children = q_parent_index.internalPointer().children
+            if children:
+                index_values2 = children[0].values
+                if index_values2:
+                    if isinstance(list(index_values2)[0], AbstractSimulationDataItem):
+                        # we are one level above the leaves.
+                        siblings = q_parent_index.internalPointer().parent.children
+                        if len(siblings) > 1:
+                            sibling_identifiers = [sibling.identifier for sibling in siblings]
+                            longest_common_str = long_substr(sibling_identifiers)
+                            unique_part = str(q_parent_index.internalPointer()).replace(longest_common_str,'')
+                            return unique_part
+                        else:
+                            path = str(q_parent_index.internalPointer()).split(sep)
+                            if len(path) > 2:
+                                return sep.join(path[-2:])
+                            else:
+                                return str(q_parent_index.internalPointer())
+
+
+
+            # isinstance(list(q_parent_index.internalPointer().parent.children[0].values)[0], AbstractSimulationDataItem)
+
+            if index_values:
+                if isinstance(list(index_values)[0], AbstractSimulationDataItem):
+                    print(str(q_parent_index.internalPointer()))
+                    print(q_parent_index.internalPointer())
             return QVariant(str(q_parent_index.internalPointer()))
         return QVariant()
 
@@ -720,10 +772,10 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                 )
                 if condition:
                     raise AmbiguousSimDataItems((
-                                                   "Ambigious sim data items: Sim Data Item {} and {}"
-                                                   " have different absolute paths but the same"
-                                                   " position at the tree {}"
-                                               ).format(AbstractEncLog, value, AbstractEncLog.tree_identifier_list))
+                                                    "Ambigious sim data items: Sim Data Item {} and {}"
+                                                    " have different absolute paths but the same"
+                                                    " position at the tree {}"
+                                                ).format(AbstractEncLog, value, AbstractEncLog.tree_identifier_list))
             # Add *sim_data_item* to the set of values of the tree item *item*
             item.values.add(sim_data_item)
 
