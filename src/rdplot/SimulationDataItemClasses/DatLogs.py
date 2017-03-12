@@ -87,14 +87,14 @@ class AbstractDatLog(AbstractSimulationDataItem):
 class DatLogHM(AbstractDatLog):
     @classmethod
     def can_parse_file(cls, path):
-        with open(path, 'r') as dat_log:
             try:
-                xml = dat_log.read()
+                with open(path, 'r') as dat_log:
+                    xml = dat_log.read()
                 sim_data = xmltodict.parse(xml)
                 is_hm_sim = (sim_data['Logfile']['Codec']['Value'] == 'TMHEVCSimulation'
                              or sim_data['Logfile']['Codec']['Value'] == 'TMHEVCSimulationDecodeIPPE')
                 return is_hm_sim
-            except (IndexError, ExpatError):
+            except (ExpatError, UnicodeDecodeError, KeyError, IsADirectoryError):
                 return False
 
     def _parse_summary_data(self):
