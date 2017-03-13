@@ -1,9 +1,11 @@
 from collections import deque
+from os.path import sep
 import numpy as np
 from PyQt5.Qt import Qt, QVariant, QModelIndex, QDialog, QLabel
 from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel, QAbstractTableModel, pyqtSignal
 from SimulationDataItemClasses.EncoderLogs import AbstractEncLog
 from lib.BD import bjontegaard
+from SimulationDataItem import AbstractSimulationDataItem
 
 
 #
@@ -12,6 +14,7 @@ from lib.BD import bjontegaard
 
 def compare_strings_case_insensitive(first, second):
     return first.casefold() > second.casefold()
+
 
 # -------------------------------------------------------------------------------
 
@@ -420,6 +423,32 @@ class OrderedDictTreeModel(QAbstractItemModel):
 
     def data(self, q_parent_index, q_role):
         if q_parent_index.isValid() and q_role == Qt.DisplayRole:
+            # t = list(q_parent_index.internalPointer().values)[0]
+            # t2 = t.values
+            index_values = q_parent_index.internalPointer().values
+            children = q_parent_index.internalPointer().children
+            if children:
+                index_values2 = children[0].values
+                if index_values2:
+                    if isinstance(list(index_values2)[0], AbstractSimulationDataItem):
+                        # we are one level above the leaves.
+                        siblings = q_parent_index.internalPointer().parent.children
+                        if len(siblings) > 1:
+                            sibling_identifiers = []
+                            sibling_identifiers += [sibling.identifier.split(sep) for sibling in siblings]
+                            unique_part = []
+                            for c in sibling_identifiers:
+                                result = list(filter(lambda x: all(x in l for l in sibling_identifiers) == False, c))
+                                unique_part.append(" ".join(result))
+
+                            return unique_part[q_parent_index.row()]
+                        else:
+                            path = str(q_parent_index.internalPointer()).split(sep)
+                            if len(path) > 2:
+                                return sep.join(path[-2:])
+                            else:
+                                return str(q_parent_index.internalPointer())
+
             return QVariant(str(q_parent_index.internalPointer()))
         return QVariant()
 
@@ -720,10 +749,10 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                 )
                 if condition:
                     raise AmbiguousSimDataItems((
-                                                   "Ambigious sim data items: Sim Data Item {} and {}"
-                                                   " have different absolute paths but the same"
-                                                   " position at the tree {}"
-                                               ).format(AbstractEncLog, value, AbstractEncLog.tree_identifier_list))
+                                                    "Ambigious sim data items: Sim Data Item {} and {}"
+                                                    " have different absolute paths but the same"
+                                                    " position at the tree {}"
+                                                ).format(AbstractEncLog, value, AbstractEncLog.tree_identifier_list))
             # Add *sim_data_item* to the set of values of the tree item *item*
             item.values.add(sim_data_item)
 
