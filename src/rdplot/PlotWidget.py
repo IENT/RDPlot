@@ -82,7 +82,13 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         # Now lets create a legend only containing informative
         # content (no duplicates)
         tmp_legend = []
-        tmp_legend += [plot_data.identifiers + plot_data.path for plot_data in plot_data_collection]
+        for plot_data in plot_data_collection:
+            tmp = []
+            for identifiers in plot_data.identifiers:
+                tmp += identifiers.split('/')
+            tmp2 = tmp + plot_data.path
+            tmp_legend.append(tmp2)
+
         legend = []
         for c in tmp_legend:
             result = list(filter(lambda x: all(x in l for l in tmp_legend) == False, c))
@@ -94,7 +100,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         plot_count = 0
         for plot_data in plot_data_collection:
             # Create legend from variable path and sim data items identifiers
-            l =  legend[plot_count] #" ".join([i for i in plot_data.identifiers] + plot_data.path)
+            l = legend[plot_count] #" ".join([i for i in plot_data.identifiers] + plot_data.path)
 
             # Convert list of pairs of strings to two sorted lists of floats
             values = ((float(x), float(y)) for (x, y) in plot_data.values)
