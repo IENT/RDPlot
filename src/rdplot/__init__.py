@@ -160,7 +160,10 @@ class Main(QMainWindow, Ui_MainWindow):
         values = self.selectedSimulationDataItemListModel.values()
         # List call necessary to avoid runtime error because of elements changing
         # during iteration
+        self._variable_tree_selection_model.selectionChanged.disconnect()
         self.simDataItemTreeModel.remove(list(values))
+        self._variable_tree_selection_model.selectionChanged.connect(self.update_plot)
+
 
     def change_list(self, q_selected, q_deselected):
         """Extend superclass behavior by automatically adding the values of
