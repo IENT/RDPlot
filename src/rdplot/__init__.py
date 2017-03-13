@@ -58,7 +58,7 @@ class Main(QMainWindow, Ui_MainWindow):
             self.update_variable_tree
         )
 
-        # Connect signals of menues
+        # Connect signals of menus
         self.actionOpen_File.triggered.connect(
             self.simDataItemTreeView.add_sim_data_item
         )
