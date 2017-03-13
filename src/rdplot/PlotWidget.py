@@ -100,7 +100,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         plot_count = 0
         for plot_data in plot_data_collection:
             # Create legend from variable path and sim data items identifiers
-            l =  legend[plot_count] #" ".join([i for i in plot_data.identifiers] + plot_data.path)
+            l = legend[plot_count] #" ".join([i for i in plot_data.identifiers] + plot_data.path)
 
             # Convert list of pairs of strings to two sorted lists of floats
             values = ((float(x), float(y)) for (x, y) in plot_data.values)

@@ -434,12 +434,7 @@ class OrderedDictTreeModel(QAbstractItemModel):
                         # we are one level above the leaves.
                         siblings = q_parent_index.internalPointer().parent.children
                         if len(siblings) > 1:
-                            sibling_identifiers = []
-                            sibling_identifiers += [sibling.identifier.split(sep) for sibling in siblings]
-                            unique_part = []
-                            for c in sibling_identifiers:
-                                result = list(filter(lambda x: all(x in l for l in sibling_identifiers) == False, c))
-                                unique_part.append(" ".join(result))
+                            pr
                             return unique_part[q_parent_index.row()]
                         else:
                             path = str(q_parent_index.internalPointer()).split(sep)
@@ -448,14 +443,6 @@ class OrderedDictTreeModel(QAbstractItemModel):
                             else:
                                 return str(q_parent_index.internalPointer())
 
-
-
-            # isinstance(list(q_parent_index.internalPointer().parent.children[0].values)[0], AbstractSimulationDataItem)
-
-            if index_values:
-                if isinstance(list(index_values)[0], AbstractSimulationDataItem):
-                    print(str(q_parent_index.internalPointer()))
-                    print(q_parent_index.internalPointer())
             return QVariant(str(q_parent_index.internalPointer()))
         return QVariant()
 
