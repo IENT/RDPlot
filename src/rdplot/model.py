@@ -453,10 +453,13 @@ class OrderedDictTreeModel(QAbstractItemModel):
                         # we are one level above the leaves.
                         siblings = q_parent_index.internalPointer().parent.children
                         if len(siblings) > 1:
-                            sibling_identifiers = [sibling.identifier for sibling in siblings]
-                            longest_common_str = long_sub_str(sibling_identifiers)
-                            unique_part = str(q_parent_index.internalPointer()).replace(longest_common_str,'')
-                            return unique_part
+                            sibling_identifiers = []
+                            sibling_identifiers += [sibling.identifier.split(sep) for sibling in siblings]
+                            unique_part = []
+                            for c in sibling_identifiers:
+                                result = list(filter(lambda x: all(x in l for l in sibling_identifiers) == False, c))
+                                unique_part.append(" ".join(result))
+                            return unique_part[q_parent_index.row()]
                         else:
                             path = str(q_parent_index.internalPointer()).split(sep)
                             if len(path) > 2:
