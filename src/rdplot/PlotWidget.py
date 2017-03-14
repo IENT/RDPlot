@@ -85,7 +85,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         for plot_data in plot_data_collection:
             tmp = []
             for identifiers in plot_data.identifiers:
-                tmp += identifiers.split('/')
+                tmp += identifiers.split(sep)
             tmp2 = tmp + plot_data.path
             tmp_legend.append(tmp2)
 

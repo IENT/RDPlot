@@ -844,7 +844,12 @@ class BdTableModel(QAbstractTableModel):
 
     def headerData(self, col, orientation, role):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            return QVariant(self._horizontal_headers[col])
+            tmp_horizontal_headers = [header.split(sep) for header in self._horizontal_headers]
+            headers = []
+            for c in tmp_horizontal_headers:
+                result = list(filter(lambda x: all(x in l for l in tmp_horizontal_headers) == False, c))
+                headers.append(" ".join(result))
+            return QVariant(headers[col])
         elif orientation == Qt.Vertical and role == Qt.DisplayRole:
             return QVariant(self._vertical_headers[col])
         return QVariant()
