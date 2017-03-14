@@ -1,6 +1,6 @@
 import re
 
-from os.path import abspath, join, isdir, isfile, normpath, basename, sep, dirname
+from os.path import abspath, join, isdir, isfile, normpath, basename, sep, dirname, splitext
 from abc import ABCMeta
 
 from SimulationDataItem import (AbstractSimulationDataItem,
@@ -20,30 +20,16 @@ class AbstractEncLog(AbstractSimulationDataItem):
         self.temporal_data = self._parse_temporal_data()
 
     def _parse_path(self, path):
-        try:
-            # Assumes structure of .../<simulation_directory>/log/<basename>
-            filename = basename(path)
-        except IndexError:
-            raise SimulationDataItemError(
-                "Path {} can not be splitted into directories and filename"
-                .format(filename, path)
-            )
-
-        try:
-            separator = '-'
-            filename_splitted = filename.split('_QP')[0].split(separator)
-            sequence = filename_splitted[-1]
-            config = separator.join(filename_splitted[0: -2])
-        except IndexError:
-            raise SimulationDataItemError((
-                "Filename {} can not be splitted into config until '{}' and"
-                " sequence between last '{}' and '_QP'"
-            ).format(filename, separator, separator))
-
-        # prepend simulation directory to config
-        config = dirname(normpath(path)) + config
+        """ parses the identifiers for an encoder log out of the
+        path of the logfile and the sequence name and qp given in
+         the logfile"""
+        # set config to path of sim data item
+        config = dirname(normpath(path))
+        # open log file and parse for sequence name and qp
         with open(self.path, 'r') as log_file:
             log_text = log_file.read()  # reads the whole text file
+            sequence = re.findall(r""" ^Input \s+ File \s+ : \s+ (\S+) $
+                                    """, log_text, re.M + re.X)
             qp = re.findall(r""" ^QP \s+ : \s+ (\d+.\d+) $
                                   """, log_text, re.M + re.X)
         # join all found qps together, that is necessary
@@ -51,6 +37,9 @@ class AbstractEncLog(AbstractSimulationDataItem):
         qp = " ".join([str(q) for q in qp])
         if qp == "":
             raise SimulationDataItemError
+        # set sequence to the sequence name without path and suffix
+        # not for
+        sequence = splitext(basename(sequence[0]))[0]
 
         return sequence, config, qp
 

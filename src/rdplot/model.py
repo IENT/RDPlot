@@ -443,11 +443,12 @@ class OrderedDictTreeModel(QAbstractItemModel):
 
                             return unique_part[q_parent_index.row()]
                         else:
-                            path = str(q_parent_index.internalPointer()).split(sep)
-                            if len(path) > 2:
-                                return sep.join(path[-2:])
-                            else:
-                                return str(q_parent_index.internalPointer())
+                            path = str(q_parent_index.internalPointer())
+                            return path
+                            # if len(path) > 2:
+                            #     return sep.join(path[-2:])
+                            # else:
+                            #     return str(q_parent_index.internalPointer())
 
             return QVariant(str(q_parent_index.internalPointer()))
         return QVariant()
