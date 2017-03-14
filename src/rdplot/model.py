@@ -939,7 +939,7 @@ class BdTableModel(QAbstractTableModel):
 
         # iterate over all rows (sequences) and columns (configurations)
         # of the table. Calculate one bd for each cell and store it in the
-        # model. Emit in the very and the dataChanged signal
+        # model. Emit in the very end the dataChanged signal
         row = 0
         for seq in self._vertical_headers:
             col = 0

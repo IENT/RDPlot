@@ -39,7 +39,7 @@ class AbstractEncLog(AbstractSimulationDataItem):
             raise SimulationDataItemError
         # set sequence to the sequence name without path and suffix
         # not for
-        sequence = splitext(basename(sequence[0]))[0]
+        sequence = splitext(basename(sequence[-1]))[0]
 
         return sequence, config, qp
 
@@ -324,7 +324,27 @@ class EncLogSHM(AbstractEncLog):
                             (float(bitrate), float(summaries[layer_quantity * it + layer][index]))
                         )
                 data2[layerstring] = data3
+
+            # add the addtion of layers 1 and two in rate. PSNR values are taken from Layer one
+            # TODO make this nice one day
+            layerstring = 'layer 1 + 2'
+            #data2[layerstring] = {}
+            data4 = {}
+            bitrate = 0
+            for layer in range(0, layer_quantity):
+                if summaries[layer_quantity * it + layer_quantity - 1][2] != '-nan':
+                    bitrate += float(summaries[layer_quantity * it + layer][2])
+            for (index, name) in names.items():
+                data4[name] = []
+                if summaries[layer_quantity * it + layer_quantity - 1][2] == 'nan':
+                    data4[name].append((float(0), float(0)))
+                else:
+                    data4[name].append(
+                        (bitrate, float(summaries[layer_quantity * it + layer_quantity - 1][index])))
+            data2[layerstring] = data4
+
             data[header_names[it]] = data2
+
         return data
 
     def _parse_temporal_data(self):
