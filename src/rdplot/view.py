@@ -11,6 +11,7 @@ from os.path import join
 
 import model
 from SimulationDataItem import SimulationDataItemFactory, SimulationDataItemError
+from model import AmbiguousSimDataItems
 
 
 # Path to the folder containing simulation data sub classes. The classes
@@ -181,12 +182,25 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         if not sim_data_items:
             msg = QMessageBox(self)  # use self as parent here
             msg.setIcon(QMessageBox.Information)
-            msg.setText("I cannot find any simulation data item in your favourized directory.\n"
+            msg.setText("I cannot find any simulation data item in your selected directory.\n"
                         "If you are really sure that there should be some valid item, "
                         "you should consider writing a new parser.")
             msg.setWindowTitle("Info")
             msg.show()
-        self.model().update(sim_data_items)
+        try:
+            self.model().update(sim_data_items)
+        except AmbiguousSimDataItems:
+            msg = QMessageBox(self)  # use self as parent here
+            msg.setIcon(QMessageBox.Warning)
+            msg.setText("I have found ambigous simualtion data items in your selected directory.\n"
+                        "The reason for that is that you want to parse files from one directory "
+                        "with different names but the same QP and sequence name.\n"
+                        "From all the parsers I know at the moment I cannot decide what you want "
+                        "to achieve.\n"
+                        "Recommendation: Move the files you do not want plot to a different location.\n"
+                        "Note: The sequence tree view on the left is most probably incomplete now.")
+            msg.setWindowTitle("Warning")
+            msg.show()
 
 
 class PlottedFilesListView(QtWidgets.QListView):
