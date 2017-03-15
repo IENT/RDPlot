@@ -94,7 +94,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             result = list(filter(lambda x: all(x in l for l in tmp_legend) == False, c))
             legend.append(" ".join(result))
         if len(tmp_legend) == 1:
-            legend = tmp_legend
+            legend = ['']
 
         # plot all the lines which are missing yet
         plot_count = 0
