@@ -54,11 +54,11 @@ class AbstractEncLog(AbstractSimulationDataItem):
         return [
             (
                 [self.sequence, self.config, self.qp],
-                {'Temporal': self.temporal_data}
+                {self.__class__.__name__ : {'Temporal': self.temporal_data}}
             ),
             (
                 [self.sequence, self.config],
-                {'Summary': self.summary_data}
+                {self.__class__.__name__ : {'Summary': self.summary_data}}
             ),
         ]
 
