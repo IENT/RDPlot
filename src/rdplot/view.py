@@ -202,6 +202,8 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
             msg.setWindowTitle("Warning")
             msg.show()
 
+        self.expandToDepth(0)
+
 
 class PlottedFilesListView(QtWidgets.QListView):
     """Implements the view for plotted files"""

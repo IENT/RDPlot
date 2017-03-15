@@ -234,7 +234,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.variableTreeModel.clear_and_update_from_dict_tree(dict_tree)
 
         # Auto expand variable tree
-        self.variableTreeView.expandAll()
+        self.variableTreeView.expandToDepth(1)
 
         # Reselect all variables, which also exist on the new tree
         for path in selected_path_collection:
