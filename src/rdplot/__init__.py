@@ -290,8 +290,8 @@ class Main(QMainWindow, Ui_MainWindow):
             msg.setWindowTitle("Info")
             msg.show()
             return
-        filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save RD data as', '.', '.rd')
-        filename = ''.join(filename)
+        filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save RD data as', '.', '*.rd')
+        filename = filename[0] + filename[1][1:]
         if not len(filename) == 0:
             f = open(filename, 'w')
             f.write(jsonpickle.encode(self.get_selected_simulation_data_items()))
