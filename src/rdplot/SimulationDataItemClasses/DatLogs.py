@@ -76,16 +76,16 @@ class AbstractDatLog(AbstractSimulationDataItem):
         return False
 
 
-class DatLogHM(AbstractDatLog):
+class DatLogBasedOnClassName(AbstractDatLog):
     @classmethod
     def can_parse_file(cls, path):
             try:
                 with open(path, 'r') as dat_log:
                     xml = dat_log.read()
                 sim_data = xmltodict.parse(xml)
-                is_hm_sim = (sim_data['Logfile']['Codec']['Value'] == 'TMHEVCSimulation'
-                             or sim_data['Logfile']['Codec']['Value'] == 'TMHEVCSimulationDecodeIPPE')
-                return is_hm_sim
+                # discard 'DatLog' from class name, then compare to class specified in log file
+                is_sim_of_this_class = ( cls.__name__[6:]  in sim_data['Logfile']['Codec']['Value'])
+                return is_sim_of_this_class
             except (ExpatError, UnicodeDecodeError, KeyError, IsADirectoryError):
                 return False
 
@@ -110,3 +110,10 @@ class DatLogHM(AbstractDatLog):
             except IndexError:
                 raise
 
+
+class DatLogHEVC(DatLogBasedOnClassName):
+    pass
+
+
+class DatLogJEM501_360(DatLogBasedOnClassName):
+    pass
