@@ -103,6 +103,10 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         self.msg.setText("Parsing Directory...")
         self.msg.setWindowTitle("Info")
 
+    # drag'n'drop mechanism adapted
+    # from question on stackoverflow at http://stackoverflow.com/q/22543644
+    # from user http://stackoverflow.com/users/1107049/alphanumeric
+
     def dragEnterEvent(self, event):
         # Consider only url/path events
         if event.mimeData().hasUrls():
@@ -117,8 +121,11 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
             self.parserThread.addPath( url.path() )
             self.parserThread.start()
 
-    # Keypress fix from
-    # http://stackoverflow.com/questions/27475940/pyqt-connect-to-keypressevent
+    # end snippet
+
+    # keypress fix adapted
+    # from answer on stackoverflow at http://stackoverflow.com/a/27477021
+    # from user http://stackoverflow.com/users/984421/ekhumoro
 
     deleteKey = pyqtSignal()
 
@@ -126,6 +133,8 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         if q_key_event.count() == 1 and q_key_event.key() == Qt.Key_Delete:
             self.deleteKey.emit()
         super().keyPressEvent(q_key_event)
+
+    # end snippet
 
     def _get_open_file_names(self):
         # extract folder and filename
