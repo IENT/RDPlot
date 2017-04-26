@@ -30,11 +30,11 @@ class AbstractEncLog(AbstractSimulationDataItem):
             log_text = log_file.read()  # reads the whole text file
             sequence = re.findall(r""" ^Input \s+ File \s+ : \s+ (\S+) $
                                     """, log_text, re.M + re.X)
-            qp = re.findall(r""" ^QP \s+ : \s+ (\d+.\d+) $
+            qp = re.findall(r""" ^QP \s+ : \s+ (\d+(?:.\d+)?) $
                                   """, log_text, re.M + re.X)
         # join all found qps together, that is necessary
         # for SHM
-        qp = " ".join([str(q) for q in qp])
+        qp = " ".join([str(float(q)) for q in qp])
         if qp == "":
             raise SimulationDataItemError
         # set sequence to the sequence name without path and suffix
@@ -203,44 +203,92 @@ class EncLogHM360Lib(AbstractEncLog):
     def can_parse_file(cls, path):
         return cls._enc_log_file_matches_re_pattern(
             path,
-            r'Y-PSNR_VP0',
-        )
+            r'Y-PSNR_(?:DYN_)?VP0',
+        ) #Y-PSNR_DYN_VP0
 
     def _parse_summary_data(self):
-        with open(self.path, 'r') as log_file:
-            log_text = log_file.read()  # reads the whole text file
-            summaries = re.findall(r""" ^(\S+) .+ $ \s .+ $
-                                        \s+ (\d+) \s+ \D \s+ (\S+)  # Total Frames, Bitrate
-                                        \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)  # y-, u-, v-, yuv-PSNR
-                                        \s+ (\S+) \s+ (\S+) \s+ (\S+)  # SPSNR_NN
-                                        \s+ (\S+) \s+ (\S+) \s+ (\S+)  # WSPSNR
-                                        \s+ (\S+) \s+ (\S+) \s+ (\S+)  # SPSNR_I
-                                        \s+ (\S+) \s+ (\S+) \s+ (\S+)  # CPPPSNR
-                                        \s+ (\S+) \s+ (\S+) \s+ (\S+)  # E2EWSPSNR
-                                        \s+ (\S+) \s+ (\S+) \s+ (\S+)  # PSNR_VP0
-                                        \s+ (\S+) \s+ (\S+) \s+ (\S+) $  # PSNR_VP1
-                                        """, log_text, re.M + re.X)
-        data = {}
-        names = {1: 'Frames', 2: 'Bitrate',
-                 3: 'Y-PSNR', 4: 'U-PSNR', 5: 'V-PSNR', 6: 'YUV-PSNR',
-                 7: 'Y-SPSNR_NN', 8: 'U-SPSNR_NN', 9: 'V-SPSNR_NN',
-                 10: 'Y-WSPSNR', 11: 'U-WSPSNR', 12: 'V-WSPSNR',
-                 13: 'Y-SPSNR_I', 14: 'U-SPSNR_I', 15: 'V-SPSNR_I',
-                 16: 'Y-CPPSNR', 17: 'U-CPPSNR', 18: 'V-CPPSNR',
-                 19: 'Y-E2EWSPSNR', 20: 'U-E2EWSPSNR', 21: 'V-E2EWSPSNR',
-                 22: 'Y-PSNR_VP0', 23: 'U-PSNR_VP0', 24: 'V-PSNR_VP0',
-                 25: 'Y-PSNR_VP1', 26: 'U-PSNR_VP1', 27: 'V-PSNR_VP1'
-                 }
 
-        for i in range(0, len(summaries)):  # iterate through Summary, I, P, B
-            data2 = {name: [] for (index, name) in names.items()}
-            for (index, name) in names.items():
-                data2[name].append(
-                    (float(summaries[i][2]), float(summaries[i][index]))
-                )
-            data[summaries[i][0]] = data2
+        if self._enc_log_file_matches_re_pattern(self.path, r'Y-PSNR_VP0'):
+            # 360Lib version < 3.0
+            with open(self.path, 'r') as log_file:
+                log_text = log_file.read()  # reads the whole text file
+                summaries = re.findall(r""" ^(\S+) .+ $ \s .+ $
+                                            \s+ (\d+) \s+ \D \s+ (\S+)  # Total Frames, Bitrate
+                                            \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)  # y-, u-, v-, yuv-PSNR
+                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # SPSNR_NN
+                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # WSPSNR
+                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # SPSNR_I
+                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # CPPPSNR
+                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # E2EWSPSNR
+                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # PSNR_VP0
+                                            \s+ (\S+) \s+ (\S+) \s+ (\S+) $  # PSNR_VP1
+                                            """, log_text, re.M + re.X)
+            data = {}
+            names = {1: 'Frames', 2: 'Bitrate',
+                     3: 'Y-PSNR', 4: 'U-PSNR', 5: 'V-PSNR', 6: 'YUV-PSNR',
+                     7: 'Y-SPSNR_NN', 8: 'U-SPSNR_NN', 9: 'V-SPSNR_NN',
+                     10: 'Y-WSPSNR', 11: 'U-WSPSNR', 12: 'V-WSPSNR',
+                     13: 'Y-SPSNR_I', 14: 'U-SPSNR_I', 15: 'V-SPSNR_I',
+                     16: 'Y-CPPSNR', 17: 'U-CPPSNR', 18: 'V-CPPSNR',
+                     19: 'Y-E2EWSPSNR', 20: 'U-E2EWSPSNR', 21: 'V-E2EWSPSNR',
+                     22: 'Y-PSNR_VP0', 23: 'U-PSNR_VP0', 24: 'V-PSNR_VP0',
+                     25: 'Y-PSNR_VP1', 26: 'U-PSNR_VP1', 27: 'V-PSNR_VP1'
+                     }
 
-        return data
+            for i in range(0, len(summaries)):  # iterate through Summary, I, P, B
+                data2 = {name: [] for (index, name) in names.items()}
+                for (index, name) in names.items():
+                    data2[name].append(
+                        (float(summaries[i][2]), float(summaries[i][index]))
+                    )
+                data[summaries[i][0]] = data2
+
+            return data
+
+        else:
+            # 360Lib version  3.0
+            with open(self.path, 'r') as log_file:
+                log_text = log_file.read()  # reads the whole text file
+                summaries = re.findall(r""" ^(\S+) .+ $ \s .+ $
+                                            \s+ (\d+) \s+ \D \s+ (\S+)  # Total Frames, Bitrate
+                                            \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)  # y-, u-, v-, yuv-PSNR
+                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # WSPSNR
+                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # E2ESPSNR_NN
+                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # E2ESPSNR_I
+                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # E2ECPPPSNR
+                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # E2EWSPSNR
+                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # PSNR_DYN_VP0
+                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # PSNR_DYN_VP1
+                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # CFSPSNR_NN
+                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # CFSPSNR_I
+                                            \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ $  # CFCPPPSNR
+                                            """, log_text, re.M + re.X)
+
+            data = {}
+            names = {1: 'Frames', 2: 'Bitrate',
+                     3: 'Y-PSNR', 4: 'U-PSNR', 5: 'V-PSNR', 6: 'YUV-PSNR',
+                     7: 'Y-WSPSNR', 8: 'U-WSPSNR', 9: 'V-WSPSNR',
+                     10: 'Y-E2ESPSNR_NN', 11: 'U-E2ESPSNR_NN', 12: 'V-E2ESPSNR_NN',
+                     13: 'Y-E2ESPSNR_I', 14: 'U-E2ESPSNR_I', 15: 'V-E2ESPSNR_I',
+                     16: 'Y-E2ECPPPSNR', 17: 'U-E2ECPPPSNR', 18: 'V-E2ECPPPSNR',
+                     19: 'Y-E2EWSPSNR', 20: 'U-E2EWSPSNR', 21: 'V-E2EWSPSNR',
+                     22: 'Y-PSNR_DYN_VP0', 23: 'U-PSNR_DYN_VP0', 24: 'V-PSNR_DYN_VP0',
+                     25: 'Y-PSNR_DYN_VP1', 26: 'U-PSNR_DYN_VP1', 27: 'V-PSNR_DYN_VP1',
+                     28: 'Y-CFSPSNR_NN', 29: 'U-CFSPSNR_NN', 30: 'V-CFSPSNR_NN',
+                     31: 'Y-CFSPSNR_I', 32: 'U-CFSPSNR_I', 33: 'V-CFSPSNR_I',
+                     34: 'Y-CFCPPPSNR', 35: 'U-CFCPPPSNR', 36: 'V-CFCPPPSNR'
+
+                     }
+
+            for i in range(0, len(summaries)):  # iterate through Summary, I, P, B
+                data2 = {name: [] for (index, name) in names.items()}
+                for (index, name) in names.items():
+                    data2[name].append(
+                        (float(summaries[i][2]), float(summaries[i][index]))
+                    )
+                data[summaries[i][0]] = data2
+
+            return data
 
     def _parse_temporal_data(self):
         # this function extracts temporal values
