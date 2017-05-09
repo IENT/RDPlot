@@ -198,7 +198,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
             msg.show()
         try:
             self.model().update(sim_data_items)
-        except AmbiguousSimDataItems:
+        except AmbiguousSimDataItems as inst:
             msg = QMessageBox(self)  # use self as parent here
             msg.setIcon(QMessageBox.Warning)
             msg.setText("I have found ambigous simualtion data items in your selected directory.\n"
@@ -207,7 +207,8 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
                         "From all the parsers I know at the moment I cannot decide what you want "
                         "to achieve.\n"
                         "Recommendation: Move the files you do not want plot to a different location.\n"
-                        "Note: The sequence tree view on the left is most probably incomplete now.")
+                        "Note: The sequence tree view on the left is most probably incomplete now.\n\n"
+                        "%s" % inst)
             msg.setWindowTitle("Warning")
             msg.show()
 

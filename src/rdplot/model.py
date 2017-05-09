@@ -753,7 +753,7 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                                                     "Ambigious sim data items: Sim Data Item {} and {}"
                                                     " have different absolute paths but the same"
                                                     " position at the tree {}"
-                                                ).format(AbstractEncLog, value, AbstractEncLog.tree_identifier_list))
+                                                ).format(sim_data_item, value, AbstractEncLog.tree_identifier_list))
             # Add *sim_data_item* to the set of values of the tree item *item*
             item.values.add(sim_data_item)
 
