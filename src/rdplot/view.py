@@ -44,6 +44,7 @@ class ParserWorkThread(QThread):
         for path in self.pathlist:
             try:
                 sim_data_items = self._factory.create_item_list_from_path(path)
+                print(("Parsed '{}' ").format(path))
             except SimulationDataItemError:
                 self.newParsedData.emit([])
                 self.pathlist.clear()
