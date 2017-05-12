@@ -235,7 +235,7 @@ class AbstractSimulationDataItem(metaclass=ABCMeta):
         pass
 
     @abstractproperty
-    def tree_identifier_list(self):
+    def tree_identifier_list(self, params=None):
         """Property to acces a list of identifiers, used to specify the position
         of simulation data items in the tree view.
 
