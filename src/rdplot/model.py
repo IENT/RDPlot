@@ -769,13 +769,13 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
             for sim_data_item in sim_data_items:
 
                 # Get *item* of the tree corresponding to *sim_data_item*
-                item = self.create_path(sim_data_item.tree_identifier_list())
+                item = self.create_path(sim_data_item.tree_identifier_list)
 
                 # This prevents an sim data item overwriting another one
                 # with same *tree_identifier_list* but different absolute path
                 for value in item.values:
                     condition = (
-                        value.tree_identifier_list() == sim_data_item.tree_identifier_list()
+                        value.tree_identifier_list() == sim_data_item.tree_identifier_list
                         and value.path != sim_data_item.path
                     )
                     if condition:
@@ -783,13 +783,13 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                                                         "Ambigious sim data items: Sim Data Item {} and {}"
                                                         " have different absolute paths but the same"
                                                         " position at the tree {}"
-                                                    ).format(sim_data_item, value, AbstractEncLog.tree_identifier_list()))
+                                                    ).format(sim_data_item, value, AbstractEncLog.tree_identifier_list))
                 # Add *sim_data_item* to the set of values of the tree item *item*
                 item.values.add(sim_data_item)
         else:
             for sim_data_item in sim_data_items:
                 sim_data_item.additional_params = list(diff_dict.keys())   
-                item = self.create_path(*sim_data_item.tree_identifier_list(diff_dict.keys()))
+                item = self.create_path(*sim_data_item.tree_identifier_list)
                 item.values.add(sim_data_item)
 
 
@@ -806,7 +806,7 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
 
         for sim_data_item in sim_data_items:
             # Get *item* of the tree corresponding to *sim_data_item*
-            item = self.create_path(*sim_data_item.tree_identifier_list())
+            item = self.create_path(*sim_data_item.tree_identifier_list)
             self.remove_item(item)
 
         self.items_changed.emit()

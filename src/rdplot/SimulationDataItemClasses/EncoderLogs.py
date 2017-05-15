@@ -45,9 +45,10 @@ class AbstractEncLog(AbstractSimulationDataItem):
 
         return sequence, config, qp
 
-    def tree_identifier_list(self, params=None):
-        if params is not None:
-            return [self.__class__.__name__, self.sequence, self.config] + [self.encoder_config[x] for x in params] + [self.qp]
+    @property
+    def tree_identifier_list(self):
+        if self.additional_params:
+            return [self.__class__.__name__, self.sequence, self.config] + [self.encoder_config[x] for x in self.additional_params] + [self.qp]
         else:
             return [self.__class__.__name__, self.sequence, self.config, self.qp]
     # Properties
