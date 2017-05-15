@@ -397,6 +397,7 @@ class SimulationDataItemFactory:
             path = join(directory_path, file_name)
             try:
                 item_list.extend(self.create_item_from_file(path))
+                print(("Parsed '{}' ").format(path))
             except SimulationDataItemError as error:
                 pass
                 # We definitely cannot accept thousands of execptions on the command line
