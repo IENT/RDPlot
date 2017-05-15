@@ -769,7 +769,7 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
             for sim_data_item in sim_data_items:
 
                 # Get *item* of the tree corresponding to *sim_data_item*
-                item = self.create_path(sim_data_item.tree_identifier_list)
+                item = self.create_path(*sim_data_item.tree_identifier_list)
 
                 # This prevents an sim data item overwriting another one
                 # with same *tree_identifier_list* but different absolute path
