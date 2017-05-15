@@ -19,6 +19,7 @@ class AbstractEncLog(AbstractSimulationDataItem):
         self.summary_data = self._parse_summary_data()
         self.temporal_data = self._parse_temporal_data()
         self.encoder_config = self._parse_encoder_config()
+        self.additional_params = []
 
     def _parse_path(self, path):
         """ parses the identifiers for an encoder log out of the
@@ -46,7 +47,7 @@ class AbstractEncLog(AbstractSimulationDataItem):
 
     def tree_identifier_list(self, params=None):
         if params is not None:
-            return [self.__class__.__name__, self.sequence, self.config, self.qp, ''.join([self.encoder_config[x] for x in params])]
+            return [self.__class__.__name__, self.sequence, self.config] + [self.encoder_config[x] for x in params] + [self.qp]
         else:
             return [self.__class__.__name__, self.sequence, self.config, self.qp]
     # Properties
@@ -64,16 +65,28 @@ class AbstractEncLog(AbstractSimulationDataItem):
 
     @property
     def data(self):
-        return [
-            (
-                [self.sequence, self.config, self.qp],
-                {self.__class__.__name__ : {'Temporal': self.temporal_data}}
-            ),
-            (
-                [self.sequence, self.config],
-                {self.__class__.__name__ : {'Summary': self.summary_data}}
-            ),
-        ]
+        if self.additional_params:
+            return [
+                (
+                    [self.sequence, self.config, self.qp],
+                    {self.__class__.__name__ : {'Temporal': self.temporal_data}}
+                ),
+                (
+                    [self.sequence, self.config] + [self.encoder_config[x] for x in self.additional_params],
+                    {self.__class__.__name__ : {'Summary': self.summary_data}}
+                ),
+            ]
+        else:
+            return [
+                (
+                    [self.sequence, self.config, self.qp],
+                    {self.__class__.__name__ : {'Temporal': self.temporal_data}}
+                ),
+                (
+                    [self.sequence, self.config],
+                    {self.__class__.__name__ : {'Summary': self.summary_data}}
+                ),
+            ]
 
     # Non-abstract Helper Functions
     @classmethod

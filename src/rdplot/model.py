@@ -739,55 +739,56 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
 
         AdditionalParamFound = False
 
+        all_enc_configs = []
+        diff_dict = {}
+
         for sim_data_item in sim_data_items:
-
-            # Get *item* of the tree corresponding to *sim_data_item*
-            item = self.create_path(sim_data_item.tree_identifier_list())
-
-            # This prevents an sim data item overwriting another one
-            # with same *tree_identifier_list* but different absolute path
-            for value in item.values:
-                condition = (
-                    value.tree_identifier_list() == sim_data_item.tree_identifier_list()
-                    and value.path != sim_data_item.path
-                )
-                if condition:
-                    AdditionalParamFound = True
-                    break
-                    raise AmbiguousSimDataItems((
-                                                    "Ambigious sim data items: Sim Data Item {} and {}"
-                                                    " have different absolute paths but the same"
-                                                    " position at the tree {}"
-                                                ).format(sim_data_item, value, AbstractEncLog.tree_identifier_list()))
-            # Add *sim_data_item* to the set of values of the tree item *item*
-            if AdditionalParamFound:
-                break
-            item.values.add(sim_data_item)
-
-        
-        if AdditionalParamFound:
-            all_enc_configs = []
-            for sim_data_item in sim_data_items:
-                all_enc_configs.append(sim_data_item.encoder_config)
-                #print(sim_data_item.summary_data['encoder_config'])
-            diff_dict = {}
-            value_filter = ['.yuv','.bin','.hevc','.jem']
-            key_filter = ['QP']
-            for i in range(len(all_enc_configs) - 1):
-                current_item, next_item = all_enc_configs[i], all_enc_configs[i + 1]
-                diff = set(current_item.values()) ^ set(next_item.values())
-                for (key, value) in set(current_item.items()) ^ set(next_item.items()):
-                    if all(y not in key for y in key_filter):
-                        if all(x not in value for x in value_filter):
-                            if key not in diff_dict:
-                                diff_dict[key] = []
+            all_enc_configs.append(sim_data_item.encoder_config)
+            #print(sim_data_item.summary_data['encoder_config'])
+        value_filter = ['.yuv','.bin','.hevc','.jem']
+        key_filter = []
+        for i in range(len(all_enc_configs) - 1):
+            current_item, next_item = all_enc_configs[i], all_enc_configs[i + 1]
+            diff = set(current_item.values()) ^ set(next_item.values())
+            for (key, value) in set(current_item.items()) ^ set(next_item.items()):
+                if all(y not in key for y in key_filter):
+                    if all(x not in value for x in value_filter):
+                        if key not in diff_dict:
+                            diff_dict[key] = []
+                            diff_dict[key].append(value)
+                        else:
+                            if value not in diff_dict[key]:
                                 diff_dict[key].append(value)
-                            else:
-                                if value not in diff_dict[key]:
-                                    diff_dict[key].append(value)
-                        
-            print(diff_dict)
-            for sim_data_item in sim_data_items:   
+        if 'QP' in diff_dict:
+            diff_dict.pop('QP',None)
+        
+        if diff_dict:
+            AdditionalParamFound = True
+
+        if not AdditionalParamFound:
+            for sim_data_item in sim_data_items:
+
+                # Get *item* of the tree corresponding to *sim_data_item*
+                item = self.create_path(sim_data_item.tree_identifier_list())
+
+                # This prevents an sim data item overwriting another one
+                # with same *tree_identifier_list* but different absolute path
+                for value in item.values:
+                    condition = (
+                        value.tree_identifier_list() == sim_data_item.tree_identifier_list()
+                        and value.path != sim_data_item.path
+                    )
+                    if condition:
+                        raise AmbiguousSimDataItems((
+                                                        "Ambigious sim data items: Sim Data Item {} and {}"
+                                                        " have different absolute paths but the same"
+                                                        " position at the tree {}"
+                                                    ).format(sim_data_item, value, AbstractEncLog.tree_identifier_list()))
+                # Add *sim_data_item* to the set of values of the tree item *item*
+                item.values.add(sim_data_item)
+        else:
+            for sim_data_item in sim_data_items:
+                sim_data_item.additional_params = list(diff_dict.keys())   
                 item = self.create_path(*sim_data_item.tree_identifier_list(diff_dict.keys()))
                 item.values.add(sim_data_item)
 
