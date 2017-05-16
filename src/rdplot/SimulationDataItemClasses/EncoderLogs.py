@@ -45,26 +45,16 @@ class AbstractEncLog(AbstractSimulationDataItem):
 
         return sequence, config, qp
 
+    # Properties
+
     @property
     def tree_identifier_list(self):
         if self.additional_params:
-            return [self.__class__.__name__, self.sequence, self.config] + [self.encoder_config[x] for x in self.additional_params] + [self.qp]
+            return [self.__class__.__name__, self.sequence, self.config] + ['+'.join("{!s}={!r}".format(key,val) for (key,val) in dict((k, self.encoder_config[k]) for k in self.additional_params).items())] + [self.qp]
         else:
             return [self.__class__.__name__, self.sequence, self.config, self.qp]
-    # Properties
 
-    #@property
-    #def tree_identifier_list(self, params=None):
-    #    if params is not None:
-    #        return [self.__class__.__name__, self.sequence, self.config, self.qp, self.encoder_config[params]]
-    #    else:
-    #        return [self.__class__.__name__, self.sequence, self.config, self.qp]
-    
-    #@property    
-    #def tree_identifier_list(self, encoder_params):
-    #    return [self.__class__.__name__, self.sequence, self.config, self.qp], self.encoder_config[encoder_params]
-
-    @property
+     @property
     def data(self):
         if self.additional_params:
             return [
@@ -73,7 +63,7 @@ class AbstractEncLog(AbstractSimulationDataItem):
                     {self.__class__.__name__ : {'Temporal': self.temporal_data}}
                 ),
                 (
-                    [self.sequence, self.config] + [self.encoder_config[x] for x in self.additional_params],
+                    [self.sequence, self.config] + ['+'.join("{!s}={!r}".format(key,val) for (key,val) in dict((k, self.encoder_config[k]) for k in self.additional_params).items())],
                     {self.__class__.__name__ : {'Summary': self.summary_data}}
                 ),
             ]
