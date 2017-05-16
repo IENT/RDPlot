@@ -423,34 +423,20 @@ class OrderedDictTreeModel(QAbstractItemModel):
 
     def data(self, q_parent_index, q_role):
         if q_parent_index.isValid() and q_role == Qt.DisplayRole:
-            # t = list(q_parent_index.internalPointer().values)[0]
-            # t2 = t.values
-            index_values = q_parent_index.internalPointer().values
-            children = q_parent_index.internalPointer().children
-            if children:
-                index_values2 = children[0].values
-                if index_values2:
-                    if isinstance(list(index_values2)[0], AbstractSimulationDataItem):
-                        # we are one level above the leaves.
-                        siblings = q_parent_index.internalPointer().parent.children
-                        if len(siblings) > 1:
-                            sibling_identifiers = []
-                            sibling_identifiers += [sibling.identifier.split(sep) for sibling in siblings]
-                            unique_part = []
-                            for c in sibling_identifiers:
-                                result = list(filter(lambda x: all(x in l for l in sibling_identifiers) == False, c))
-                                unique_part.append(" ".join(result))
+            siblings = q_parent_index.internalPointer().parent.children
+            if len(siblings) > 1:
+                sibling_identifiers = []
+                sibling_identifiers += [sibling.identifier.split(sep) for sibling in siblings]
+                unique_part = []
+                for c in sibling_identifiers:
+                    result = list(filter(lambda x: all(x in l for l in sibling_identifiers) == False, c))
+                    unique_part.append(" ".join(result))
 
-                            return unique_part[q_parent_index.row()]
-                        else:
-                            path = str(q_parent_index.internalPointer())
-                            return path
-                            # if len(path) > 2:
-                            #     return sep.join(path[-2:])
-                            # else:
-                            #     return str(q_parent_index.internalPointer())
+                return unique_part[q_parent_index.row()]
+            else:
+                path = str(q_parent_index.internalPointer())
+                return path
 
-            return QVariant(str(q_parent_index.internalPointer()))
         return QVariant()
 
     # Non-Qt interface functions
@@ -734,28 +720,69 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
         signal, after all sim data items are added/replaced.
 
         :param sim_data_items: Iterable collection of :class: `SimDataItem`s to be added
+
         """
 
+        additional_param_found = False
+
+        all_enc_configs = []
+        diff_dict = {}
+
         for sim_data_item in sim_data_items:
+            all_enc_configs.append(sim_data_item.encoder_config)
+            # print(sim_data_item.summary_data['encoder_config'])
+        value_filter = ['.yuv','.bin','.hevc','.jem']
+        key_filter = []
+        for i in range(len(all_enc_configs) - 1):
+            current_item, next_item = all_enc_configs[i], all_enc_configs[i + 1]
+            diff = set(current_item.values()) ^ set(next_item.values())
+            for (key, value) in set(current_item.items()) ^ set(next_item.items()):
+                if all(y not in key for y in key_filter):
+                    if all(x not in value for x in value_filter):
+                        if key not in diff_dict:
+                            diff_dict[key] = []
+                            diff_dict[key].append(value)
+                        else:
+                            if value not in diff_dict[key]:
+                                diff_dict[key].append(value)
+        if 'QP' in diff_dict:
+            diff_dict.pop('QP',None)
 
-            # Get *item* of the tree corresponding to *sim_data_item*
-            item = self.create_path(*sim_data_item.tree_identifier_list)
+        if 'RealFormat' in diff_dict:
+            diff_dict.pop('RealFormat', None)
 
-            # This prevents an sim data item overwriting another one
-            # with same *tree_identifier_list* but different absolute path
-            for value in item.values:
-                condition = (
-                    value.tree_identifier_list == sim_data_item.tree_identifier_list
-                    and value.path != sim_data_item.path
-                )
-                if condition:
-                    raise AmbiguousSimDataItems((
-                                                    "Ambigious sim data items: Sim Data Item {} and {}"
-                                                    " have different absolute paths but the same"
-                                                    " position at the tree {}"
-                                                ).format(sim_data_item, value, AbstractEncLog.tree_identifier_list))
-            # Add *sim_data_item* to the set of values of the tree item *item*
-            item.values.add(sim_data_item)
+        if 'InternalFormat' in diff_dict:
+            diff_dict.pop('InternalFormat', None)
+        
+        if diff_dict:
+            additional_param_found = True
+
+        if not additional_param_found:
+            for sim_data_item in sim_data_items:
+
+                # Get *item* of the tree corresponding to *sim_data_item*
+                item = self.create_path(*sim_data_item.tree_identifier_list)
+
+                # This prevents an sim data item overwriting another one
+                # with same *tree_identifier_list* but different absolute path
+                for value in item.values:
+                    condition = (
+                        value.tree_identifier_list() == sim_data_item.tree_identifier_list
+                        and value.path != sim_data_item.path
+                    )
+                    if condition:
+                        raise AmbiguousSimDataItems((
+                                                        "Ambigious sim data items: Sim Data Item {} and {}"
+                                                        " have different absolute paths but the same"
+                                                        " position at the tree {}"
+                                                    ).format(sim_data_item, value, AbstractEncLog.tree_identifier_list))
+                # Add *sim_data_item* to the set of values of the tree item *item*
+                item.values.add(sim_data_item)
+        else:
+            for sim_data_item in sim_data_items:
+                sim_data_item.additional_params = list(diff_dict.keys())   
+                item = self.create_path(*sim_data_item.tree_identifier_list)
+                item.values.add(sim_data_item)
 
         self.items_changed.emit()
 
@@ -895,7 +922,7 @@ class BdTableModel(QAbstractTableModel):
             indentifiers_list.append(i.identifiers)
 
             seq_set.add(i.identifiers[0])
-            config_set.add(i.identifiers[1])
+            config_set.add('+'.join(i.identifiers[1:]))
         seq_set = sorted(seq_set)
         config_set = sorted(config_set)
 
@@ -954,24 +981,26 @@ class BdTableModel(QAbstractTableModel):
 
                 # if the anchor configuration is not available for the current seq continue
                 if len([x for x in self._plot_data_collection if
-                        x.identifiers.__eq__([identifiers_tmp[0], anchor])]) == 0:
+                        '+'.join(x.identifiers).__eq__('+'.join([identifiers_tmp[0], anchor]))]) == 0:
                     self._data[row, col] = np.nan
                     col += 1
                     continue
 
                 # get the rd values for curve c1 which is the anchor
-                c1 = [x for x in self._plot_data_collection if x.identifiers.__eq__([identifiers_tmp[0], anchor])][
-                    0].values
+                c1 = [x for x in self._plot_data_collection if
+                      '+'.join(x.identifiers).__eq__('+'.join([identifiers_tmp[0], anchor]))][0].values
                 c1 = sorted(list(set(c1)))  # remove duplicates, this is just a workaround for the moment....
 
                 # if the configuration is not available for the current seq continue
-                if len([x for x in self._plot_data_collection if x.identifiers.__eq__(identifiers_tmp)]) == 0:
+                if len([x for x in self._plot_data_collection if
+                        '+'.join(x.identifiers).__eq__('+'.join(identifiers_tmp))]) == 0:
                     self._data[row, col] = np.nan
                     col += 1
                     continue
 
                 # get the rd values for curve c2
-                c2 = [x for x in self._plot_data_collection if x.identifiers.__eq__(identifiers_tmp)][0].values
+                c2 = [x for x in self._plot_data_collection
+                      if '+'.join(x.identifiers).__eq__('+'.join(identifiers_tmp))][0].values
                 c2 = sorted(list(set(c2)))
 
                 # if a simulation does not contain at least 4 rate points,

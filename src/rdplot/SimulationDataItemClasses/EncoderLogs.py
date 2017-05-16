@@ -18,6 +18,8 @@ class AbstractEncLog(AbstractSimulationDataItem):
         # Dictionaries holding the parsed values
         self.summary_data = self._parse_summary_data()
         self.temporal_data = self._parse_temporal_data()
+        self.encoder_config = self._parse_encoder_config()
+        self.additional_params = []
 
     def _parse_path(self, path):
         """ parses the identifiers for an encoder log out of the
@@ -47,7 +49,11 @@ class AbstractEncLog(AbstractSimulationDataItem):
 
     @property
     def tree_identifier_list(self):
-        return [self.__class__.__name__, self.sequence, self.config, self.qp]
+        """Builds up the tree in case of more than one (QP) parameter varied in one simulation directory """
+        return [self.__class__.__name__, self.sequence, self.config] + \
+               list(filter(None,['+'.join("{!s}={!r}".format(key,val) for (key,val) in dict((k, self.encoder_config[k]) for k in self.additional_params).items())])) + \
+               [self.qp]
+
 
     @property
     def data(self):
@@ -57,7 +63,8 @@ class AbstractEncLog(AbstractSimulationDataItem):
                 {self.__class__.__name__ : {'Temporal': self.temporal_data}}
             ),
             (
-                [self.sequence, self.config],
+                [self.sequence, self.config] +
+                list(filter(None,['+'.join("{!s}={!r}".format(key,val) for (key,val) in dict((k, self.encoder_config[k]) for k in self.additional_params).items())])),
                 {self.__class__.__name__ : {'Summary': self.summary_data}}
             ),
         ]
@@ -119,6 +126,28 @@ class EncLogHM(AbstractEncLog):
                     (name_val_dict[name_rate], name_val_dict[name])
                 )
         return data
+
+    def _parse_encoder_config(self):
+        with open(self.path, 'r') as log_file:
+            log_text = log_file.read()  # reads the whole text file
+            lines = log_text.split('\n')
+            cleanlist = []
+            for one_line in lines:
+                if one_line:
+                    if 'Non-environment-variable-controlled' in one_line:
+                        break
+                    if one_line.count(':') == 1:
+                        clean_line = one_line.strip(' \n\t\r')
+                        clean_line = clean_line.replace(' ', '')
+                        cleanlist.append(clean_line)
+                    #elif one_line.count(':')>1:
+                    # Ignore Multiline stuff for now
+                    # TODO: do something smart
+                    #else:
+                    # Something else happened, do nothing
+                    # TODO: do something smart
+        parsed_config = dict(item.split(':') for item in cleanlist)
+        return parsed_config
 
     def _parse_temporal_data(self):
         # this function extracts temporal values
