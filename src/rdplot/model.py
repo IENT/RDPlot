@@ -737,14 +737,14 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
 
         """
 
-        AdditionalParamFound = False
+        additional_param_found = False
 
         all_enc_configs = []
         diff_dict = {}
 
         for sim_data_item in sim_data_items:
             all_enc_configs.append(sim_data_item.encoder_config)
-            #print(sim_data_item.summary_data['encoder_config'])
+            # print(sim_data_item.summary_data['encoder_config'])
         value_filter = ['.yuv','.bin','.hevc','.jem']
         key_filter = []
         for i in range(len(all_enc_configs) - 1):
@@ -761,11 +761,17 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                                 diff_dict[key].append(value)
         if 'QP' in diff_dict:
             diff_dict.pop('QP',None)
+
+        if 'RealFormat' in diff_dict:
+            diff_dict.pop('RealFormat', None)
+
+        if 'InternalFormat' in diff_dict:
+            diff_dict.pop('InternalFormat', None)
         
         if diff_dict:
-            AdditionalParamFound = True
+            additional_param_found = True
 
-        if not AdditionalParamFound:
+        if not additional_param_found:
             for sim_data_item in sim_data_items:
 
                 # Get *item* of the tree corresponding to *sim_data_item*
@@ -791,9 +797,6 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                 sim_data_item.additional_params = list(diff_dict.keys())   
                 item = self.create_path(*sim_data_item.tree_identifier_list)
                 item.values.add(sim_data_item)
-
-
-
 
         self.items_changed.emit()
 
