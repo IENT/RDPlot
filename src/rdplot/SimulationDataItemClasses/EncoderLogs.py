@@ -49,35 +49,25 @@ class AbstractEncLog(AbstractSimulationDataItem):
 
     @property
     def tree_identifier_list(self):
-        if self.additional_params:
-            return [self.__class__.__name__, self.sequence, self.config] + ['+'.join("{!s}={!r}".format(key,val) for (key,val) in dict((k, self.encoder_config[k]) for k in self.additional_params).items())] + [self.qp]
-        else:
-            return [self.__class__.__name__, self.sequence, self.config, self.qp]
+        """Builds up the tree in case of more than one (QP) parameter varied in one simulation directory """
+        return [self.__class__.__name__, self.sequence, self.config] + \
+               list(filter(None,['+'.join("{!s}={!r}".format(key,val) for (key,val) in dict((k, self.encoder_config[k]) for k in self.additional_params).items())])) + \
+               [self.qp]
 
-     @property
+
+    @property
     def data(self):
-        if self.additional_params:
-            return [
-                (
-                    [self.sequence, self.config, self.qp],
-                    {self.__class__.__name__ : {'Temporal': self.temporal_data}}
-                ),
-                (
-                    [self.sequence, self.config] + ['+'.join("{!s}={!r}".format(key,val) for (key,val) in dict((k, self.encoder_config[k]) for k in self.additional_params).items())],
-                    {self.__class__.__name__ : {'Summary': self.summary_data}}
-                ),
-            ]
-        else:
-            return [
-                (
-                    [self.sequence, self.config, self.qp],
-                    {self.__class__.__name__ : {'Temporal': self.temporal_data}}
-                ),
-                (
-                    [self.sequence, self.config],
-                    {self.__class__.__name__ : {'Summary': self.summary_data}}
-                ),
-            ]
+        return [
+            (
+                [self.sequence, self.config, self.qp],
+                {self.__class__.__name__ : {'Temporal': self.temporal_data}}
+            ),
+            (
+                [self.sequence, self.config] +
+                list(filter(None,['+'.join("{!s}={!r}".format(key,val) for (key,val) in dict((k, self.encoder_config[k]) for k in self.additional_params).items())])),
+                {self.__class__.__name__ : {'Summary': self.summary_data}}
+            ),
+        ]
 
     # Non-abstract Helper Functions
     @classmethod
