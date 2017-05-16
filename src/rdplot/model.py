@@ -423,34 +423,20 @@ class OrderedDictTreeModel(QAbstractItemModel):
 
     def data(self, q_parent_index, q_role):
         if q_parent_index.isValid() and q_role == Qt.DisplayRole:
-            # t = list(q_parent_index.internalPointer().values)[0]
-            # t2 = t.values
-            index_values = q_parent_index.internalPointer().values
-            children = q_parent_index.internalPointer().children
-            if children:
-                index_values2 = children[0].values
-                if index_values2:
-                    if isinstance(list(index_values2)[0], AbstractSimulationDataItem):
-                        # we are one level above the leaves.
-                        siblings = q_parent_index.internalPointer().parent.children
-                        if len(siblings) > 1:
-                            sibling_identifiers = []
-                            sibling_identifiers += [sibling.identifier.split(sep) for sibling in siblings]
-                            unique_part = []
-                            for c in sibling_identifiers:
-                                result = list(filter(lambda x: all(x in l for l in sibling_identifiers) == False, c))
-                                unique_part.append(" ".join(result))
+            siblings = q_parent_index.internalPointer().parent.children
+            if len(siblings) > 1:
+                sibling_identifiers = []
+                sibling_identifiers += [sibling.identifier.split(sep) for sibling in siblings]
+                unique_part = []
+                for c in sibling_identifiers:
+                    result = list(filter(lambda x: all(x in l for l in sibling_identifiers) == False, c))
+                    unique_part.append(" ".join(result))
 
-                            return unique_part[q_parent_index.row()]
-                        else:
-                            path = str(q_parent_index.internalPointer())
-                            return path
-                            # if len(path) > 2:
-                            #     return sep.join(path[-2:])
-                            # else:
-                            #     return str(q_parent_index.internalPointer())
+                return unique_part[q_parent_index.row()]
+            else:
+                path = str(q_parent_index.internalPointer())
+                return path
 
-            return QVariant(str(q_parent_index.internalPointer()))
         return QVariant()
 
     # Non-Qt interface functions
@@ -936,7 +922,7 @@ class BdTableModel(QAbstractTableModel):
             indentifiers_list.append(i.identifiers)
 
             seq_set.add(i.identifiers[0])
-            config_set.add(i.identifiers[1])
+            config_set.add('+'.join(i.identifiers[1:]))
         seq_set = sorted(seq_set)
         config_set = sorted(config_set)
 
