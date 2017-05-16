@@ -981,24 +981,26 @@ class BdTableModel(QAbstractTableModel):
 
                 # if the anchor configuration is not available for the current seq continue
                 if len([x for x in self._plot_data_collection if
-                        x.identifiers.__eq__([identifiers_tmp[0], anchor])]) == 0:
+                        '+'.join(x.identifiers).__eq__('+'.join([identifiers_tmp[0], anchor]))]) == 0:
                     self._data[row, col] = np.nan
                     col += 1
                     continue
 
                 # get the rd values for curve c1 which is the anchor
-                c1 = [x for x in self._plot_data_collection if x.identifiers.__eq__([identifiers_tmp[0], anchor])][
-                    0].values
+                c1 = [x for x in self._plot_data_collection if
+                      '+'.join(x.identifiers).__eq__('+'.join([identifiers_tmp[0], anchor]))][0].values
                 c1 = sorted(list(set(c1)))  # remove duplicates, this is just a workaround for the moment....
 
                 # if the configuration is not available for the current seq continue
-                if len([x for x in self._plot_data_collection if x.identifiers.__eq__(identifiers_tmp)]) == 0:
+                if len([x for x in self._plot_data_collection if
+                        '+'.join(x.identifiers).__eq__('+'.join(identifiers_tmp))]) == 0:
                     self._data[row, col] = np.nan
                     col += 1
                     continue
 
                 # get the rd values for curve c2
-                c2 = [x for x in self._plot_data_collection if x.identifiers.__eq__(identifiers_tmp)][0].values
+                c2 = [x for x in self._plot_data_collection
+                      if '+'.join(x.identifiers).__eq__('+'.join(identifiers_tmp))][0].values
                 c2 = sorted(list(set(c2)))
 
                 # if a simulation does not contain at least 4 rate points,
