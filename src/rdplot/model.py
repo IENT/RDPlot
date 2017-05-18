@@ -728,34 +728,40 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
         all_enc_configs = []
         diff_dict = {}
 
-        for sim_data_item in sim_data_items:
-            all_enc_configs.append(sim_data_item.encoder_config)
-            # print(sim_data_item.summary_data['encoder_config'])
-        value_filter = ['.yuv','.bin','.hevc','.jem']
-        key_filter = []
-        for i in range(len(all_enc_configs) - 1):
-            current_item, next_item = all_enc_configs[i], all_enc_configs[i + 1]
-            diff = set(current_item.values()) ^ set(next_item.values())
-            for (key, value) in set(current_item.items()) ^ set(next_item.items()):
-                if all(y not in key for y in key_filter):
-                    if all(x not in value for x in value_filter):
-                        if key not in diff_dict:
-                            diff_dict[key] = []
-                            diff_dict[key].append(value)
-                        else:
-                            if value not in diff_dict[key]:
+        try:
+            for sim_data_item in sim_data_items:
+                all_enc_configs.append(sim_data_item.encoder_config)
+                # print(sim_data_item.summary_data['encoder_config'])
+            value_filter = ['.yuv','.bin','.hevc','.jem']
+            key_filter = []
+            for i in range(len(all_enc_configs) - 1):
+                current_item, next_item = all_enc_configs[i], all_enc_configs[i + 1]
+                diff = set(current_item.values()) ^ set(next_item.values())
+                for (key, value) in set(current_item.items()) ^ set(next_item.items()):
+                    if all(y not in key for y in key_filter):
+                        if all(x not in value for x in value_filter):
+                            if key not in diff_dict:
+                                diff_dict[key] = []
                                 diff_dict[key].append(value)
-        if 'QP' in diff_dict:
-            diff_dict.pop('QP',None)
+                            else:
+                                if value not in diff_dict[key]:
+                                    diff_dict[key].append(value)
+            if 'QP' in diff_dict:
+                diff_dict.pop('QP',None)
 
-        if 'RealFormat' in diff_dict:
-            diff_dict.pop('RealFormat', None)
+            if 'RealFormat' in diff_dict:
+                diff_dict.pop('RealFormat', None)
 
-        if 'InternalFormat' in diff_dict:
-            diff_dict.pop('InternalFormat', None)
-        
-        if diff_dict:
-            additional_param_found = True
+            if 'InternalFormat' in diff_dict:
+                diff_dict.pop('InternalFormat', None)
+
+            if diff_dict:
+                additional_param_found = True
+
+        except(AttributeError):
+            # maybe do something useful here
+            # This is for conformance with rd data written out by older versions of rdplot
+            pass
 
         if not additional_param_found:
             for sim_data_item in sim_data_items:

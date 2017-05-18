@@ -50,6 +50,9 @@ class AbstractEncLog(AbstractSimulationDataItem):
     @property
     def tree_identifier_list(self):
         """Builds up the tree in case of more than one (QP) parameter varied in one simulation directory """
+        # This is for conformance with rd data written out by older versions of rdplot
+        if not hasattr(self, 'additional_params'):
+            self.additional_params = []
         return [self.__class__.__name__, self.sequence, self.config] + \
                list(filter(None,['+'.join("{!s}={!r}".format(key,val) for (key,val) in dict((k, self.encoder_config[k]) for k in self.additional_params).items())])) + \
                [self.qp]
@@ -57,6 +60,9 @@ class AbstractEncLog(AbstractSimulationDataItem):
 
     @property
     def data(self):
+        # This is for conformance with rd data written out by older versions of rdplot
+        if not hasattr(self, 'additional_params'):
+            self.additional_params = []
         return [
             (
                 [self.sequence, self.config, self.qp],
