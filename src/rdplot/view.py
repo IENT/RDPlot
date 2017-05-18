@@ -120,9 +120,12 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
 
     def dropEvent(self, event):
         for url in event.mimeData().urls():
-            self.msg.show()
-            self.parserThread.addPath( url.path() )
-            self.parserThread.start()
+            if url.isLocalFile():
+                self.load_rd_data(url.path())
+            else:
+                self.msg.show()
+                self.parserThread.addPath( url.path() )
+                self.parserThread.start()
 
     # end snippet
 
@@ -146,7 +149,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
                 self,
                 "Open Sequence Encoder Log",
                 "/home/ient/Software/rd-plot-gui/examplLogs",
-                "All Logs (*.log *.xml);;Enocder Logs (*.log);;Dat Logs (*.xml)")
+                "All Logs (*.log *.xml);;Enocder Logs (*.log);;Dat Logs (*.xml);; RD Data (*.rd)")
 
             [directory, file_name] = result[0][0].rsplit('/', 1)
             return directory, file_name
@@ -189,15 +192,20 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         self.parserThread.addPath(path)
         self.parserThread.start()
 
-    def load_rd_data(self):
+    def add_rd_data(self):
+        try:
+            directory, filename = self._get_open_file_names()
+        except TypeError:
+            return
+        self.load_rd_data(filename)
+
+    def load_rd_data(self, filename):
         """Loads rd data from file"""
-        filename = QtWidgets.QFileDialog.getOpenFileName(self, 'Load RD data', '.', '*.rd')[0]
-        if not len(filename) == 0:
-            f = open(filename, 'r')
-            json_str = f.read()
-            sim_data_items = jsonpickle.decode(json_str)
-            self._update_model(sim_data_items)
-            f.close()
+        f = open(filename, 'r')
+        json_str = f.read()
+        sim_data_items = jsonpickle.decode(json_str)
+        self._update_model(sim_data_items)
+        f.close()
 
     def _update_model(self,sim_data_items):
         self.msg.hide()

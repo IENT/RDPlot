@@ -83,7 +83,7 @@ class Main(QMainWindow, Ui_MainWindow):
         )
 
         self.actionLoad_Data.triggered.connect(
-            self.simDataItemTreeView.load_rd_data
+            self.simDataItemTreeView.add_rd_data
         )
 
         self.variableTreeModel = VariableTreeModel()
