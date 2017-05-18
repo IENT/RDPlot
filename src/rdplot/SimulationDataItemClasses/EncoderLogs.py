@@ -18,7 +18,6 @@ class AbstractEncLog(AbstractSimulationDataItem):
         # Dictionaries holding the parsed values
         self.summary_data = self._parse_summary_data()
         self.temporal_data = self._parse_temporal_data()
-        self.encoder_config = self._parse_encoder_config()
         self.additional_params = []
 
     def _parse_path(self, path):
@@ -85,6 +84,10 @@ class AbstractEncLog(AbstractSimulationDataItem):
 
 
 class EncLogHM(AbstractEncLog):
+    def __init__(self, path):
+        super().__init__(path)
+        self.encoder_config = self._parse_encoder_config()
+
     @classmethod
     def can_parse_file(cls, path):
         return cls._enc_log_file_matches_re_pattern(

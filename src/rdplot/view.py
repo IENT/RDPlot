@@ -8,6 +8,8 @@ from PyQt5.QtWidgets import QMessageBox
 from collections import deque
 from os import path
 from os.path import join
+import jsonpickle
+
 
 import model
 from SimulationDataItem import SimulationDataItemFactory, SimulationDataItemError
@@ -186,6 +188,16 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         self.msg.show()
         self.parserThread.addPath(path)
         self.parserThread.start()
+
+    def load_rd_data(self):
+        """Loads rd data from file"""
+        filename = QtWidgets.QFileDialog.getOpenFileName(self, 'Load RD data', '.', '*.rd')[0]
+        if not len(filename) == 0:
+            f = open(filename, 'r')
+            json_str = f.read()
+            sim_data_items = jsonpickle.decode(json_str)
+            self._update_model(sim_data_items)
+            f.close()
 
     def _update_model(self,sim_data_items):
         self.msg.hide()

@@ -7,7 +7,6 @@ from PyQt5.QtWidgets import QMessageBox
 from os.path import sep, isfile, isdir
 from os import path
 
-import jsonpickle
 import pkg_resources
 
 import sys
@@ -84,7 +83,7 @@ class Main(QMainWindow, Ui_MainWindow):
         )
 
         self.actionLoad_Data.triggered.connect(
-            self.load_rd_data
+            self.simDataItemTreeView.load_rd_data
         )
 
         self.variableTreeModel = VariableTreeModel()
@@ -295,16 +294,6 @@ class Main(QMainWindow, Ui_MainWindow):
         if not len(filename) == 0:
             f = open(filename, 'w')
             f.write(jsonpickle.encode(self.get_selected_simulation_data_items()))
-            f.close()
-
-    def load_rd_data(self):
-        """Loads rd data from file"""
-        filename = QtWidgets.QFileDialog.getOpenFileName(self, 'Load RD data', '.', '*.rd')[0]
-        if not len(filename) == 0:
-            f = open(filename, 'r')
-            json_str = f.read()
-            sim_data_items = jsonpickle.decode(json_str)
-            self.simDataItemTreeModel.update(sim_data_items)
             f.close()
 
     def process_cmd_line_args(self, args):
