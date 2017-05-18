@@ -9,6 +9,7 @@ from collections import deque
 from os import path
 from os.path import join
 import jsonpickle
+import json
 
 
 import model
@@ -121,7 +122,10 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
     def dropEvent(self, event):
         for url in event.mimeData().urls():
             if url.isLocalFile():
-                self.load_rd_data(url.path())
+                try:
+                    self.load_rd_data(url.path())
+                except json.decoder.JSONDecodeError:
+                    return
             else:
                 self.msg.show()
                 self.parserThread.addPath( url.path() )
