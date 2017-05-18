@@ -932,6 +932,7 @@ class BdTableModel(QAbstractTableModel):
 
         self._horizontal_headers = list(config_set)
         self._vertical_headers = list(seq_set)
+        self._vertical_headers.append('AVG')
 
         # insert as many columns as we need for the selected data
         self.beginInsertColumns(QModelIndex(), 0, len(config_set) - 1)
@@ -939,12 +940,13 @@ class BdTableModel(QAbstractTableModel):
         self.endInsertColumns()
 
         # insert as many rows as we need for the selected data
-        self.beginInsertRows(QModelIndex(), 0, len(seq_set) - 1)
+        # and add one row for the average
+        self.beginInsertRows(QModelIndex(), 0, len(seq_set))
         self.insertRows(0, len(seq_set), QModelIndex())
         self.endInsertRows()
 
         self._plot_data_collection = plot_data_collection
-        self._data = np.zeros((len(seq_set), len(config_set)))
+        self._data = np.zeros((len(seq_set) + 1, len(config_set)))
         self.update_table(bd_option, interp_option, 0)
 
     # This function is called when the anchor, the interpolation method
@@ -969,6 +971,9 @@ class BdTableModel(QAbstractTableModel):
         # model. Emit in the very end the dataChanged signal
         row = 0
         for seq in self._vertical_headers:
+            # the AVG seq is actually not a sequence, so just skip it
+            if(seq == 'AVG'):
+                continue
             col = 0
             for config in self._horizontal_headers:
                 # for the anchor vs anchor measurement the bd is zero,
@@ -1017,9 +1022,11 @@ class BdTableModel(QAbstractTableModel):
                 col += 1
             row += 1
 
-            # round the output to something meaningful
-            self._data = np.around(self._data, decimals=2)
-            self.dataChanged.emit(self.index(0, 0), self.index(row, col))
+        # calculate the AVG rate savings or delta psnr and round the output to something meaningful
+        self._data[row,:] = np.mean(self._data[:-1,:][~np.isnan(self._data[:-1,:]).any(axis=1)], axis=0)
+        self._data = np.around(self._data, decimals=2)
+
+        self.dataChanged.emit(self.index(0, 0), self.index(row, col))
 
     def export_to_latex(self, filename):
         from tabulate import tabulate
