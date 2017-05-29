@@ -8,6 +8,7 @@ from os.path import sep, isfile, isdir
 from os import path
 
 import pkg_resources
+import jsonpickle
 
 import sys
 here = path.abspath(path.dirname(__file__))
