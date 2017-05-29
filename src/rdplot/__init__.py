@@ -269,28 +269,47 @@ class Main(QMainWindow, Ui_MainWindow):
         self.bdTableModel.update(plot_data_collection, self.combo_rate_psnr.currentText(),
                                  self.combo_interp.currentText())
 
+    def get_table_header(self, plot_data_collection):
+        tmp_legend = []
+        for plot_data in plot_data_collection:
+            tmp = []
+            for identifiers in plot_data.identifiers[1:]:
+                tmp += identifiers.split(sep)
+            tmp2 = tmp + plot_data.path
+            tmp_legend.append(tmp2)
+
+        legend = []
+        for c in tmp_legend:
+            result = list(filter(lambda x: all(x in l for l in tmp_legend) == False, c))
+            legend.append(" ".join(result))
+        if len(tmp_legend) == 1:
+            legend = ['']
+
+        return legend
+
     #updates the table
     def update_table(self):
 
-        #self.headerV.show()
         self.tableWidget.clear()
         self.tableWidget.setColumnCount(0)
         self.tableWidget.setRowCount(0)
-        #self.tableWidget.verticalHeader().show()
 
         plot_data_collection = self.get_plot_data_collection_from_selected_variables()
 
         self.tableWidget.setRowCount(len(plot_data_collection))
         header_count = 0
+        data_count = 0
         plot_count = 0
         data_names = []
+        plot_data_collection.sort(key=lambda plot_data: (plot_data.identifiers))
+        header = self.get_table_header(plot_data_collection)
+
         for plot_data in plot_data_collection:
             values = ((float(x), float(y)) for (x, y) in plot_data.values)
 
             sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
             [xs, ys] = list(zip(*sorted_value_pairs))
-            plot_data_collection.sort(key=lambda plot_data: (plot_data.identifiers))
-
+            #make header
             if plot_data.identifiers[0] not in data_names:
                 self.tableWidget.insertRow(plot_count)
                 self.tableWidget.setVerticalHeaderItem(plot_count, QtWidgets.QTableWidgetItem(str(plot_data.identifiers[0])))
@@ -298,20 +317,18 @@ class Main(QMainWindow, Ui_MainWindow):
                 data_names.append(plot_data.identifiers[0])
                 plot_count += 1
 
+            #fill up column per column
             for column_count in range(0,len(xs))  :
 
                 self.tableWidget.setCurrentCell(plot_count, column_count)
                 if column_count > self.tableWidget.currentColumn():   self.tableWidget.insertColumn(column_count)
                 self.tableWidget.setItem(plot_count, column_count, QtWidgets.QTableWidgetItem(str(ys[column_count])))
-
-                if 'Summary' in plot_data.path: self.tableWidget.setVerticalHeaderItem(plot_count, QtWidgets.QTableWidgetItem(str(plot_data.path[-1])))
-                else: self.tableWidget.setVerticalHeaderItem(plot_count, QtWidgets.QTableWidgetItem(str(plot_data.identifiers[-1])))
-
-                #self.tableWidget.setVerticalHeaderItem(0, QtWidgets.QTableWidgetItem(str(plot_data.identifiers[0])))
+                self.tableWidget.setVerticalHeaderItem(plot_count,QtWidgets.QTableWidgetItem(str(header[data_count])))
                 self.tableWidget.setItem(header_count, column_count, QtWidgets.QTableWidgetItem(str(xs[column_count])))
                 column_count += 1
 
             plot_count += 1
+            data_count += 1
 
         self.tableWidget.resizeColumnsToContents()
 

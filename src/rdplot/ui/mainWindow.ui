@@ -27,7 +27,7 @@
        <enum>Qt::TabFocus</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab_3">
        <attribute name="title">
@@ -133,7 +133,7 @@
            <bool>true</bool>
           </attribute>
           <attribute name="horizontalHeaderHighlightSections">
-           <bool>true</bool>
+           <bool>false</bool>
           </attribute>
           <attribute name="horizontalHeaderShowSortIndicator" stdset="0">
            <bool>false</bool>
@@ -145,7 +145,7 @@
            <bool>false</bool>
           </attribute>
           <attribute name="verticalHeaderHighlightSections">
-           <bool>true</bool>
+           <bool>false</bool>
           </attribute>
           <attribute name="verticalHeaderStretchLastSection">
            <bool>false</bool>
