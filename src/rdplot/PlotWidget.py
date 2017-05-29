@@ -29,7 +29,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.on_wheel_cpy = self.on_wheel
         self.on_db_click_cpy = self.on_db_click
 
-        # set figure and backgroung to transparent
+        # set figure and background to transparent
         self.plotAreaWidget.fig = Figure(facecolor="white")
         self.plotAreaWidget.fig.set_tight_layout(True)
 

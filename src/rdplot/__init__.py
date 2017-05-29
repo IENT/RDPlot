@@ -28,12 +28,19 @@ class Main(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.fig_dict = {}
 
+        self.tabWidget.setCurrentIndex(0)
+
         self.plotAreaVerticalLayout = QtWidgets.QVBoxLayout()
         self.plotsFrame.setLayout(self.plotAreaVerticalLayout)
+
+        #initialize Table
+        self.headerV = self.tableWidget.verticalHeader()
+        self.headerV.show()
 
         # add a widget for previewing plots, they can then be added to the actual plot
         self.plotPreview = PlotWidget()
         self.plotAreaVerticalLayout.addWidget(self.plotPreview)
+
         # Create tree model to store sim data items and connect it to views
         self.simDataItemTreeModel = SimDataItemTreeModel()
         self.bdTableModel = BdTableModel()
@@ -123,6 +130,7 @@ class Main(QMainWindow, Ui_MainWindow):
         else:
             self.actionHide_PlotSettings.setChecked(False)
         self._variable_tree_selection_model.selectionChanged.connect(self.update_plot)
+        self._variable_tree_selection_model.selectionChanged.connect(self.update_table)
 
         self.simDataItemTreeView.deleteKey.connect(self.remove)
 
@@ -163,7 +171,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self._variable_tree_selection_model.selectionChanged.disconnect()
         self.simDataItemTreeModel.remove(list(values))
         self._variable_tree_selection_model.selectionChanged.connect(self.update_plot)
-
+        self._variable_tree_selection_model.selectionChanged.connect(self.update_table)
 
     def change_list(self, q_selected, q_deselected):
         """Extend superclass behavior by automatically adding the values of
@@ -260,6 +268,67 @@ class Main(QMainWindow, Ui_MainWindow):
         # the first config if new simDataItems are selected
         self.bdTableModel.update(plot_data_collection, self.combo_rate_psnr.currentText(),
                                  self.combo_interp.currentText())
+
+    def get_table_header(self, plot_data_collection):
+        tmp_legend = []
+        for plot_data in plot_data_collection:
+            tmp = []
+            for identifiers in plot_data.identifiers[1:]:
+                tmp += identifiers.split(sep)
+            tmp2 = tmp + plot_data.path
+            tmp_legend.append(tmp2)
+
+        legend = []
+        for c in tmp_legend:
+            result = list(filter(lambda x: all(x in l for l in tmp_legend) == False, c))
+            legend.append(" ".join(result))
+        if len(tmp_legend) == 1:
+            legend = ['']
+
+        return legend
+
+    #updates the table
+    def update_table(self):
+
+        self.tableWidget.clear()
+        self.tableWidget.setColumnCount(0)
+        self.tableWidget.setRowCount(0)
+
+        plot_data_collection = self.get_plot_data_collection_from_selected_variables()
+
+        self.tableWidget.setRowCount(len(plot_data_collection))
+        header_count = plot_count = data_count = 0
+        data_names = []
+        plot_data_collection.sort(key=lambda plot_data: (plot_data.identifiers))
+        header = self.get_table_header(plot_data_collection)
+
+        for plot_data in plot_data_collection:
+            values = ((float(x), float(y)) for (x, y) in plot_data.values)
+
+            sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
+            [xs, ys] = list(zip(*sorted_value_pairs))
+            #make header
+            if plot_data.identifiers[0] not in data_names:
+                self.tableWidget.insertRow(plot_count)
+                self.tableWidget.setVerticalHeaderItem(plot_count, QtWidgets.QTableWidgetItem(str(plot_data.identifiers[0])))
+                header_count = plot_count
+                data_names.append(plot_data.identifiers[0])
+                plot_count += 1
+
+            #fill up column per column
+            for column_count in range(0,len(xs))  :
+
+                self.tableWidget.setCurrentCell(plot_count, column_count)
+                if column_count > self.tableWidget.currentColumn():   self.tableWidget.insertColumn(column_count)
+                self.tableWidget.setItem(plot_count, column_count, QtWidgets.QTableWidgetItem(str(ys[column_count])))
+                self.tableWidget.setVerticalHeaderItem(plot_count,QtWidgets.QTableWidgetItem(str(header[data_count])))
+                self.tableWidget.setItem(header_count, column_count, QtWidgets.QTableWidgetItem(str(xs[column_count])))
+                column_count += 1
+
+            plot_count += 1
+            data_count += 1
+
+        self.tableWidget.resizeColumnsToContents()
 
     def update_bd_table(self, index):
         # update bd table, the index determines the anchor,
