@@ -297,9 +297,7 @@ class Main(QMainWindow, Ui_MainWindow):
         plot_data_collection = self.get_plot_data_collection_from_selected_variables()
 
         self.tableWidget.setRowCount(len(plot_data_collection))
-        header_count = 0
-        data_count = 0
-        plot_count = 0
+        header_count = plot_count = data_count = 0
         data_names = []
         plot_data_collection.sort(key=lambda plot_data: (plot_data.identifiers))
         header = self.get_table_header(plot_data_collection)
