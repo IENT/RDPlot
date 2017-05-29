@@ -121,7 +121,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
 
     def dropEvent(self, event):
         for url in event.mimeData().urls():
-            if url.isLocalFile():
+            if url.isLocalFile() and path.isfile(url.path()):
                 try:
                     self.load_rd_data(url.path())
                 except json.decoder.JSONDecodeError:
