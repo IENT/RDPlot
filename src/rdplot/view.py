@@ -11,6 +11,8 @@ from collections import deque
 from os import path
 from os.path import join
 from os.path import isdir
+import jsonpickle
+import json
 
 import model
 from SimulationDataItem import SimulationDataItemFactory, SimulationDataItemError
@@ -129,9 +131,15 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
 
     def dropEvent(self, event):
         for url in event.mimeData().urls():
-            self.msg.show()
-            self.parserThread.addPath( url.path() )
-            self.parserThread.start()
+            if url.isLocalFile() and path.isfile(url.path()):
+                try:
+                    self.load_rd_data(url.path())
+                except json.decoder.JSONDecodeError:
+                    return
+            else:
+                self.msg.show()
+                self.parserThread.addPath( url.path() )
+                self.parserThread.start()
 
     # end snippet
 
@@ -169,7 +177,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
                 self,
                 "Open Sequence Encoder Log",
                 "/home/ient/Software/rd-plot-gui/examplLogs",
-                "All Logs (*.log *.xml);;Enocder Logs (*.log);;Dat Logs (*.xml)")
+                "All Logs (*.log *.xml);;Enocder Logs (*.log);;Dat Logs (*.xml);; RD Data (*.rd)")
 
             [directory, file_name] = result[0][0].rsplit('/', 1)
             return directory, file_name
@@ -240,6 +248,21 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         #self.parserThread.start()
     def _hide_parse_message(self):
         self.msg.hide()
+
+    def add_rd_data(self):
+        try:
+            directory, filename = self._get_open_file_names()
+        except TypeError:
+            return
+        self.load_rd_data(filename)
+
+    def load_rd_data(self, filename):
+        """Loads rd data from file"""
+        f = open(filename, 'r')
+        json_str = f.read()
+        sim_data_items = jsonpickle.decode(json_str)
+        self._update_model(sim_data_items)
+        f.close()
 
     def _update_model(self,sim_data_items):
         if not sim_data_items:
