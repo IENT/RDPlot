@@ -53,12 +53,7 @@ def get_data_files_with_correct_location():
             data_files = [('/usr/share/pixmaps/', ['src/rdplot/logo/PLOT64.png']),
                           ('/usr/share/applications/', ['src/rdplot/rdplot.desktop'])]
 
-    print('test1')
-    print(str(data_files))
-
     return data_files
-
-print('test2')
 
 setup(
     app=APP,
@@ -126,7 +121,7 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=['cycler', 'matplotlib', 'numpy','py','pyparsing','pyqt5','pytest','python-dateutil','pytz','sip','six','scipy','tabulate','mpldatacursor',
-                      'xmltodict'],
+                      'xmltodict','jsonpickle'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
@@ -156,5 +151,3 @@ setup(
         ],
     },
 )
-
-print('test3')
