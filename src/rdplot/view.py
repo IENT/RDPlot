@@ -1,16 +1,18 @@
 from PyQt5 import QtWidgets
 from PyQt5.Qt import Qt, QApplication
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 from PyQt5.QtGui import QKeySequence, QKeyEvent
 from PyQt5.QtCore import QObject,QItemSelectionModel, QItemSelection, QModelIndex, pyqtSignal, QThread
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QMessageBox, QMenu
 
 
 from collections import deque
 from os import path
 from os.path import join
+from os.path import isdir
 import jsonpickle
 import json
-
 
 import model
 from SimulationDataItem import SimulationDataItemFactory, SimulationDataItemError
@@ -25,6 +27,7 @@ SIMULATION_DATA_ITEM_CLASSES_PATH = here + path.sep + "SimulationDataItemClasses
 
 class ParserWorkThread(QThread):
     newParsedData = pyqtSignal([list])
+    allParsed     = pyqtSignal()
 
     def __init__(self, pathlist=None):
         QThread.__init__(self)
@@ -55,6 +58,7 @@ class ParserWorkThread(QThread):
 
             self.newParsedData.emit(sim_data_items)
         self.pathlist.clear()
+        self.allParsed.emit()
 
 
 class ParserWorkNoThread(QObject):
@@ -64,6 +68,7 @@ class ParserWorkNoThread(QObject):
     """
 
     newParsedData = pyqtSignal([list])
+    allParsed     = pyqtSignal()
 
     def __init__(self, pathlist=None):
         QObject.__init__(self)
@@ -90,6 +95,7 @@ class ParserWorkNoThread(QObject):
 
             self.newParsedData.emit(sim_data_items)
         self.pathlist.clear()
+        self.allParsed.emit()
 
     def start(self):
         self.run()
@@ -102,10 +108,14 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         # helpful for debugging, when breakpoints don't work because of threading
         #self.parserThread = ParserWorkNoThread()
         self.parserThread.newParsedData.connect(self._update_model)
+        self.parserThread.allParsed.connect(self._hide_parse_message)
         self.msg = QMessageBox(self) # use self as parent here
         self.msg.setIcon(QMessageBox.Information)
         self.msg.setText("Parsing Directory...")
         self.msg.setWindowTitle("Info")
+        # TODO: add context menu capabilities
+        #self.setContextMenuPolicy(Qt.CustomContextMenu)
+        #self.customContextMenuRequested.connect(self.openMenu)
 
     # drag'n'drop mechanism adapted
     # from question on stackoverflow at http://stackoverflow.com/q/22543644
@@ -143,6 +153,20 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         if q_key_event.count() == 1 and q_key_event.key() == Qt.Key_Delete:
             self.deleteKey.emit()
         super().keyPressEvent(q_key_event)
+
+    # TODO: this is how context menus can be implemented    
+    def openMenu(self, position):
+        indexes = self.selectedIndexes()
+        if len(indexes) > 0:
+            level = 0
+            index = indexes[0]
+            while index.parent().isValid():
+                index = index.parent()
+                level += 1
+        indexSelected = self.indexAt(position)
+        menu = QMenu()
+        menu.addAction(self.tr("Level: " + str(level) + ", Index: " + str(indexSelected)))
+        menu.exec_(self.viewport().mapToGlobal(position))
 
     # end snippet
 
@@ -196,6 +220,35 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         self.parserThread.addPath(path)
         self.parserThread.start()
 
+    def add_folder_list(self):
+        try:
+            result = QtWidgets.QFileDialog.getOpenFileNames(
+                self,
+                "Open Directory List",
+                "/home/ient/Software/rd-plot-gui/examplLogs",
+                "Text Files (*.txt *.*)")
+
+            with open(result[0][0]) as fp:
+                for line in fp:
+                    cleanpath = line.rstrip()
+                    if isdir(cleanpath):
+                        self.parserThread.addPath(cleanpath)
+            self.msg.show()
+            self.parserThread.start()
+                        
+        except IndexError:
+            return
+
+        # TODO this uses the parse_directory method, thus, does not automatically
+        # parse 'log'.subfolder. Should this be the case?
+        #sim_data_items = list(SimulationDataItemFactory.parse_directory(path))
+        #self.model().update(sim_data_items)
+        #self.msg.show()
+        #self.parserThread.addPath(path)
+        #self.parserThread.start()
+    def _hide_parse_message(self):
+        self.msg.hide()
+
     def add_rd_data(self):
         try:
             directory, filename = self._get_open_file_names()
@@ -212,7 +265,6 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         f.close()
 
     def _update_model(self,sim_data_items):
-        self.msg.hide()
         if not sim_data_items:
             msg = QMessageBox(self)  # use self as parent here
             msg.setIcon(QMessageBox.Warning)

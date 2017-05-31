@@ -72,6 +72,9 @@ class Main(QMainWindow, Ui_MainWindow):
         self.actionOpen_Directory.triggered.connect(
             self.simDataItemTreeView.add_folder
         )
+        self.actionOpen_Directory_List.triggered.connect(
+            self.simDataItemTreeView.add_folder_list
+        )
         self.actionHide_PlotSettings.triggered.connect(
             self.set_plot_settings_visibility
         )

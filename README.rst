@@ -17,8 +17,11 @@ installable via pip3.
 
 You can also build an app for OS X.
 
-Linux
+Linux 
 =======================
+
+The following was tested with Ubuntu 16.04. It should be similar for other
+distributions.
 
 First of all there is a conflict between the python3-matplotlib package for
 Ubuntu and matplotlib installed from pip. 
@@ -28,17 +31,25 @@ directly installed from pip and python3-matplotlib not installed on the system.
 
 Make sure that you are using python 3 and pip is up to date.
 
-Sadly but true, we need a dependency called jsonpickle.  
-You need to install that by::
+Sadly but true, we need a few dependencies.  
+You need to install them with::
 
-    sudo apt-get install python3-jsonpickle
+    sudo apt-get install python3-jsonpickle python3-tk  python3-pip  python3-setuptools
     
 and then::
 
     python setup.py sdist
-     
-    sudo pip3 install dist/rdplot-1.0.0.tar.gz 
-    
+
+Now you can install rdplot, either as user or system wide.
+Install it system wide::
+
+    sudo pip3 install --no-binary rdplot dist/rdplot-1.0.0.tar.gz
+
+As user. This will install the binary to ~/.local/bin/rdplot. Make sure it is 
+in your PATH. The desktop launcher also will work only if this is the case::
+
+   pip3 install --user --no-binary rdplot dist/rdplot-1.0.0.tar.gz
+
 If you already have the tool installed run::
 
      sudo pip3 install --upgrade dist/rdplot-1.0.0.tar.gz 
