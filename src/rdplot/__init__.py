@@ -286,7 +286,7 @@ class Main(QMainWindow, Ui_MainWindow):
             result = list(filter(lambda x: all(x in l for l in tmp_legend) == False, c))
             legend.append(" ".join(result))
         if len(tmp_legend) == 1:
-            legend = ['']
+            legend = [plot_data.path[-1]]
 
         return legend
 
@@ -324,7 +324,7 @@ class Main(QMainWindow, Ui_MainWindow):
                 self.tableWidget.setCurrentCell(plot_count, column_count)
                 if column_count > self.tableWidget.currentColumn():   self.tableWidget.insertColumn(column_count)
                 self.tableWidget.setItem(plot_count, column_count, QtWidgets.QTableWidgetItem(str(ys[column_count])))
-                self.tableWidget.setVerticalHeaderItem(plot_count,QtWidgets.QTableWidgetItem(str(header[data_count])))
+                self.tableWidget.setVerticalHeaderItem(plot_count, QtWidgets.QTableWidgetItem(str(header[data_count])))
                 self.tableWidget.setItem(header_count, column_count, QtWidgets.QTableWidgetItem(str(xs[column_count])))
                 column_count += 1
 
@@ -357,7 +357,7 @@ class Main(QMainWindow, Ui_MainWindow):
         if not self.get_selected_simulation_data_items():
             msg = QMessageBox(self)  # use self as parent here
             msg.setIcon(QMessageBox.Information)
-            msg.setText("You did not select any simualtion data item to store\n"
+            msg.setText("You did not select any simulation data item to store\n"
                         "Please make a selection and try again.")
             msg.setWindowTitle("Info")
             msg.show()

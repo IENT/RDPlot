@@ -96,17 +96,55 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="font">
+           <font>
+            <weight>50</weight>
+            <bold>false</bold>
+           </font>
+          </property>
           <property name="layoutDirection">
            <enum>Qt::LeftToRight</enum>
           </property>
           <property name="autoFillBackground">
            <bool>false</bool>
           </property>
+          <property name="styleSheet">
+           <string notr="true">QTableWidget{
+background-color: transparent;
+gridline-color: grey;
+}
+QTableWidget::item {
+background-color: white;
+}
+QTableWidget::item:selected {
+background-color: grey;
+}
+
+QHeaderView {
+background-color: transparent;
+gridline-color: grey;
+}
+QHeaderView::section{
+border-top: 1px solid;
+border-top-color: grey;
+border-left:1px solid;
+border-left-color: grey;
+border-bottom: 1px solid;
+border-bottom-color: grey;
+border-right: 1px solid;
+border-right-color: grey;
+padding: 4px;
+}
+</string>
+          </property>
           <property name="frameShape">
            <enum>QFrame::NoFrame</enum>
           </property>
           <property name="frameShadow">
            <enum>QFrame::Sunken</enum>
+          </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectItems</enum>
           </property>
           <property name="showGrid">
            <bool>true</bool>
@@ -203,7 +241,7 @@
      </item>
      <item>
       <widget class="QComboBox" name="combo_interp">
-       <property name="currentText" stdset="0">
+       <property name="currentText">
         <string/>
        </property>
       </widget>
