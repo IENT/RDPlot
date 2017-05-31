@@ -9,13 +9,13 @@ https://github.com/pypa/sampleproject
 from setuptools import setup, find_packages
 # To use a consistent encoding
 from codecs import open
-from os import path
 import platform
+import os
 
-here = path.abspath(path.dirname(__file__))
+here = os.path.abspath(os.path.dirname(__file__))
 
 # Get the long description from the README file
-with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+with open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 APP = ['src/rdplot/__init__.py']	
@@ -28,6 +28,37 @@ OPTIONS = {'iconfile':'src/rdplot/logo/PLOT1024.icns',
         'CFBundleVersion': "0.1.0",
         'CFBundleShortVersionString': "0.1.0"}
         }
+
+
+def get_data_files_with_correct_location():
+    """Set up the data_files variable correctly.
+    If install happens on Linux:
+        If install is done as root, system wide directories and files
+        configured for it are used. Otherwise files are installed in users home directory.
+    If install happens on Windows:
+        no data_files necessary"""
+    data_files = []
+
+    if 'Linux' in platform.system():
+        if os.geteuid() != 0:
+            # install as user
+            data_files = [(os.path.join(os.path.expanduser('~'),'.local/share/icons/'), ['src/rdplot/logo/PLOT64.png']),
+            #data_files = [(os.path.join('/home/sauer/','.local/share/icons/'), ['src/rdplot/logo/PLOT64.png']),
+                          (os.path.join(os.path.expanduser('~'),'.local/share/applications/'), ['src/rdplot/rdplot.desktop'])]
+
+
+        else:
+            # install as root or with sudo
+            #data_files = [(os.path.join('/home/sauer/', '.local/share/icons/'), ['src/rdplot/logo/PLOT64.png']),
+            data_files = [('/usr/share/pixmaps/', ['src/rdplot/logo/PLOT64.png']),
+                          ('/usr/share/applications/', ['src/rdplot/rdplot.desktop'])]
+
+    print('test1')
+    print(str(data_files))
+
+    return data_files
+
+print('test2')
 
 setup(
     app=APP,
@@ -114,7 +145,7 @@ setup(
     # need to place data files outside of your packages. See:
     # http://docs.python.org/3.4/distutils/setupscript.html#installing-additional-files # noqa
     # In this case, 'data_file' will be installed into '<sys.prefix>/my_data'
-    data_files=[('/usr/share/pixmaps/',['src/rdplot/logo/PLOT64.png']),('/usr/share/applications/',['src/rdplot/rdplot.desktop'])] if 'Linux' in platform.system() else [],
+    data_files=get_data_files_with_correct_location(),
 
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow
@@ -125,3 +156,5 @@ setup(
         ],
     },
 )
+
+print('test3')

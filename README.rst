@@ -36,9 +36,16 @@ You need to install that by::
 and then::
 
     python setup.py sdist
-     
-    sudo pip3 install dist/rdplot-1.0.0.tar.gz 
-    
+
+Now you can install rdplot, either as user or system wide.
+Install it system wide::
+
+    sudo pip3 install --no-binary rdplot dist/rdplot-1.0.0.tar.gz
+
+As user::
+
+   pip3 install --user --no-binary rdplot dist/rdplot-1.0.0.tar.gz
+
 If you already have the tool installed run::
 
      sudo pip3 install --upgrade dist/rdplot-1.0.0.tar.gz 
