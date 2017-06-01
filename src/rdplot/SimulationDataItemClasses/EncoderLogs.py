@@ -8,6 +8,7 @@ from SimulationDataItem import (AbstractSimulationDataItem,
 
 
 class AbstractEncLog(AbstractSimulationDataItem):
+
     def __init__(self, path):
         super().__init__(path)
 
@@ -84,6 +85,9 @@ class AbstractEncLog(AbstractSimulationDataItem):
 
 
 class EncLogHM(AbstractEncLog):
+    # Order value, used to determine order in which parser are tried.
+    parse_order = 10
+
     def __init__(self, path):
         super().__init__(path)
         self.encoder_config = self._parse_encoder_config()
@@ -187,6 +191,9 @@ class EncLogHM(AbstractEncLog):
 
 
 class EncLogHM14(EncLogHM):
+    # Order value, used to determine order in which parser are tried.
+    parse_order = 11
+
     @classmethod
     def can_parse_file(cls, path):
         return cls._enc_log_file_matches_re_pattern(
@@ -237,6 +244,9 @@ class EncLogHM14(EncLogHM):
 
 
 class EncLogHM360Lib(AbstractEncLog):
+    # Order value, used to determine order in which parser are tried.
+    parse_order = 20
+
     def __init__(self, path):
         super().__init__(path)
         self.encoder_config = self._parse_encoder_config()
@@ -405,6 +415,9 @@ class EncLogHM360Lib(AbstractEncLog):
 
 
 class EncLogSHM(AbstractEncLog):
+    # Order value, used to determine order in which parser are tried.
+    parse_order = 21
+
     @classmethod
     def can_parse_file(cls, path):
         return cls._enc_log_file_matches_re_pattern(

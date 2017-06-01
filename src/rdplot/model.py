@@ -769,8 +769,10 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
 
         for sim_data_item in sim_data_items:
 
+            has_additional_params = False
             if sim_data_item.__class__ in additional_param_found:
                 sim_data_item.additional_params = list(diff_dict[sim_data_item.__class__].keys())
+                has_additional_params = True
 
             # Get *item* of the tree corresponding to *sim_data_item*
             item = self.create_path(*sim_data_item.tree_identifier_list)
@@ -780,12 +782,10 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
             # This prevents an sim data item overwriting another one
             # with same *tree_identifier_list* but different absolute path
             for value in item.values:
-                any_class_has_additional_params = True if additional_param_found else False
-
                 condition = (
                     value.tree_identifier_list == sim_data_item.tree_identifier_list
                     and value.path != sim_data_item.path
-                    and not any_class_has_additional_params
+                    and not has_additional_params
                 )
                 if condition:
                     raise AmbiguousSimDataItems((
