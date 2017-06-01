@@ -1,9 +1,9 @@
 [Desktop Entry]
 Name=RDPlot
 Type=Application
-Exec=rdplot %F
+Exec=bash -c 'export PATH="$PATH:~/.local/bin"; rdplot %F'
 Terminal=false
-Icon=/usr/share/pixmaps/PLOT64.png
+Icon=PLOT64
 Comment=RDPlot tool
 NoDisplay=false
 Name[en]=RDPlot
