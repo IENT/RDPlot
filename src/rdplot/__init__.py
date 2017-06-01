@@ -87,6 +87,10 @@ class Main(QMainWindow, Ui_MainWindow):
             self.load_rd_data
         )
 
+        self.action_About.triggered.connect(
+            self.open_about_page
+        )
+
         self.variableTreeModel = VariableTreeModel()
         self.variableTreeView.setModel(self.variableTreeModel)
         self.plotsettings.visibilityChanged.connect(self.plot_settings_visibility_changed)
@@ -323,6 +327,34 @@ class Main(QMainWindow, Ui_MainWindow):
             self.simDataItemTreeView.msg.show()
             self.simDataItemTreeView.parserThread.addPath(path)
             self.simDataItemTreeView.parserThread.start()
+
+    def open_about_page(self):
+        """Opens and displays an Html About file"""
+        try:
+            html_path = path.abspath(here + '/docs/about.html')
+            html_file = open(html_path, 'r', encoding='utf-8', errors='ignore')
+            source_code = html_file.read()
+            app_version = QtWidgets.QApplication.applicationVersion()
+            source_code = source_code.replace("##VERSION##", app_version)
+            source_code = source_code.replace("##here##", here)
+            about_dialog = QtWidgets.QDialog(self)
+            about_dialog.setWindowTitle("About RDPlot")
+            about_dialog.setMaximumSize(1000, 800)
+            about_text = QtWidgets.QTextBrowser(about_dialog)
+            about_text.setMinimumWidth(950)
+            about_text.setMinimumHeight(800)
+            about_text.setHtml(source_code)
+            about_text.setOpenExternalLinks(True)
+            about_text.show()
+            about_dialog.exec_()
+            about_dialog.close()
+            about_text.close()
+        except IOError:
+            html_error = QtWidgets.QMessageBox()
+            html_error.setIcon(QMessageBox.Critical)
+            html_error.setText("Error opening about or help")
+            html_error.setInformativeText("The html file from the resource could not be loaded.")
+            html_error.exec_()
 
 
 def main():
