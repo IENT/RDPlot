@@ -237,12 +237,47 @@ class EncLogHM14(EncLogHM):
 
 
 class EncLogHM360Lib(AbstractEncLog):
+    def __init__(self, path):
+        super().__init__(path)
+        self.encoder_config = self._parse_encoder_config()
+
     @classmethod
     def can_parse_file(cls, path):
         return cls._enc_log_file_matches_re_pattern(
             path,
             r'Y-PSNR_(?:DYN_)?VP0',
         ) #Y-PSNR_DYN_VP0
+
+    def _parse_encoder_config(self):
+        with open(self.path, 'r') as log_file:
+            log_text = log_file.read()  # reads the whole text file
+            lines = log_text.split('\n')
+            cleanlist = []
+            for one_line in lines:
+                if one_line:
+                    if '-----360 video parameters----' in one_line:
+                        break
+                    if one_line.count(':') == 1:
+                        clean_line = one_line.strip(' \n\t\r')
+                        clean_line = clean_line.replace(' ', '')
+                        cleanlist.append(clean_line)
+                    #elif one_line.count(':')>1:
+                    # Ignore Multiline stuff for now
+                    # TODO: do something smart
+                    #else:
+                    # Something else happened, do nothing
+                    # TODO: do something smart
+        parsed_config = dict(item.split(':') for item in cleanlist)
+
+        # parse 360 rotation parameter
+        m = re.search('Rotation in 1/100 degrees:\s+\(yaw:(\d+)\s+pitch:(\d+)\s+roll:(\d+)\)', log_text)
+        if m:
+            yaw = m.group(1)
+            pitch = m.group(2)
+            roll = m.group(3)
+            parsed_config['SVideoRotation'] = 'Y%sP%sR%s' % (yaw, pitch, roll)
+
+        return parsed_config
 
     def _parse_summary_data(self):
 
@@ -463,78 +498,78 @@ class EncLogSHM(AbstractEncLog):
             data[layerstring] = data2
         return data
 
-
-class EncLogHM360LibOld(AbstractEncLog):
-    @classmethod
-    def can_parse_file(cls, path):
-        return cls._enc_log_file_matches_re_pattern(
-            path,
-            r'^-----360 \s video \s parameters----',
-        )
-
-    def _parse_summary_data(self):
-        with open(self.path, 'r') as log_file:
-            log_text = log_file.read()  # reads the whole text file
-            summaries = re.findall(r""" ^(\S+) .+ $ \s .+ $
-                                        \s+ (\d+) \s+ \D \s+ (\S+)  # Total Frames, Bitrate
-                                        \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)  # y-, u-, v-, yuv-PSNR
-                                        \s+ (\S+) \s+ (\S+) \s+ (\S+)  # WSPSNR
-                                        \s+ (\S+) \s+ (\S+) \s+ (\S+)  # CPPPSNR
-                                        \s+ (\S+) \s+ (\S+) \s+ (\S+) \s $  # E2EWSPSNR
-                                        """, log_text, re.M + re.X)
-        data = {}
-        names = {1: 'Frames', 2: 'Bitrate', 3: 'Y-PSNR', 4: 'U-PSNR',
-                 5: 'V-PSNR', 6: 'YUV-PSNR', 7: 'Y-WSPSNR', 8: 'U-WSPSNR',
-                 9: 'V-WSPSNR', 10: 'Y-CPPSNR', 11: 'U-CPPSNR', 12: 'V-CPPSNR',
-                 13: 'Y-E2EWSPSNR', 14: 'U-E2EWSPSNR', 15: 'V-E2EWSPSNR'}
-
-        for i in range(0, len(summaries)):  # iterate through Summary, I, P, B
-            data2 = {name: [] for (index, name) in names.items()}
-            for (index, name) in names.items():
-                data2[name].append(
-                    (float(summaries[i][2]), float(summaries[i][index]))
-                )
-            data[summaries[i][0]] = data2
-
-        # viewport = re.findall(r""" ^\s+ (\d+) \s+ \D \s+ (\d+)  # total frames, viewport
-        #                            \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)  # y-,u-,v-, yuv-PSNR
-        #                            \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)$  # y-,u-,v-, yuv-MSE
-        #                             """, log_text, re.M + re.X)
-        #
-        # viewportNames = {0: 'Frames', 1: 'Viewport', 2: 'Y-PSNR', 3: 'U-PSNR',
-        #          4: 'V-PSNR', 5: 'YUV-PSNR', 6: 'Y-MSE', 7: 'U-MSE',
-        #          8: 'V-MSE', 9: 'Y-MSE'}
-
-        return data
-
-    def _parse_temporal_data(self):
-        # this function extracts temporal values
-        with open(self.path, 'r') as log_file:
-            log_text = log_file.read()  # reads the whole text file
-            temp_data = re.findall(r"""
-                ^POC \s+ (\d+) \s+ .+ \s+ \d+ \s+ . \s+ (.-\D+) ,  # POC, Slice
-                \s .+ \) \s+ (\d+) \s+ \S+ \s+  # bits
-                \[ \S \s (\S+) \s \S+ \s+ \S \s (\S+) \s \S+ \s+ \S \s (\S+) \s \S+ ] \s  # y-, u-, v-PSNR
-                \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-WSPSNR
-                \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-CPPPSNR
-                \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-E2EWSPSNR
-                """, log_text, re.M + re.X)
-
-        # Association between index of data in temp_data and corresponding
-        # output key. Output shape definition is in one place.
-        names = {0: 'Frames', 2: 'Bits',
-                 3: 'Y-PSNR', 4: 'U-PSNR', 5: 'V-PSNR',
-                 6: 'Y-WSPSNR', 7: 'U-WSPSNR', 8: 'V-WSPSNR',
-                 9: 'Y-CPPSNR', 10: 'U-CPPSNR', 11: 'V-CPPSNR',
-                 12: 'Y-E2EWSPSNR', 13: 'U-E2EWSPSNR', 14: 'V-E2EWSPSNR',
-                 }
-
-        # Define output data dict and fill it with parsed values
-        data = {name: [] for (index, name) in names.items()}
-        for i in range(0, len(temp_data)):
-            # As referencing to frame produces error, reference to index *i*
-            for (index, name) in names.items():
-                data[name].append(
-                    (i, temp_data[i][index])
-                )
-        return data
+#
+# class EncLogHM360LibOld(AbstractEncLog):
+#     @classmethod
+#     def can_parse_file(cls, path):
+#         return cls._enc_log_file_matches_re_pattern(
+#             path,
+#             r'^-----360 \s video \s parameters----',
+#         )
+#
+#     def _parse_summary_data(self):
+#         with open(self.path, 'r') as log_file:
+#             log_text = log_file.read()  # reads the whole text file
+#             summaries = re.findall(r""" ^(\S+) .+ $ \s .+ $
+#                                         \s+ (\d+) \s+ \D \s+ (\S+)  # Total Frames, Bitrate
+#                                         \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)  # y-, u-, v-, yuv-PSNR
+#                                         \s+ (\S+) \s+ (\S+) \s+ (\S+)  # WSPSNR
+#                                         \s+ (\S+) \s+ (\S+) \s+ (\S+)  # CPPPSNR
+#                                         \s+ (\S+) \s+ (\S+) \s+ (\S+) \s $  # E2EWSPSNR
+#                                         """, log_text, re.M + re.X)
+#         data = {}
+#         names = {1: 'Frames', 2: 'Bitrate', 3: 'Y-PSNR', 4: 'U-PSNR',
+#                  5: 'V-PSNR', 6: 'YUV-PSNR', 7: 'Y-WSPSNR', 8: 'U-WSPSNR',
+#                  9: 'V-WSPSNR', 10: 'Y-CPPSNR', 11: 'U-CPPSNR', 12: 'V-CPPSNR',
+#                  13: 'Y-E2EWSPSNR', 14: 'U-E2EWSPSNR', 15: 'V-E2EWSPSNR'}
+#
+#         for i in range(0, len(summaries)):  # iterate through Summary, I, P, B
+#             data2 = {name: [] for (index, name) in names.items()}
+#             for (index, name) in names.items():
+#                 data2[name].append(
+#                     (float(summaries[i][2]), float(summaries[i][index]))
+#                 )
+#             data[summaries[i][0]] = data2
+#
+#         # viewport = re.findall(r""" ^\s+ (\d+) \s+ \D \s+ (\d+)  # total frames, viewport
+#         #                            \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)  # y-,u-,v-, yuv-PSNR
+#         #                            \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)$  # y-,u-,v-, yuv-MSE
+#         #                             """, log_text, re.M + re.X)
+#         #
+#         # viewportNames = {0: 'Frames', 1: 'Viewport', 2: 'Y-PSNR', 3: 'U-PSNR',
+#         #          4: 'V-PSNR', 5: 'YUV-PSNR', 6: 'Y-MSE', 7: 'U-MSE',
+#         #          8: 'V-MSE', 9: 'Y-MSE'}
+#
+#         return data
+#
+#     def _parse_temporal_data(self):
+#         # this function extracts temporal values
+#         with open(self.path, 'r') as log_file:
+#             log_text = log_file.read()  # reads the whole text file
+#             temp_data = re.findall(r"""
+#                 ^POC \s+ (\d+) \s+ .+ \s+ \d+ \s+ . \s+ (.-\D+) ,  # POC, Slice
+#                 \s .+ \) \s+ (\d+) \s+ \S+ \s+  # bits
+#                 \[ \S \s (\S+) \s \S+ \s+ \S \s (\S+) \s \S+ \s+ \S \s (\S+) \s \S+ ] \s  # y-, u-, v-PSNR
+#                 \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-WSPSNR
+#                 \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-CPPPSNR
+#                 \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-E2EWSPSNR
+#                 """, log_text, re.M + re.X)
+#
+#         # Association between index of data in temp_data and corresponding
+#         # output key. Output shape definition is in one place.
+#         names = {0: 'Frames', 2: 'Bits',
+#                  3: 'Y-PSNR', 4: 'U-PSNR', 5: 'V-PSNR',
+#                  6: 'Y-WSPSNR', 7: 'U-WSPSNR', 8: 'V-WSPSNR',
+#                  9: 'Y-CPPSNR', 10: 'U-CPPSNR', 11: 'V-CPPSNR',
+#                  12: 'Y-E2EWSPSNR', 13: 'U-E2EWSPSNR', 14: 'V-E2EWSPSNR',
+#                  }
+#
+#         # Define output data dict and fill it with parsed values
+#         data = {name: [] for (index, name) in names.items()}
+#         for i in range(0, len(temp_data)):
+#             # As referencing to frame produces error, reference to index *i*
+#             for (index, name) in names.items():
+#                 data[name].append(
+#                     (i, temp_data[i][index])
+#                 )
+#         return data
