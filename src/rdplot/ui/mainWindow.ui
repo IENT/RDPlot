@@ -272,7 +272,6 @@ padding: 4px;
     <addaction name="separator"/>
     <addaction name="actionSave_Table"/>
     <addaction name="separator"/>
-    <addaction name="actionLoad_Data"/>
     <addaction name="actionSave_Data"/>
    </widget>
    <widget class="QMenu" name="menuView">
@@ -350,7 +349,7 @@ padding: 4px;
   </widget>
   <action name="actionOpen_File">
    <property name="text">
-    <string>&amp;Open File</string>
+    <string>&amp;Open File (RD-Data or Log)</string>
    </property>
   </action>
   <action name="actionOpen_Directory">
@@ -411,14 +410,6 @@ padding: 4px;
   <action name="actionSave_Table">
    <property name="text">
     <string>&amp;Save Table</string>
-   </property>
-  </action>
-  <action name="actionLoad_Data">
-   <property name="text">
-    <string>&amp;Load RD Data</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+L</string>
    </property>
   </action>
   <action name="actionSave_Data">

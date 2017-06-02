@@ -67,7 +67,7 @@ class Main(QMainWindow, Ui_MainWindow):
 
         # Connect signals of menus
         self.actionOpen_File.triggered.connect(
-            self.simDataItemTreeView.add_sim_data_item
+            self.simDataItemTreeView.add_file
         )
         self.actionOpen_Directory.triggered.connect(
             self.simDataItemTreeView.add_folder
@@ -93,9 +93,6 @@ class Main(QMainWindow, Ui_MainWindow):
             self.save_current_selection
         )
 
-        self.actionLoad_Data.triggered.connect(
-            self.simDataItemTreeView.add_rd_data
-        )
 
         self.variableTreeModel = VariableTreeModel()
         self.variableTreeView.setModel(self.variableTreeModel)
