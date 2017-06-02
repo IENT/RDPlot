@@ -759,6 +759,9 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                 if 'InternalFormat' in diff_dict[sim_class]:
                     diff_dict[sim_class].pop('InternalFormat', None)
 
+                if 'Warning' in diff_dict[sim_class]:
+                    diff_dict[sim_class].pop('Warning', None)
+
                 if diff_dict[sim_class]:
                     additional_param_found.append(sim_class)
 
