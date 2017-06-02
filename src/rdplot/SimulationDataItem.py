@@ -165,6 +165,9 @@ class AbstractSimulationDataItem(metaclass=ABCMeta):
     :type path: :class: `str`
     """
 
+    # Order value, used to determine order in which parser are tried.
+    parse_order = 100 # large default value. it subclass does not lower it, it will be tried last
+
     # Constructor
 
     def __init__(self, path):
@@ -372,9 +375,11 @@ class SimulationDataItemFactory:
         # Create simulatin data item of the first class which says, it can parse
         # the file
         cls_list = []
-        for cls in self._classes:
+        # try parser, in the order given by their parse_order attribute. use the first one that can parse the file
+        for cls in reversed(sorted(self._classes, key=lambda parser_class: parser_class.parse_order)):
             if cls.can_parse_file(file_path):
                 cls_list.append(cls(file_path))
+                break
         return cls_list
 
         raise SimulationDataItemError((
