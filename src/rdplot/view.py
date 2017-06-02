@@ -133,8 +133,17 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         for url in event.mimeData().urls():
             if url.isLocalFile() and path.isfile(url.path()):
                 try:
-                    self.load_rd_data(url.path())
+                    # check what kind of file we have.
+                    # process .rd with load_rd_data, .xml and .log with the parsers
+                    file_ending = path.basename(url.path()).rsplit('.', maxsplit=1)[1]
+                    if file_ending == 'rd':
+                        self.load_rd_data(url.path())
+                    elif file_ending == 'log' or file_ending == 'xml':
+                        self.parserThread.addPath(url.path())
+                        self.parserThread.start()
                 except json.decoder.JSONDecodeError:
+                    return
+                except IndexError: # there was no file ending, i.e. not '.' in the name
                     return
             else:
                 self.msg.show()
