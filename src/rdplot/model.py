@@ -966,8 +966,17 @@ class BdTableModel(QAbstractTableModel):
         self.endInsertRows()
 
         self._plot_data_collection = plot_data_collection
+
         self._data = np.zeros((len(seq_set) + 1, len(config_set)))
-        self.update_table(bd_option, interp_option, 0)
+        # todo: remove this hack, once units are parsed. then tell by the unit whether we have temporal or summary plot, i.e. whether bd tables make sense
+        all_values = []
+        all_vals_are_integers = False
+        for collection in plot_data_collection:
+            all_values += collection.values
+        x_vals = [val[0] for val in all_values]
+        all_vals_are_integers = all(isinstance(item, int) for item in x_vals)
+        if not all_vals_are_integers:
+            self.update_table(bd_option, interp_option, 0)
 
     # This function is called when the anchor, the interpolation method
     # or the output of the bjontegaard delta is changed
