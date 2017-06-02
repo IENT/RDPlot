@@ -86,7 +86,7 @@ class DatLogBasedOnClassName(AbstractDatLog):
                 # discard 'DatLog' from class name, then compare to class specified in log file
                 is_sim_of_this_class = ( cls.__name__[6:]  in sim_data['Logfile']['Codec']['Value'])
                 return is_sim_of_this_class
-            except (ExpatError, UnicodeDecodeError, KeyError, IsADirectoryError):
+            except (ExpatError, UnicodeDecodeError, KeyError, IsADirectoryError,FileNotFoundError):
                 return False
 
     def _parse_summary_data(self):
