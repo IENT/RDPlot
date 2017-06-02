@@ -50,8 +50,8 @@
       </property>
       <property name="minimumSize">
        <size>
-        <width>0</width>
-        <height>0</height>
+        <width>320</width>
+        <height>180</height>
        </size>
       </property>
       <property name="baseSize">
