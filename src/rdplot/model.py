@@ -728,6 +728,13 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
         all_enc_configs = {}
         diff_dict = {}
 
+        # build up a diff dict in order let the software handle multiple different parameters
+        # in one simulation directory
+        # some of the diffs should not be interpreted as parameters
+        # those are removed from the dict; for sure QP, RealFormat, InternalFormat, and Warning
+        # are not parameters
+        # if you want to simulate with your own parameters, make sure that they appear in the
+        # logfile
         try:
             for sim_data_item in sim_data_items:
                 if sim_data_item.__class__ not in all_enc_configs:
