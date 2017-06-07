@@ -6,8 +6,9 @@ from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel, QAbstractTableM
 from SimulationDataItemClasses.EncoderLogs import AbstractEncLog
 from lib.BD import bjontegaard
 from SimulationDataItem import AbstractSimulationDataItem
-
-
+from string import Template
+from tabulate import tabulate
+import pkg_resources
 #
 # Functions
 #
@@ -1058,8 +1059,18 @@ class BdTableModel(QAbstractTableModel):
         self.dataChanged.emit(self.index(0, 0), self.index(row, col))
 
     def export_to_latex(self, filename):
-        from tabulate import tabulate
-
         seqs = [seq.split('_')[0] for seq in self._vertical_headers]
-        filehandle = open(filename, 'w')
-        filehandle.write(tabulate(self._data, self._horizontal_headers, showindex=seqs, tablefmt="latex_booktabs"))
+        latex_table = tabulate(self._data, self._horizontal_headers, showindex=seqs, tablefmt="latex_booktabs")
+
+        # creata a template class which uses % as the placeholder introducing delimiter, since this is the
+        # latex comment character
+        class LatexTemplate(Template):
+            delimiter = '%'
+
+        # open the template latex file, which has a preamble and add table
+        # this produces a file which can already be compiled
+        template_file_name = pkg_resources.resource_filename(__name__, 'latex_table_template.tex')
+        with open(template_file_name, 'r') as template_file, open(filename, 'w') as output_file:
+            latex_template = LatexTemplate(template_file.read())
+            new_latex_doc = latex_template.substitute(table_goeth_here=latex_table)
+            output_file.write(new_latex_doc)

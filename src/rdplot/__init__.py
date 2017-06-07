@@ -344,7 +344,7 @@ class Main(QMainWindow, Ui_MainWindow):
         if self.bdTableModel.rowCount(self) == 0:
             return
         filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save Table as', '.', 'tex')
-        filename = ''.join(filename)
+        filename = '.'.join(filename)
         if not len(filename) == 0:
             self.bdTableModel.export_to_latex(filename)
 
