@@ -186,11 +186,12 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
                 self,
                 "Open Sequence Encoder Log",
                 "/home/ient/Software/rd-plot-gui/examplLogs",
-                "All Logs (*.log *.xml);;Enocder Logs (*.log);;Dat Logs (*.xml);; RD Data (*.rd)")
+                "All Logs (*.log *.xml *.rd);;Enocder Logs (*.log);;Dat Logs (*.xml);; RD Data (*.rd)")
 
-            [directory, file_name] = result[0][0].rsplit('/', 1)
-            return directory, file_name
-        except IndexError:
+            # magic: split returned list of files into lists of directories and file names
+            directories, file_names = zip(*[file.rsplit('/', 1) for file in result[0]])
+            return directories, file_names
+        except (IndexError, ValueError):
             return
 
     def _get_folder(self):
@@ -204,14 +205,22 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         except IndexError:
             return
 
-    # adds a logfile to the treeview
-    def add_sim_data_item(self):
+    # open one or more files
+    # will detect what kind of file (.rd, .log, .xml) and act accordingly
+    def add_file(self):
         try:
-            directory, file_name = self._get_open_file_names()
+            directories, file_names = self._get_open_file_names()
         except TypeError:
             return
-        path = join(directory, file_name)
-        self.parserThread.addPath(path)
+        for directory, file_name in zip(directories, file_names):
+            # check what kind of file we have.
+            # process .rd with load_rd_data, .xml and .log with the parsers
+            path = join(directory, file_name)
+            file_ending = file_name.rsplit('.', maxsplit=1)[1]
+            if file_ending == 'rd':
+                self.load_rd_data(path)
+            elif file_ending == 'log' or file_ending == 'xml':
+                self.parserThread.addPath(path)
         self.parserThread.start()
 
     # adds all logfiles and sequences from a directory to the treeview
@@ -257,13 +266,6 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         #self.parserThread.start()
     def _hide_parse_message(self):
         self.msg.hide()
-
-    def add_rd_data(self):
-        try:
-            directory, filename = self._get_open_file_names()
-        except TypeError:
-            return
-        self.load_rd_data(filename)
 
     def load_rd_data(self, filename):
         """Loads rd data from file"""
