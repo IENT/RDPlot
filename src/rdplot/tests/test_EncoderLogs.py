@@ -29,7 +29,8 @@ class TestEncLogHM(unittest.TestCase):
                 self.assertTrue(isinstance(float(qp), float))
 
                 # check structure of temporal data dict
-                self.assertListEqual(list(temporal_data.keys()), ['Frames', 'Bits', 'Y-PSNR', 'U-PSNR', 'V-PSNR'])
+                self.assertCountEqual(temporal_data.keys(), ['Frames', 'Bits', 'Y-PSNR', 'U-PSNR', 'V-PSNR'])
+
 
                 # check structure of summary data dict
                 # any stream will have at least summary and intra pictures:
@@ -37,7 +38,7 @@ class TestEncLogHM(unittest.TestCase):
                 self.assertTrue('I' in summary_data.keys())
                 for picture_type_key, data_keys in summary_data.items():
                     # check structure of  data dict for this picture type
-                    self.assertListEqual(list(data_keys), ['Total Frames', 'Y-PSNR', 'U-PSNR', 'V-PSNR', 'YUV-PSNR'])
+                    self.assertCountEqual(data_keys, ['Total Frames', 'Y-PSNR', 'U-PSNR', 'V-PSNR', 'YUV-PSNR'])
 
     def test_can_parse_file(self):
         # try all log directories. only the one of HM logs should work, other should not work
@@ -99,7 +100,7 @@ class TestEncLogSHM(unittest.TestCase):
 
                 # check structure of temporal data dict
                 for layer_key, layer_data in temporal_data.items():
-                    self.assertListEqual(list(layer_data), ['Frames', 'Bits', 'Y-PSNR', 'U-PSNR', 'V-PSNR'])
+                    self.assertCountEqual(layer_data, ['Frames', 'Bits', 'Y-PSNR', 'U-PSNR', 'V-PSNR'])
 
                 # check structure of summary data dict
                 # any stream will have at least summary and intra pictures:
@@ -108,7 +109,7 @@ class TestEncLogSHM(unittest.TestCase):
                 for picture_type_key, data_keys in summary_data.items():
                     # check structure of  data dict for this picture type
                     for layer_key, layer_data in data_keys.items():
-                        self.assertListEqual(list(layer_data), ['Frames', 'Bitrate', 'Y-PSNR', 'U-PSNR', 'V-PSNR', 'YUV-PSNR'])
+                        self.assertCountEqual(layer_data, ['Frames', 'Bitrate', 'Y-PSNR', 'U-PSNR', 'V-PSNR', 'YUV-PSNR'])
 
     def test_can_parse_file(self):
         # try all log directories. only the one of HM logs should work, other should not work
