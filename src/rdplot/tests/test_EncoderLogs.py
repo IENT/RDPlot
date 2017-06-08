@@ -6,7 +6,7 @@ TEST_DIR = path.dirname(path.abspath(__file__))
 
 class TestEncLogHM(unittest.TestCase):
     def setUp(self):
-        hm_dir = path.join(TEST_DIR, 'test_logs/HM')
+        hm_dir = path.join(TEST_DIR, 'test_logs/examplesForDifferentVersions/HM')
         hm_logs = listdir(hm_dir)
         self.hm_log_paths = [path.join(hm_dir, log) for log in hm_logs]
 
@@ -42,7 +42,7 @@ class TestEncLogHM(unittest.TestCase):
 
     def test_can_parse_file(self):
         # try all log directories. only the one of HM logs should work, other should not work
-        for x in walk(path.join(TEST_DIR, 'test_logs/')):
+        for x in walk(path.join(TEST_DIR, 'test_logs/examplesForDifferentVersions/')):
             log_dir = x[0]
 
             logs = listdir(log_dir)
@@ -72,7 +72,7 @@ class TestEncLogHM(unittest.TestCase):
 
 class TestEncLogSHM(unittest.TestCase):
     def setUp(self):
-        shm_dir = path.join(TEST_DIR, 'test_logs/SHM')
+        shm_dir = path.join(TEST_DIR, 'test_logs/examplesForDifferentVersions/SHM')
         shm_logs = listdir(shm_dir)
         self.shm_log_paths = [path.join(shm_dir, log) for log in shm_logs]
 
@@ -113,7 +113,7 @@ class TestEncLogSHM(unittest.TestCase):
 
     def test_can_parse_file(self):
         # try all log directories. only the one of HM logs should work, other should not work
-        for x in walk(path.join(TEST_DIR, 'test_logs/')):
+        for x in walk(path.join(TEST_DIR, 'test_logs/examplesForDifferentVersions/')):
             log_dir = x[0]
 
             logs = listdir(log_dir)
