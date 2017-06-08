@@ -1,4 +1,5 @@
 test:
   script:
   - cd src
-  - python3 -m unittest 
+  - python3 -m pytest --cov ./ --cov-report term-missing --cov-report xml  --junitxml unittest_results.xml
+
