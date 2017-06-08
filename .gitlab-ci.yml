@@ -1,6 +1,5 @@
 test:
   script:
   - cd src
-  - xvfb-run -s "-screen 0 1920x1080x24" python3 -m pytest --cov ./ --cov-report ter
-m-missing --cov-report xml  --junitxml unittest_results.xml
+  - xvfb-run -s "-screen 0 1920x1080x24" python3 -m pytest --cov ./ --cov-report term-missing --cov-report xml  --junitxml unittest_results.xml
 
