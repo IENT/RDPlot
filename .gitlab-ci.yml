@@ -1,0 +1,4 @@
+test:
+  script:
+  - cd src
+  - python3 -m unittest 
