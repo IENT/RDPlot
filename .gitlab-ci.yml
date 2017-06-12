@@ -16,3 +16,15 @@ pages:
     expire_in: 30 days
   only:
     - master
+    
+build_sdist:
+  stage: deploy
+  script:
+    - python3 setup.py sdist
+    - mv dist/rdplot-1.0.0.tar.gz  public
+  artifacts:
+    paths:
+      - public
+    expire_in: 30 days
+  only:
+    - master
