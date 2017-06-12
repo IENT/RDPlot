@@ -12,6 +12,12 @@ from codecs import open
 import platform
 import os
 
+# hack to get the version from git tag
+import importlib.util
+spec = importlib.util.spec_from_file_location("version", "src/rdplot/version.py")
+rdplot_version = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(rdplot_version)
+
 here = os.path.abspath(os.path.dirname(__file__))
 
 # Get the long description from the README file
@@ -63,8 +69,8 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='1.0.0',
-
+    version=rdplot_version.__VERSION__,
+    
     description='A plot tool for rate distortion curves',
     long_description=long_description,
 
