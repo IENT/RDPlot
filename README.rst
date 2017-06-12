@@ -43,12 +43,12 @@ and then::
 Now you can install rdplot, either as user or system wide.
 Install it system wide::
 
-    sudo pip3 install --no-binary rdplot dist/rdplot-1.0.0.tar.gz
+    sudo pip3 install --no-binary dist/rdplot-1.0.0.tar.gz
 
 As user. This will install the binary to ~/.local/bin/rdplot. Make sure it is 
 in your PATH. The desktop launcher also will work only if this is the case::
 
-   pip3 install --user --no-binary rdplot dist/rdplot-1.0.0.tar.gz
+   pip3 install --user --no-binary  dist/rdplot-1.0.0.tar.gz
 
 If you already have the tool installed run::
 
