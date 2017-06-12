@@ -21,6 +21,7 @@ build_sdist:
   stage: deploy
   script:
     - python3 setup.py sdist
+    - cp dist/rdplot-1.0.0.tar.gz /tools/rd-plot-gui-sdist-gitlab/
   artifacts:
     paths:
       - dist/rdplot-1.0.0.tar.gz
