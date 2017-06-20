@@ -34,9 +34,17 @@ class AbstractEncLog(AbstractSimulationDataItem):
                                     """, log_text, re.M + re.X)
             qp = re.findall(r""" ^QP \s+ : \s+ (\d+(?:.\d+)?) $
                                   """, log_text, re.M + re.X)
+            if not qp:
+                qp = re.findall(r"""^QP\s+:\s+(\d+(?:.\d+)?)\s+\(incrementing internal QP at source frame (\d+)\)$""",log_text, re.M)
+                qp = '/'.join(list(qp[0]))
+
         # join all found qps together, that is necessary
         # for SHM
-        qp = " ".join([str(float(q)) for q in qp])
+        try:
+            qp = " ".join([str(float(q)) for q in qp])
+        except ValueError:
+            pass
+
         if qp == "":
             raise SimulationDataItemError
         # set sequence to the sequence name without path and suffix
