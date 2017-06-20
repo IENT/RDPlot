@@ -16,3 +16,12 @@ pages:
     expire_in: 30 days
   only:
     - master
+    
+build_sdist:
+  stage: deploy
+  script:
+    - python3 setup.py sdist
+    - rm /tools/rd-plot-gui-sdist-gitlab/rdplot-*.tar.gz
+    - cp dist/rdplot-*.tar.gz /tools/rd-plot-gui-sdist-gitlab/
+  only:
+    - master

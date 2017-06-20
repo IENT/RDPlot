@@ -117,3 +117,35 @@ class DatLogHEVC(DatLogBasedOnClassName):
 
 class DatLogJEM501_360(DatLogBasedOnClassName):
     pass
+
+class DatLogConversionPSNRLoss360(DatLogBasedOnClassName):
+
+    def _parse_path(self, path):
+        # logs from this class are not actual encoder simulations, don't have qp, using the conversion size for qp
+        # todo: should rd-plot allow different x-axis then qp?
+        filename = basename(path)
+
+        separator = '-'
+        try:
+            filename_split = filename.split('_CodingFaceWidth')[0].split(separator)
+            sequence = filename_split[-1]
+            config = separator.join(filename_split[0: -2])
+        except IndexError:
+            raise SimulationDataItemError((
+                "Filename {} can not be split into config until '{}' and"
+                " sequence between last '{}' and '_QP'"
+            ).format(filename, separator, separator))
+
+        # prepend simulation directory to config
+        config = dirname(normpath(path)) + config
+        qp = None
+        with open(self.path, 'r') as dat_log:
+            try:
+                xml = dat_log.read()
+                sim_data = xmltodict.parse(xml)
+                # TODO support for layer specific qp
+                qp = sim_data['Logfile']['QP']['Value']
+            except (IndexError, ExpatError):
+                raise SimulationDataItemError
+
+        return sequence, config, qp

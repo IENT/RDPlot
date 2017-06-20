@@ -770,6 +770,12 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                 if 'Warning' in diff_dict[sim_class]:
                     diff_dict[sim_class].pop('Warning', None)
 
+                if 'Byteswrittentofile' in diff_dict[sim_class]:
+                    diff_dict[sim_class].pop('Byteswrittentofile', None)
+                
+                if 'TotalTime' in diff_dict[sim_class]:
+                    diff_dict[sim_class].pop('TotalTime', None)
+                
                 if diff_dict[sim_class]:
                     additional_param_found.append(sim_class)
 
