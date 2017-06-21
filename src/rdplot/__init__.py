@@ -1,4 +1,25 @@
 #!/usr/bin/python3
+
+##################################################################################################
+#    This file is part of RDPlot - A gui for creating rd plots based on pyqt and matplotlib
+#    <https://git.rwth-aachen.de/IENT-Software/rd-plot-gui>
+#    Copyright (C) 2017  Institut fuer Nachrichtentechnik, RWTH Aachen University, GERMANY
+#
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+##################################################################################################
+
 from PyQt5.uic import loadUiType
 from PyQt5.QtCore import QItemSelectionModel, QSize
 from PyQt5 import QtGui
@@ -93,6 +114,10 @@ class Main(QMainWindow, Ui_MainWindow):
             self.save_current_selection
         )
 
+
+        self.action_About.triggered.connect(
+            self.open_about_page
+        )
 
         self.variableTreeModel = VariableTreeModel()
         self.variableTreeView.setModel(self.variableTreeModel)
@@ -382,6 +407,34 @@ class Main(QMainWindow, Ui_MainWindow):
             self.simDataItemTreeView.msg.show()
             self.simDataItemTreeView.parserThread.addPath(path)
             self.simDataItemTreeView.parserThread.start()
+
+    def open_about_page(self):
+        """Opens and displays an Html About file"""
+        try:
+            html_path = path.abspath(here + '/docs/about.html')
+            html_file = open(html_path, 'r', encoding='utf-8', errors='ignore')
+            source_code = html_file.read()
+            app_version = '0.1.0'
+            source_code = source_code.replace("##VERSION##", app_version)
+            source_code = source_code.replace("##here##", here)
+            about_dialog = QtWidgets.QDialog(self)
+            about_dialog.setWindowTitle("About RDPlot")
+            about_dialog.setMaximumSize(950, 800)
+            about_text = QtWidgets.QTextBrowser(about_dialog)
+            about_text.setMinimumWidth(950)
+            about_text.setMinimumHeight(800)
+            about_text.setHtml(source_code)
+            about_text.setOpenExternalLinks(True)
+            about_text.show()
+            about_dialog.exec_()
+            about_dialog.close()
+            about_text.close()
+        except IOError:
+            html_error = QtWidgets.QMessageBox()
+            html_error.setIcon(QMessageBox.Critical)
+            html_error.setText("Error opening about or help")
+            html_error.setInformativeText("The html file from the resource could not be loaded.")
+            html_error.exec_()
 
 
 def main():

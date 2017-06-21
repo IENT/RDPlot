@@ -258,7 +258,7 @@ padding: 4px;
      <x>0</x>
      <y>0</y>
      <width>1253</width>
-     <height>25</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -282,8 +282,15 @@ padding: 4px;
     <addaction name="actionHide_PlotSettings"/>
     <addaction name="actionHide_Status"/>
    </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="action_About"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QDockWidget" name="sequenceWidget">
    <property name="allowedAreas">
@@ -423,6 +430,11 @@ padding: 4px;
   <action name="actionOpen_Directory_List">
    <property name="text">
     <string>Open Directory List</string>
+   </property>
+  </action>
+  <action name="action_About">
+   <property name="text">
+    <string>About</string>
    </property>
   </action>
  </widget>
