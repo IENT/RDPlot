@@ -110,6 +110,11 @@ class AbstractEncLog(AbstractSimulationDataItem):
             return cls._is_file_text_matching_re_pattern(path, pattern)
         return False
 
+    def _parse_summary_data(self):
+       with open(self.path, 'r') as log_file:
+            log_text = log_file.read()  # reads the whole text file
+            total_time = re.findall(r""" ^\s*Total\s+Time.\s+(\d+.\d+)
+                                """, log_text, re.M + re.X)
 
 class EncLogHM(AbstractEncLog):
     # Order value, used to determine order in which parser are tried.
@@ -136,9 +141,11 @@ class EncLogHM(AbstractEncLog):
                            (\s+\S+)(\s+\S+)(\s+\S+)(\s+\S+)(\s+\S+)# catch rest of the line
                            \s* # catch newline and space
                            (\d+\s+)\w # catch frame number
-                           (\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+) # catch the fractional number (rate, PSNRs)
+                           (\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)# catch the fractional number (rate, PSNRs)
+                           #\s* .+ \s+ \d+.\d+ \s* .+ \s* (\w+ \s+ \w+).\s+ (\d+.\d+) #catch total time
                       """, log_text, re.M + re.X)
-
+            total_time = re.findall(r""" ^\s*Total\s+Time.\s+(\d+.\d+)
+                           """, log_text, re.M + re.X)
         data = {}
         for summary in summaries:
             summary_type = summary[0]
@@ -165,6 +172,8 @@ class EncLogHM(AbstractEncLog):
                 data[summary_type][name].append(
                     (name_val_dict[name_rate], name_val_dict[name])
                 )
+        #data['Total Time'] = total_time[0]
+        data['SUMMARY']['Total Time'] = [(float(summaries[0][8]), float(total_time[0]))]
         return data
 
     def _parse_encoder_config(self):
@@ -196,15 +205,17 @@ class EncLogHM(AbstractEncLog):
 
         temp_data = re.findall(r"""
             ^POC \s+ (\d+) \s+ .+ \s+ \d+ \s+ . \s+ (.-\D+) ,  #Slice
-            \s .+ \) \s+ (\d+) \s+ (.+) \s+ \[ (\D+) \s+ (\d+.\d+) \s+ #Y PSNR
+            \s .+ \) \s+ (\d+) \s+ (.+) \s+ #bits
+            \[ (\D+) \s+ (\d+.\d+) \s+ #Y PSNR
             \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # U PSNR
-            \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # v PSNR
+            \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ \D+ . # V PSNR
+            \s+ \[ (\D+) \s+ (\d+) \s+# Encoding time
             """, log_text, re.M + re.X)
 
         # Association between index of data in temp_data and corresponding
         # output key. Output shape definition is in one place.
         names = {0: 'Frames', 2: 'Bits', 5: 'Y-PSNR', 7: 'U-PSNR',
-                 9: 'V-PSNR'}
+                 9: 'V-PSNR', 11: 'ET'}
 
         # Define output data dict and fill it with parsed values
         data = {name: [] for (index, name) in names.items()}
@@ -318,6 +329,11 @@ class EncLogHM360Lib(AbstractEncLog):
 
     def _parse_summary_data(self):
 
+        with open(self.path, 'r') as log_file:
+            log_text = log_file.read()
+            total_time = re.findall(r""" ^\s*Total\s+Time.\s+(\d+.\d+)
+                            """, log_text, re.M + re.X)
+
         if self._enc_log_file_matches_re_pattern(self.path, r'Y-PSNR_VP0'):
             # 360Lib version < 3.0
             with open(self.path, 'r') as log_file:
@@ -353,8 +369,6 @@ class EncLogHM360Lib(AbstractEncLog):
                     )
                 data[summaries[i][0]] = data2
 
-            return data
-
         else:
             # 360Lib version  3.0
             with open(self.path, 'r') as log_file:
@@ -371,7 +385,7 @@ class EncLogHM360Lib(AbstractEncLog):
                                             \s+ (\S+) \s+ (\S+) \s+ (\S+)  # PSNR_DYN_VP1
                                             \s+ (\S+) \s+ (\S+) \s+ (\S+)  # CFSPSNR_NN
                                             \s+ (\S+) \s+ (\S+) \s+ (\S+)  # CFSPSNR_I
-                                            \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ $  # CFCPPPSNR
+                                            \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+  $# CFCPPPSNR
                                             """, log_text, re.M + re.X)
 
             data = {}
@@ -387,7 +401,6 @@ class EncLogHM360Lib(AbstractEncLog):
                      28: 'Y-CFSPSNR_NN', 29: 'U-CFSPSNR_NN', 30: 'V-CFSPSNR_NN',
                      31: 'Y-CFSPSNR_I', 32: 'U-CFSPSNR_I', 33: 'V-CFSPSNR_I',
                      34: 'Y-CFCPPPSNR', 35: 'U-CFCPPPSNR', 36: 'V-CFCPPPSNR'
-
                      }
 
             for i in range(0, len(summaries)):  # iterate through Summary, I, P, B
@@ -398,7 +411,8 @@ class EncLogHM360Lib(AbstractEncLog):
                     )
                 data[summaries[i][0]] = data2
 
-            return data
+        data['SUMMARY']['Total Time'] = [(float(summaries[0][2]), float(total_time[0]))]
+        return data
 
     def _parse_temporal_data(self):
         # this function extracts temporal values
@@ -415,6 +429,10 @@ class EncLogHM360Lib(AbstractEncLog):
                 \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-E2EWSPSNR
                 \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-PSNR_VP0
                 \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-PSNR_VP1
+                \[ \S+ \s \S+ \s \S+ \s+ \S+ \s \S+ \s \S+ \s+ \S+ \s \S+ \s \S+ ] \s  #y-, u-, v-CFSPSNR_NN
+                \[ \S+ \s \S+ \s \S+ \s+ \S+ \s \S+ \s \S+ \s+ \S+ \s \S+ \s \S+ ] \s  #y-, u-, v-CFSPSNR_I
+                \[ \S+ \s \S+ \s \S+ \s+ \S+ \s \S+ \s \S+ \s+ \S+ \s \S+ \s \S+ ] \s  #y-, u-, v-CFCPPPSNR
+                \[ \D+ \s+ (\d+) \s+ #ET
                 """, log_text, re.M + re.X)
 
         # Association between index of data in temp_data and corresponding
@@ -427,7 +445,7 @@ class EncLogHM360Lib(AbstractEncLog):
                  15: 'Y-CPPSNR', 16: 'U-CPPSNR', 17: 'V-CPPSNR',
                  18: 'Y-E2EWSPSNR', 19: 'U-E2EWSPSNR', 20: 'V-E2EWSPSNR',
                  21: 'Y-PSNR_VP0', 22: 'U-PSNR_VP0', 23: 'V-PSNR_VP0',
-                 24: 'Y-PSNR_VP1', 25: 'U-PSNR_VP1', 26: 'V-PSNR_VP1'
+                 24: 'Y-PSNR_VP1', 25: 'U-PSNR_VP1', 26: 'V-PSNR_VP1', 27: 'ET'
                  }
 
         # Define output data dict and fill it with parsed values
@@ -459,12 +477,13 @@ class EncLogSHM(AbstractEncLog):
                         ^\s+ L (\d+) \s+ (\d+) \s+ \D \s+ # the next is bitrate
                         (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)
                         """, log_text, re.M + re.X)
-
+            total_time = re.findall(r""" ^\s*Total\s+Time.\s+(\d+.\d+)
+                                        """, log_text, re.M + re.X)
         data = {}
         layer_quantity = int(len(summaries) / 4)
         header_names = ['SUMMARY', 'I', 'P', 'B']
         names = {1: 'Frames', 2: 'Bitrate', 3: 'Y-PSNR', 4: 'U-PSNR',
-                 5: 'V-PSNR', 6: 'YUV-PSNR'}
+                 5: 'V-PSNR', 6: 'YUV-PSNR', }
 
         for it in range(0, 4):  # iterate through Summary, I, P, B
             data2 = {}
@@ -486,7 +505,7 @@ class EncLogSHM(AbstractEncLog):
                         )
                 data2[layerstring] = data3
 
-            # add the addtion of layers 1 and two in rate. PSNR values are taken from Layer one
+            # add the addition of layers 1 and two in rate. PSNR values are taken from Layer one
             # TODO make this nice one day
             layerstring = 'layer 1 + 2'
             #data2[layerstring] = {}
@@ -506,6 +525,9 @@ class EncLogSHM(AbstractEncLog):
 
             data[header_names[it]] = data2
 
+        data['SUMMARY']['layer 0']['Total Time'] = [(float(summaries[0][2]), float(total_time[0]))]
+        data['SUMMARY']['layer 1']['Total Time'] = [(float(summaries[1][2]), float(total_time[0]))]
+        data['SUMMARY']['layer 1 + 2']['Total Time'] = [(float(data['SUMMARY']['layer 1 + 2']['Bitrate'][0][0]), float(total_time[0]))]
         return data
 
     def _parse_temporal_data(self):
@@ -516,13 +538,14 @@ class EncLogSHM(AbstractEncLog):
                                 ^POC \s+ (\d+) .+? : \s+ (\d+) .+ (\D-\D+) \s \D+,  #Slice
                                 .+ \) \s+ (\d+) \s+ (.+) \s+ \[ (\D+) \s+ (\d+.\d+) \s+ #Y PSNR
                                 \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # U PSNR
-                                \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # v PSNR
+                                \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ \D+ . # v PSNR
+                                \s+ \[ (\D+) \s+ (\d+) \s+# Encoding time
                                 """, log_text, re.M + re.X)
 
         # Association between index of data in temp_data and corresponding
         # output key. Output shape definition is in one place.
         names = {0: 'Frames', 3: 'Bits', 6: 'Y-PSNR', 8: 'U-PSNR',
-                 10: 'V-PSNR'}
+                 10: 'V-PSNR', 12:'ET'}
 
         layer_quantity = int(max(temp_data[i][1] for i in range(0, len(temp_data)))) + 1
         layer_quantity = int(layer_quantity)

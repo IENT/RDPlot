@@ -27,7 +27,7 @@
        <enum>Qt::TabFocus</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab_3">
        <attribute name="title">
@@ -429,7 +429,7 @@ padding: 4px;
   </action>
   <action name="actionOpen_Directory_List">
    <property name="text">
-    <string>Open Directory List</string>
+    <string>O&amp;pen Directory List</string>
    </property>
   </action>
   <action name="action_About">

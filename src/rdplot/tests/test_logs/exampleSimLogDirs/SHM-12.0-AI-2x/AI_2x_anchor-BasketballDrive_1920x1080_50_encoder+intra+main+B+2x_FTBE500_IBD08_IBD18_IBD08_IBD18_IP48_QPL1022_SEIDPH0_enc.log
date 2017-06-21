@@ -1,0 +1,13 @@
+bin/TAppEncoderStatic -c cfg/encoder_intra_main_B_2x.cfg --ReconFile0=/tmp/6377407.1.MegaKnechte/videosim_knecht23_mr03aZ/tmp/BasketballDrive_L0_960x540_50_encoder+intra+main+B+2x_FTBE500_IBD08_IBD18_IBD08_IBD18_IP48_QPL1022_SEIDPH0.yuv --IntraPeriod0=48 --FrameRate0=50 --FramesToBeEncoded=500 --SourceHeight0=540 --SourceWidth0=960 --InputFile0=orig/BasketballDrive_960x540_50_zerophase_0.9pi.yuv --ReconFile1=/tmp/6377407.1.MegaKnechte/videosim_knecht23_mr03aZ/tmp/BasketballDrive_L1_1920x1080_50_encoder+intra+main+B+2x_FTBE500_IBD08_IBD18_IBD08_IBD18_IP48_QPL1022_SEIDPH0.yuv --IntraPeriod1=48 --FrameRate1=50 --SourceHeight1=1080 --SourceWidth1=1920 --InputFile1=orig/BasketballDrive_1920x1080_50.yuv --BitstreamFile=str/BasketballDrive_1920x1080_50_encoder+intra+main+B+2x_FTBE500_IBD08_IBD18_IBD08_IBD18_IP48_QPL1022_SEIDPH0.shvc --InternalBitDepth0=8 --InternalBitDepth1=8 --QP0=22 --QP1=22 --InputBitDepth0=8 --InputBitDepth1=8 --SEIDecodedPictureHash=0
+
+SHM software: Encoder Version [12.0 (HM-16.9)][Linux][GCC 5.4.0][64 bit] 
+
+Default OLS defined. Ignoring ListOfOutputLayers1
+
+Error: found fewer Reference Picture Sets than GOPSize
+Error: Invalid GOP structure given
+******************************************************************
+** WARNING: --SEIDecodedPictureHash is now disabled by default. **
+**          Automatic verification of decoded pictures by a     **
+**          decoder requires this option to be enabled.         **
+******************************************************************

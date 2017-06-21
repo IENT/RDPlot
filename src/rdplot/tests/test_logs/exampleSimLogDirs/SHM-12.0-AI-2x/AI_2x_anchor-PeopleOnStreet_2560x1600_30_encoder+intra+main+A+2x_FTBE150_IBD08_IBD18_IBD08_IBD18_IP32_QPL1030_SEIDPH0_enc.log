@@ -1,0 +1,13 @@
+bin/TAppEncoderStatic -c cfg/encoder_intra_main_A_2x.cfg --ReconFile0=/tmp/6377401.1.MegaKnechte/videosim_knecht23_Z8HYSt/tmp/PeopleOnStreet_L0_1280x800_30_encoder+intra+main+A+2x_FTBE150_IBD08_IBD18_IBD08_IBD18_IP32_QPL1030_SEIDPH0.yuv --IntraPeriod0=32 --FrameRate0=30 --FramesToBeEncoded=150 --SourceHeight0=800 --SourceWidth0=1280 --InputFile0=orig/PeopleOnStreet_1280x800_30_crop_zerophase_0.9pi.yuv --ReconFile1=/tmp/6377401.1.MegaKnechte/videosim_knecht23_Z8HYSt/tmp/PeopleOnStreet_L1_2560x1600_30_encoder+intra+main+A+2x_FTBE150_IBD08_IBD18_IBD08_IBD18_IP32_QPL1030_SEIDPH0.yuv --IntraPeriod1=32 --FrameRate1=30 --SourceHeight1=1600 --SourceWidth1=2560 --InputFile1=orig/PeopleOnStreet_2560x1600_30_crop.yuv --BitstreamFile=str/PeopleOnStreet_2560x1600_30_encoder+intra+main+A+2x_FTBE150_IBD08_IBD18_IBD08_IBD18_IP32_QPL1030_SEIDPH0.shvc --InternalBitDepth0=8 --InternalBitDepth1=8 --QP0=30 --QP1=30 --InputBitDepth0=8 --InputBitDepth1=8 --SEIDecodedPictureHash=0
+
+SHM software: Encoder Version [12.0 (HM-16.9)][Linux][GCC 5.4.0][64 bit] 
+
+Default OLS defined. Ignoring ListOfOutputLayers1
+
+Error: found fewer Reference Picture Sets than GOPSize
+Error: Invalid GOP structure given
+******************************************************************
+** WARNING: --SEIDecodedPictureHash is now disabled by default. **
+**          Automatic verification of decoded pictures by a     **
+**          decoder requires this option to be enabled.         **
+******************************************************************
