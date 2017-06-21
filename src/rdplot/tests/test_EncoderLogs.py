@@ -30,7 +30,7 @@ class TestEncLogHM(unittest.TestCase):
                 self.assertTrue(isinstance(float(qp), float))
 
                 # check structure of temporal data dict
-                self.assertCountEqual(temporal_data.keys(), ['Frames', 'Bits', 'Y-PSNR', 'U-PSNR', 'V-PSNR'])
+                self.assertCountEqual(temporal_data.keys(), ['Frames', 'ET', 'Bits', 'Y-PSNR', 'U-PSNR', 'V-PSNR'])
 
                 # check structure of summary data dict
                 # any stream will have at least summary and intra pictures:
@@ -38,7 +38,7 @@ class TestEncLogHM(unittest.TestCase):
                 self.assertTrue('I' in summary_data.keys())
                 for picture_type_key, data in summary_data.items():
                     # check structure of  data dict for this picture type
-                    self.assertCountEqual(data.keys(), ['Total Frames', 'Y-PSNR', 'U-PSNR', 'V-PSNR', 'YUV-PSNR'])
+                    self.assertCountEqual(data.keys(), ['Total Frames', 'Total Time', 'Y-PSNR', 'U-PSNR', 'V-PSNR', 'YUV-PSNR'])
 
     def test_can_parse_file(self):
         # try all log directories. only the one of HM logs should work, other should not work
@@ -85,7 +85,7 @@ class TestEncLogSHM(unittest.TestCase):
 
                 # check structure of temporal data dict
                 for layer_key, layer_data in temporal_data.items():
-                    self.assertCountEqual(layer_data, ['Frames', 'Bits', 'Y-PSNR', 'U-PSNR', 'V-PSNR'])
+                    self.assertCountEqual(layer_data, ['Frames', 'ET', 'Bits', 'Y-PSNR', 'U-PSNR', 'V-PSNR'])
 
                 # check structure of summary data dict
                 # any stream will have at least summary and intra pictures:
@@ -95,7 +95,7 @@ class TestEncLogSHM(unittest.TestCase):
                     # check structure of  data dict for this picture type
                     for layer_key, layer_data in data_keys.items():
                         self.assertCountEqual(layer_data.keys(),
-                                              ['Frames', 'Bitrate', 'Y-PSNR', 'U-PSNR', 'V-PSNR', 'YUV-PSNR'])
+                                              ['Frames', 'Total Time', 'Bitrate', 'Y-PSNR', 'U-PSNR', 'V-PSNR', 'YUV-PSNR'])
 
     def test_can_parse_file(self):
         # try all log directories. only the one of HM logs should work, other should not work
@@ -139,7 +139,7 @@ class TestEncLogHM360Lib(unittest.TestCase):
 
                 # check structure of temporal data dict
                 self.assertCountEqual(temporal_data.keys(),
-                                      ['Frames', 'Bits', 'Y-PSNR', 'U-PSNR', 'V-PSNR', 'Y-SPSNR_NN', 'U-SPSNR_NN',
+                                      ['Frames', 'ET', 'Bits', 'Y-PSNR', 'U-PSNR', 'V-PSNR', 'Y-SPSNR_NN', 'U-SPSNR_NN',
                                        'V-SPSNR_NN', 'Y-WSPSNR', 'U-WSPSNR', 'V-WSPSNR', 'Y-SPSNR_I', 'U-SPSNR_I',
                                        'V-SPSNR_I', 'Y-CPPSNR', 'U-CPPSNR', 'V-CPPSNR', 'Y-E2EWSPSNR', 'U-E2EWSPSNR',
                                        'V-E2EWSPSNR', 'Y-PSNR_VP0', 'U-PSNR_VP0', 'V-PSNR_VP0', 'Y-PSNR_VP1',
@@ -151,7 +151,7 @@ class TestEncLogHM360Lib(unittest.TestCase):
                 self.assertTrue('I' in summary_data.keys())
                 for picture_type_key, data in summary_data.items():
                     # check structure of  data dict for this picture type
-                    self.assertCountEqual(data.keys(), ['Frames', 'Bitrate', 'Y-PSNR', 'U-PSNR', 'V-PSNR', 'YUV-PSNR',
+                    self.assertCountEqual(data.keys(), ['Frames', 'Total Time', 'Bitrate', 'Y-PSNR', 'U-PSNR', 'V-PSNR', 'YUV-PSNR',
                                                         'Y-WSPSNR', 'U-WSPSNR', 'V-WSPSNR',
                                                         'Y-E2ESPSNR_NN', 'U-E2ESPSNR_NN', 'V-E2ESPSNR_NN',
                                                         'Y-E2ESPSNR_I', 'U-E2ESPSNR_I', 'V-E2ESPSNR_I',
