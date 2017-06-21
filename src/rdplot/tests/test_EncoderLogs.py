@@ -1,5 +1,6 @@
 import unittest
 from SimulationDataItemClasses import EncoderLogs
+import SimulationDataItem
 from os import path, listdir, walk
 
 TEST_DIR = path.dirname(path.abspath(__file__))
@@ -38,7 +39,11 @@ class TestEncLogHM(unittest.TestCase):
                 self.assertTrue('I' in summary_data.keys())
                 for picture_type_key, data in summary_data.items():
                     # check structure of  data dict for this picture type
-                    self.assertCountEqual(data.keys(), ['Total Frames', 'Total Time', 'Y-PSNR', 'U-PSNR', 'V-PSNR', 'YUV-PSNR'])
+                    if picture_type_key=='SUMMARY':
+                        self.assertCountEqual(data.keys(), ['Total Frames', 'Total Time', 'Y-PSNR', 'U-PSNR', 'V-PSNR', 'YUV-PSNR'])
+                    else:
+                        self.assertCountEqual(data.keys(),
+                                              ['Total Frames', 'Y-PSNR', 'U-PSNR', 'V-PSNR', 'YUV-PSNR'])
 
     def test_can_parse_file(self):
         # try all log directories. only the one of HM logs should work, other should not work
@@ -94,8 +99,13 @@ class TestEncLogSHM(unittest.TestCase):
                 for picture_type_key, data_keys in summary_data.items():
                     # check structure of  data dict for this picture type
                     for layer_key, layer_data in data_keys.items():
-                        self.assertCountEqual(layer_data.keys(),
-                                              ['Frames', 'Total Time', 'Bitrate', 'Y-PSNR', 'U-PSNR', 'V-PSNR', 'YUV-PSNR'])
+                        if picture_type_key == 'SUMMARY':
+                            self.assertCountEqual(layer_data.keys(),
+                                                ['Frames', 'Total Time', 'Bitrate', 'Y-PSNR', 'U-PSNR', 'V-PSNR', 'YUV-PSNR'])
+                        else:
+                            self.assertCountEqual(layer_data.keys(),
+                                                  ['Frames', 'Bitrate', 'Y-PSNR', 'U-PSNR', 'V-PSNR',
+                                                   'YUV-PSNR'])
 
     def test_can_parse_file(self):
         # try all log directories. only the one of HM logs should work, other should not work
@@ -151,18 +161,32 @@ class TestEncLogHM360Lib(unittest.TestCase):
                 self.assertTrue('I' in summary_data.keys())
                 for picture_type_key, data in summary_data.items():
                     # check structure of  data dict for this picture type
-                    self.assertCountEqual(data.keys(), ['Frames', 'Total Time', 'Bitrate', 'Y-PSNR', 'U-PSNR', 'V-PSNR', 'YUV-PSNR',
-                                                        'Y-WSPSNR', 'U-WSPSNR', 'V-WSPSNR',
-                                                        'Y-E2ESPSNR_NN', 'U-E2ESPSNR_NN', 'V-E2ESPSNR_NN',
-                                                        'Y-E2ESPSNR_I', 'U-E2ESPSNR_I', 'V-E2ESPSNR_I',
-                                                        'Y-E2ECPPPSNR', 'U-E2ECPPPSNR', 'V-E2ECPPPSNR', 'Y-E2EWSPSNR',
-                                                        'U-E2EWSPSNR', 'V-E2EWSPSNR',
-                                                        'Y-PSNR_DYN_VP0', 'U-PSNR_DYN_VP0', 'V-PSNR_DYN_VP0',
-                                                        'Y-PSNR_DYN_VP1', 'U-PSNR_DYN_VP1',
-                                                        'V-PSNR_DYN_VP1', 'Y-CFSPSNR_NN', 'U-CFSPSNR_NN',
-                                                        'V-CFSPSNR_NN', 'Y-CFSPSNR_I', 'U-CFSPSNR_I',
-                                                        'V-CFSPSNR_I', 'Y-CFCPPPSNR', 'U-CFCPPPSNR', 'V-CFCPPPSNR'])
-
+                    if picture_type_key == 'SUMMARY':
+                        self.assertCountEqual(data.keys(), ['Frames', 'Total Time', 'Bitrate', 'Y-PSNR', 'U-PSNR', 'V-PSNR', 'YUV-PSNR',
+                                                            'Y-WSPSNR', 'U-WSPSNR', 'V-WSPSNR',
+                                                            'Y-E2ESPSNR_NN', 'U-E2ESPSNR_NN', 'V-E2ESPSNR_NN',
+                                                            'Y-E2ESPSNR_I', 'U-E2ESPSNR_I', 'V-E2ESPSNR_I',
+                                                            'Y-E2ECPPPSNR', 'U-E2ECPPPSNR', 'V-E2ECPPPSNR', 'Y-E2EWSPSNR',
+                                                            'U-E2EWSPSNR', 'V-E2EWSPSNR',
+                                                            'Y-PSNR_DYN_VP0', 'U-PSNR_DYN_VP0', 'V-PSNR_DYN_VP0',
+                                                            'Y-PSNR_DYN_VP1', 'U-PSNR_DYN_VP1',
+                                                            'V-PSNR_DYN_VP1', 'Y-CFSPSNR_NN', 'U-CFSPSNR_NN',
+                                                            'V-CFSPSNR_NN', 'Y-CFSPSNR_I', 'U-CFSPSNR_I',
+                                                            'V-CFSPSNR_I', 'Y-CFCPPPSNR', 'U-CFCPPPSNR', 'V-CFCPPPSNR'])
+                    else:
+                        self.assertCountEqual(data.keys(),
+                                              ['Frames', 'Bitrate', 'Y-PSNR', 'U-PSNR', 'V-PSNR',
+                                               'YUV-PSNR',
+                                               'Y-WSPSNR', 'U-WSPSNR', 'V-WSPSNR',
+                                               'Y-E2ESPSNR_NN', 'U-E2ESPSNR_NN', 'V-E2ESPSNR_NN',
+                                               'Y-E2ESPSNR_I', 'U-E2ESPSNR_I', 'V-E2ESPSNR_I',
+                                               'Y-E2ECPPPSNR', 'U-E2ECPPPSNR', 'V-E2ECPPPSNR', 'Y-E2EWSPSNR',
+                                               'U-E2EWSPSNR', 'V-E2EWSPSNR',
+                                               'Y-PSNR_DYN_VP0', 'U-PSNR_DYN_VP0', 'V-PSNR_DYN_VP0',
+                                               'Y-PSNR_DYN_VP1', 'U-PSNR_DYN_VP1',
+                                               'V-PSNR_DYN_VP1', 'Y-CFSPSNR_NN', 'U-CFSPSNR_NN',
+                                               'V-CFSPSNR_NN', 'Y-CFSPSNR_I', 'U-CFSPSNR_I',
+                                               'V-CFSPSNR_I', 'Y-CFCPPPSNR', 'U-CFCPPPSNR', 'V-CFCPPPSNR'])
     def test_can_parse_file(self):
         # try all log directories. only the one of HM logs should work, other should not work
         for x in walk(path.join(TEST_DIR, 'test_logs/examplesForDifferentVersions/')):
