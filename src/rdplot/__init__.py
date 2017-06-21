@@ -67,7 +67,7 @@ class Main(QMainWindow, Ui_MainWindow):
 
         # Connect signals of menus
         self.actionOpen_File.triggered.connect(
-            self.simDataItemTreeView.add_sim_data_item
+            self.simDataItemTreeView.add_file
         )
         self.actionOpen_Directory.triggered.connect(
             self.simDataItemTreeView.add_folder
@@ -93,9 +93,6 @@ class Main(QMainWindow, Ui_MainWindow):
             self.save_current_selection
         )
 
-        self.actionLoad_Data.triggered.connect(
-            self.simDataItemTreeView.add_rd_data
-        )
 
         self.variableTreeModel = VariableTreeModel()
         self.variableTreeView.setModel(self.variableTreeModel)
@@ -344,7 +341,7 @@ class Main(QMainWindow, Ui_MainWindow):
         if self.bdTableModel.rowCount(self) == 0:
             return
         filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save Table as', '.', 'tex')
-        filename = ''.join(filename)
+        filename = '.'.join(filename)
         if not len(filename) == 0:
             self.bdTableModel.export_to_latex(filename)
 

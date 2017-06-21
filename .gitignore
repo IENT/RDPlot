@@ -91,3 +91,8 @@ ENV/
 
 # example data folder
 example_simulation_data
+
+
+# allow encoder logs in the automatic tests folder
+!src/rdplot/tests/test_logs/examplesForDifferentVersions/*/*.log
+!src/rdplot/tests/test_logs/exampleSimLogDirs/*/*.log

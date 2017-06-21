@@ -8,6 +8,7 @@ from SimulationDataItem import (AbstractSimulationDataItem,
 
 
 class AbstractEncLog(AbstractSimulationDataItem):
+
     def __init__(self, path):
         super().__init__(path)
 
@@ -82,8 +83,16 @@ class AbstractEncLog(AbstractSimulationDataItem):
             return cls._is_file_text_matching_re_pattern(path, pattern)
         return False
 
+    def _parse_summary_data(self):
+       with open(self.path, 'r') as log_file:
+            log_text = log_file.read()  # reads the whole text file
+            total_time = re.findall(r""" ^\s*Total\s+Time.\s+(\d+.\d+)
+                                """, log_text, re.M + re.X)
 
 class EncLogHM(AbstractEncLog):
+    # Order value, used to determine order in which parser are tried.
+    parse_order = 10
+
     def __init__(self, path):
         super().__init__(path)
         self.encoder_config = self._parse_encoder_config()
@@ -105,9 +114,11 @@ class EncLogHM(AbstractEncLog):
                            (\s+\S+)(\s+\S+)(\s+\S+)(\s+\S+)(\s+\S+)# catch rest of the line
                            \s* # catch newline and space
                            (\d+\s+)\w # catch frame number
-                           (\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+) # catch the fractional number (rate, PSNRs)
+                           (\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)# catch the fractional number (rate, PSNRs)
+                           #\s* .+ \s+ \d+.\d+ \s* .+ \s* (\w+ \s+ \w+).\s+ (\d+.\d+) #catch total time
                       """, log_text, re.M + re.X)
-
+            total_time = re.findall(r""" ^\s*Total\s+Time.\s+(\d+.\d+)
+                           """, log_text, re.M + re.X)
         data = {}
         for summary in summaries:
             summary_type = summary[0]
@@ -134,6 +145,8 @@ class EncLogHM(AbstractEncLog):
                 data[summary_type][name].append(
                     (name_val_dict[name_rate], name_val_dict[name])
                 )
+        #data['Total Time'] = total_time[0]
+        data['SUMMARY']['Total Time'] = [(float(summaries[0][8]), float(total_time[0]))]
         return data
 
     def _parse_encoder_config(self):
@@ -165,15 +178,17 @@ class EncLogHM(AbstractEncLog):
 
         temp_data = re.findall(r"""
             ^POC \s+ (\d+) \s+ .+ \s+ \d+ \s+ . \s+ (.-\D+) ,  #Slice
-            \s .+ \) \s+ (\d+) \s+ (.+) \s+ \[ (\D+) \s+ (\d+.\d+) \s+ #Y PSNR
+            \s .+ \) \s+ (\d+) \s+ (.+) \s+ #bits
+            \[ (\D+) \s+ (\d+.\d+) \s+ #Y PSNR
             \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # U PSNR
-            \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # v PSNR
+            \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ \D+ . # V PSNR
+            \s+ \[ (\D+) \s+ (\d+) \s+# Encoding time
             """, log_text, re.M + re.X)
 
         # Association between index of data in temp_data and corresponding
         # output key. Output shape definition is in one place.
         names = {0: 'Frames', 2: 'Bits', 5: 'Y-PSNR', 7: 'U-PSNR',
-                 9: 'V-PSNR'}
+                 9: 'V-PSNR', 11: 'ET'}
 
         # Define output data dict and fill it with parsed values
         data = {name: [] for (index, name) in names.items()}
@@ -187,6 +202,9 @@ class EncLogHM(AbstractEncLog):
 
 
 class EncLogHM14(EncLogHM):
+    # Order value, used to determine order in which parser are tried.
+    parse_order = 11
+
     @classmethod
     def can_parse_file(cls, path):
         return cls._enc_log_file_matches_re_pattern(
@@ -237,6 +255,13 @@ class EncLogHM14(EncLogHM):
 
 
 class EncLogHM360Lib(AbstractEncLog):
+    # Order value, used to determine order in which parser are tried.
+    parse_order = 20
+
+    def __init__(self, path):
+        super().__init__(path)
+        self.encoder_config = self._parse_encoder_config()
+
     @classmethod
     def can_parse_file(cls, path):
         return cls._enc_log_file_matches_re_pattern(
@@ -244,7 +269,43 @@ class EncLogHM360Lib(AbstractEncLog):
             r'Y-PSNR_(?:DYN_)?VP0',
         ) #Y-PSNR_DYN_VP0
 
+    def _parse_encoder_config(self):
+        with open(self.path, 'r') as log_file:
+            log_text = log_file.read()  # reads the whole text file
+            lines = log_text.split('\n')
+            cleanlist = []
+            for one_line in lines:
+                if one_line:
+                    if '-----360 video parameters----' in one_line:
+                        break
+                    if one_line.count(':') == 1:
+                        clean_line = one_line.strip(' \n\t\r')
+                        clean_line = clean_line.replace(' ', '')
+                        cleanlist.append(clean_line)
+                    #elif one_line.count(':')>1:
+                    # Ignore Multiline stuff for now
+                    # TODO: do something smart
+                    #else:
+                    # Something else happened, do nothing
+                    # TODO: do something smart
+        parsed_config = dict(item.split(':') for item in cleanlist)
+
+        # parse 360 rotation parameter
+        m = re.search('Rotation in 1/100 degrees:\s+\(yaw:(\d+)\s+pitch:(\d+)\s+roll:(\d+)\)', log_text)
+        if m:
+            yaw = m.group(1)
+            pitch = m.group(2)
+            roll = m.group(3)
+            parsed_config['SVideoRotation'] = 'Y%sP%sR%s' % (yaw, pitch, roll)
+
+        return parsed_config
+
     def _parse_summary_data(self):
+
+        with open(self.path, 'r') as log_file:
+            log_text = log_file.read()
+            total_time = re.findall(r""" ^\s*Total\s+Time.\s+(\d+.\d+)
+                            """, log_text, re.M + re.X)
 
         if self._enc_log_file_matches_re_pattern(self.path, r'Y-PSNR_VP0'):
             # 360Lib version < 3.0
@@ -281,8 +342,6 @@ class EncLogHM360Lib(AbstractEncLog):
                     )
                 data[summaries[i][0]] = data2
 
-            return data
-
         else:
             # 360Lib version  3.0
             with open(self.path, 'r') as log_file:
@@ -299,7 +358,7 @@ class EncLogHM360Lib(AbstractEncLog):
                                             \s+ (\S+) \s+ (\S+) \s+ (\S+)  # PSNR_DYN_VP1
                                             \s+ (\S+) \s+ (\S+) \s+ (\S+)  # CFSPSNR_NN
                                             \s+ (\S+) \s+ (\S+) \s+ (\S+)  # CFSPSNR_I
-                                            \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ $  # CFCPPPSNR
+                                            \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+  $# CFCPPPSNR
                                             """, log_text, re.M + re.X)
 
             data = {}
@@ -315,7 +374,6 @@ class EncLogHM360Lib(AbstractEncLog):
                      28: 'Y-CFSPSNR_NN', 29: 'U-CFSPSNR_NN', 30: 'V-CFSPSNR_NN',
                      31: 'Y-CFSPSNR_I', 32: 'U-CFSPSNR_I', 33: 'V-CFSPSNR_I',
                      34: 'Y-CFCPPPSNR', 35: 'U-CFCPPPSNR', 36: 'V-CFCPPPSNR'
-
                      }
 
             for i in range(0, len(summaries)):  # iterate through Summary, I, P, B
@@ -326,7 +384,8 @@ class EncLogHM360Lib(AbstractEncLog):
                     )
                 data[summaries[i][0]] = data2
 
-            return data
+        data['SUMMARY']['Total Time'] = [(float(summaries[0][2]), float(total_time[0]))]
+        return data
 
     def _parse_temporal_data(self):
         # this function extracts temporal values
@@ -343,6 +402,10 @@ class EncLogHM360Lib(AbstractEncLog):
                 \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-E2EWSPSNR
                 \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-PSNR_VP0
                 \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-PSNR_VP1
+                \[ \S+ \s \S+ \s \S+ \s+ \S+ \s \S+ \s \S+ \s+ \S+ \s \S+ \s \S+ ] \s  #y-, u-, v-CFSPSNR_NN
+                \[ \S+ \s \S+ \s \S+ \s+ \S+ \s \S+ \s \S+ \s+ \S+ \s \S+ \s \S+ ] \s  #y-, u-, v-CFSPSNR_I
+                \[ \S+ \s \S+ \s \S+ \s+ \S+ \s \S+ \s \S+ \s+ \S+ \s \S+ \s \S+ ] \s  #y-, u-, v-CFCPPPSNR
+                \[ \D+ \s+ (\d+) \s+ #ET
                 """, log_text, re.M + re.X)
 
         # Association between index of data in temp_data and corresponding
@@ -355,7 +418,7 @@ class EncLogHM360Lib(AbstractEncLog):
                  15: 'Y-CPPSNR', 16: 'U-CPPSNR', 17: 'V-CPPSNR',
                  18: 'Y-E2EWSPSNR', 19: 'U-E2EWSPSNR', 20: 'V-E2EWSPSNR',
                  21: 'Y-PSNR_VP0', 22: 'U-PSNR_VP0', 23: 'V-PSNR_VP0',
-                 24: 'Y-PSNR_VP1', 25: 'U-PSNR_VP1', 26: 'V-PSNR_VP1'
+                 24: 'Y-PSNR_VP1', 25: 'U-PSNR_VP1', 26: 'V-PSNR_VP1', 27: 'ET'
                  }
 
         # Define output data dict and fill it with parsed values
@@ -370,6 +433,9 @@ class EncLogHM360Lib(AbstractEncLog):
 
 
 class EncLogSHM(AbstractEncLog):
+    # Order value, used to determine order in which parser are tried.
+    parse_order = 21
+
     @classmethod
     def can_parse_file(cls, path):
         return cls._enc_log_file_matches_re_pattern(
@@ -384,12 +450,13 @@ class EncLogSHM(AbstractEncLog):
                         ^\s+ L (\d+) \s+ (\d+) \s+ \D \s+ # the next is bitrate
                         (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)
                         """, log_text, re.M + re.X)
-
+            total_time = re.findall(r""" ^\s*Total\s+Time.\s+(\d+.\d+)
+                                        """, log_text, re.M + re.X)
         data = {}
         layer_quantity = int(len(summaries) / 4)
         header_names = ['SUMMARY', 'I', 'P', 'B']
         names = {1: 'Frames', 2: 'Bitrate', 3: 'Y-PSNR', 4: 'U-PSNR',
-                 5: 'V-PSNR', 6: 'YUV-PSNR'}
+                 5: 'V-PSNR', 6: 'YUV-PSNR', }
 
         for it in range(0, 4):  # iterate through Summary, I, P, B
             data2 = {}
@@ -411,7 +478,7 @@ class EncLogSHM(AbstractEncLog):
                         )
                 data2[layerstring] = data3
 
-            # add the addtion of layers 1 and two in rate. PSNR values are taken from Layer one
+            # add the addition of layers 1 and two in rate. PSNR values are taken from Layer one
             # TODO make this nice one day
             layerstring = 'layer 1 + 2'
             #data2[layerstring] = {}
@@ -431,6 +498,9 @@ class EncLogSHM(AbstractEncLog):
 
             data[header_names[it]] = data2
 
+        data['SUMMARY']['layer 0']['Total Time'] = [(float(summaries[0][2]), float(total_time[0]))]
+        data['SUMMARY']['layer 1']['Total Time'] = [(float(summaries[1][2]), float(total_time[0]))]
+        data['SUMMARY']['layer 1 + 2']['Total Time'] = [(float(data['SUMMARY']['layer 1 + 2']['Bitrate'][0][0]), float(total_time[0]))]
         return data
 
     def _parse_temporal_data(self):
@@ -441,13 +511,14 @@ class EncLogSHM(AbstractEncLog):
                                 ^POC \s+ (\d+) .+? : \s+ (\d+) .+ (\D-\D+) \s \D+,  #Slice
                                 .+ \) \s+ (\d+) \s+ (.+) \s+ \[ (\D+) \s+ (\d+.\d+) \s+ #Y PSNR
                                 \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # U PSNR
-                                \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ # v PSNR
+                                \D+ \s+ (\D+) \s+ (\d+.\d+) \s+ \D+ . # v PSNR
+                                \s+ \[ (\D+) \s+ (\d+) \s+# Encoding time
                                 """, log_text, re.M + re.X)
 
         # Association between index of data in temp_data and corresponding
         # output key. Output shape definition is in one place.
         names = {0: 'Frames', 3: 'Bits', 6: 'Y-PSNR', 8: 'U-PSNR',
-                 10: 'V-PSNR'}
+                 10: 'V-PSNR', 12:'ET'}
 
         layer_quantity = int(max(temp_data[i][1] for i in range(0, len(temp_data)))) + 1
         layer_quantity = int(layer_quantity)
@@ -461,80 +532,81 @@ class EncLogSHM(AbstractEncLog):
                     )
             layerstring = 'layer ' + str(layer)
             data[layerstring] = data2
-        return data
-
-
-class EncLogHM360LibOld(AbstractEncLog):
-    @classmethod
-    def can_parse_file(cls, path):
-        return cls._enc_log_file_matches_re_pattern(
-            path,
-            r'^-----360 \s video \s parameters----',
-        )
-
-    def _parse_summary_data(self):
-        with open(self.path, 'r') as log_file:
-            log_text = log_file.read()  # reads the whole text file
-            summaries = re.findall(r""" ^(\S+) .+ $ \s .+ $
-                                        \s+ (\d+) \s+ \D \s+ (\S+)  # Total Frames, Bitrate
-                                        \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)  # y-, u-, v-, yuv-PSNR
-                                        \s+ (\S+) \s+ (\S+) \s+ (\S+)  # WSPSNR
-                                        \s+ (\S+) \s+ (\S+) \s+ (\S+)  # CPPPSNR
-                                        \s+ (\S+) \s+ (\S+) \s+ (\S+) \s $  # E2EWSPSNR
-                                        """, log_text, re.M + re.X)
-        data = {}
-        names = {1: 'Frames', 2: 'Bitrate', 3: 'Y-PSNR', 4: 'U-PSNR',
-                 5: 'V-PSNR', 6: 'YUV-PSNR', 7: 'Y-WSPSNR', 8: 'U-WSPSNR',
-                 9: 'V-WSPSNR', 10: 'Y-CPPSNR', 11: 'U-CPPSNR', 12: 'V-CPPSNR',
-                 13: 'Y-E2EWSPSNR', 14: 'U-E2EWSPSNR', 15: 'V-E2EWSPSNR'}
-
-        for i in range(0, len(summaries)):  # iterate through Summary, I, P, B
-            data2 = {name: [] for (index, name) in names.items()}
-            for (index, name) in names.items():
-                data2[name].append(
-                    (float(summaries[i][2]), float(summaries[i][index]))
-                )
-            data[summaries[i][0]] = data2
-
-        # viewport = re.findall(r""" ^\s+ (\d+) \s+ \D \s+ (\d+)  # total frames, viewport
-        #                            \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)  # y-,u-,v-, yuv-PSNR
-        #                            \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)$  # y-,u-,v-, yuv-MSE
-        #                             """, log_text, re.M + re.X)
-        #
-        # viewportNames = {0: 'Frames', 1: 'Viewport', 2: 'Y-PSNR', 3: 'U-PSNR',
-        #          4: 'V-PSNR', 5: 'YUV-PSNR', 6: 'Y-MSE', 7: 'U-MSE',
-        #          8: 'V-MSE', 9: 'Y-MSE'}
 
         return data
 
-    def _parse_temporal_data(self):
-        # this function extracts temporal values
-        with open(self.path, 'r') as log_file:
-            log_text = log_file.read()  # reads the whole text file
-            temp_data = re.findall(r"""
-                ^POC \s+ (\d+) \s+ .+ \s+ \d+ \s+ . \s+ (.-\D+) ,  # POC, Slice
-                \s .+ \) \s+ (\d+) \s+ \S+ \s+  # bits
-                \[ \S \s (\S+) \s \S+ \s+ \S \s (\S+) \s \S+ \s+ \S \s (\S+) \s \S+ ] \s  # y-, u-, v-PSNR
-                \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-WSPSNR
-                \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-CPPPSNR
-                \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-E2EWSPSNR
-                """, log_text, re.M + re.X)
-
-        # Association between index of data in temp_data and corresponding
-        # output key. Output shape definition is in one place.
-        names = {0: 'Frames', 2: 'Bits',
-                 3: 'Y-PSNR', 4: 'U-PSNR', 5: 'V-PSNR',
-                 6: 'Y-WSPSNR', 7: 'U-WSPSNR', 8: 'V-WSPSNR',
-                 9: 'Y-CPPSNR', 10: 'U-CPPSNR', 11: 'V-CPPSNR',
-                 12: 'Y-E2EWSPSNR', 13: 'U-E2EWSPSNR', 14: 'V-E2EWSPSNR',
-                 }
-
-        # Define output data dict and fill it with parsed values
-        data = {name: [] for (index, name) in names.items()}
-        for i in range(0, len(temp_data)):
-            # As referencing to frame produces error, reference to index *i*
-            for (index, name) in names.items():
-                data[name].append(
-                    (i, temp_data[i][index])
-                )
-        return data
+#
+# class EncLogHM360LibOld(AbstractEncLog):
+#     @classmethod
+#     def can_parse_file(cls, path):
+#         return cls._enc_log_file_matches_re_pattern(
+#             path,
+#             r'^-----360 \s video \s parameters----',
+#         )
+#
+#     def _parse_summary_data(self):
+#         with open(self.path, 'r') as log_file:
+#             log_text = log_file.read()  # reads the whole text file
+#             summaries = re.findall(r""" ^(\S+) .+ $ \s .+ $
+#                                         \s+ (\d+) \s+ \D \s+ (\S+)  # Total Frames, Bitrate
+#                                         \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)  # y-, u-, v-, yuv-PSNR
+#                                         \s+ (\S+) \s+ (\S+) \s+ (\S+)  # WSPSNR
+#                                         \s+ (\S+) \s+ (\S+) \s+ (\S+)  # CPPPSNR
+#                                         \s+ (\S+) \s+ (\S+) \s+ (\S+) \s $  # E2EWSPSNR
+#                                         """, log_text, re.M + re.X)
+#         data = {}
+#         names = {1: 'Frames', 2: 'Bitrate', 3: 'Y-PSNR', 4: 'U-PSNR',
+#                  5: 'V-PSNR', 6: 'YUV-PSNR', 7: 'Y-WSPSNR', 8: 'U-WSPSNR',
+#                  9: 'V-WSPSNR', 10: 'Y-CPPSNR', 11: 'U-CPPSNR', 12: 'V-CPPSNR',
+#                  13: 'Y-E2EWSPSNR', 14: 'U-E2EWSPSNR', 15: 'V-E2EWSPSNR'}
+#
+#         for i in range(0, len(summaries)):  # iterate through Summary, I, P, B
+#             data2 = {name: [] for (index, name) in names.items()}
+#             for (index, name) in names.items():
+#                 data2[name].append(
+#                     (float(summaries[i][2]), float(summaries[i][index]))
+#                 )
+#             data[summaries[i][0]] = data2
+#
+#         # viewport = re.findall(r""" ^\s+ (\d+) \s+ \D \s+ (\d+)  # total frames, viewport
+#         #                            \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)  # y-,u-,v-, yuv-PSNR
+#         #                            \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)$  # y-,u-,v-, yuv-MSE
+#         #                             """, log_text, re.M + re.X)
+#         #
+#         # viewportNames = {0: 'Frames', 1: 'Viewport', 2: 'Y-PSNR', 3: 'U-PSNR',
+#         #          4: 'V-PSNR', 5: 'YUV-PSNR', 6: 'Y-MSE', 7: 'U-MSE',
+#         #          8: 'V-MSE', 9: 'Y-MSE'}
+#
+#         return data
+#
+#     def _parse_temporal_data(self):
+#         # this function extracts temporal values
+#         with open(self.path, 'r') as log_file:
+#             log_text = log_file.read()  # reads the whole text file
+#             temp_data = re.findall(r"""
+#                 ^POC \s+ (\d+) \s+ .+ \s+ \d+ \s+ . \s+ (.-\D+) ,  # POC, Slice
+#                 \s .+ \) \s+ (\d+) \s+ \S+ \s+  # bits
+#                 \[ \S \s (\S+) \s \S+ \s+ \S \s (\S+) \s \S+ \s+ \S \s (\S+) \s \S+ ] \s  # y-, u-, v-PSNR
+#                 \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-WSPSNR
+#                 \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-CPPPSNR
+#                 \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-E2EWSPSNR
+#                 """, log_text, re.M + re.X)
+#
+#         # Association between index of data in temp_data and corresponding
+#         # output key. Output shape definition is in one place.
+#         names = {0: 'Frames', 2: 'Bits',
+#                  3: 'Y-PSNR', 4: 'U-PSNR', 5: 'V-PSNR',
+#                  6: 'Y-WSPSNR', 7: 'U-WSPSNR', 8: 'V-WSPSNR',
+#                  9: 'Y-CPPSNR', 10: 'U-CPPSNR', 11: 'V-CPPSNR',
+#                  12: 'Y-E2EWSPSNR', 13: 'U-E2EWSPSNR', 14: 'V-E2EWSPSNR',
+#                  }
+#
+#         # Define output data dict and fill it with parsed values
+#         data = {name: [] for (index, name) in names.items()}
+#         for i in range(0, len(temp_data)):
+#             # As referencing to frame produces error, reference to index *i*
+#             for (index, name) in names.items():
+#                 data[name].append(
+#                     (i, temp_data[i][index])
+#                 )
+#         return data

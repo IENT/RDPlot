@@ -1,0 +1,97 @@
+
+HM software: Encoder Version [HM-16.6-JEM-6.0] (including RExt)[Linux][GCC 5.4.0][64 bit] 
+
+
+Input          File                    : orig/DrivingInCountry_3840x1920_30fps_8bit_420pf_erp.yuv
+Bitstream      File                    : str/DrivingInCountry_3840x1920_QP32.hevc
+Reconstruction File                    : /tmp/6459937.1.MegaKnechte/anysim_knecht21_DrivingInCountry_3840x1920_QP32_j5awpfjb/rec/DrivingInCountry_3840x1920_QP32_rec_enc.yuv
+Real     Format                        : 3840x1920 3.75Hz
+Internal Format                        : 3840x1920 3.75Hz
+Sequence PSNR output                   : Linear average only
+Sequence MSE output                    : Disabled
+True Bitdepth PSNR                     : Disabled
+Frame MSE output                       : Disabled
+MS-SSIM output                         : Disabled
+Cabac-zero-word-padding                : Enabled
+Frame/Field                            : Frame based coding
+Frame index                            : 0 - 2 (3 frames)
+Profile                                : main10
+CTU size / minQTL / minQTC / minQT          : 128 / 8 / 4 /8
+I slice: MaxBTSize: 32, 64; MaxBTDepth: 4, 0; MinBTSize: 4, 4
+P/B slice: MaxBTSize: 128; MaxBTDepth: 4; MinBTSize: 4
+SPS MaxBTDepth: 3; MaxBTDepthISliceL: 3; MaxBTDepthISliceC: 3
+RQT trans. size (min / max)            : 4 / 64
+Max RQT depth inter                    : 3
+Max RQT depth intra                    : 3
+Min PCM size                           : 8
+Motion search range                    : 64
+Intra period                           : 1
+Decoding refresh type                  : 0
+Rewriting parameter sets flag (RAP)    : Enabled
+QP                                     : 32
+Max dQP signaling depth                : 0
+Cb QP Offset                           : 1
+Cr QP Offset                           : 1
+QP adaptation                          : 0 (range=0)
+GOP size                               : 1
+Input bit depth                        : (Y:8, C:8)
+MSB-extended bit depth                 : (Y:8, C:8)
+Internal bit depth                     : (Y:10, C:10)
+PCM sample bit depth                   : (Y:8, C:8)
+Intra reference smoothing              : Enabled
+diff_cu_chroma_qp_offset_depth         : -1
+extended_precision_processing_flag     : Disabled
+implicit_rdpcm_enabled_flag            : Disabled
+explicit_rdpcm_enabled_flag            : Disabled
+transform_skip_rotation_enabled_flag   : Disabled
+transform_skip_context_enabled_flag    : Disabled
+cross_component_prediction_enabled_flag: Disabled
+high_precision_offsets_enabled_flag    : Disabled
+persistent_rice_adaptation_enabled_flag: Disabled
+cabac_bypass_alignment_enabled_flag    : Disabled
+log2_sao_offset_scale_luma             : 0
+log2_sao_offset_scale_chroma           : 0
+Cost function:                         : Lossy coding (default)
+RateControl                            : 0
+Max Num Merge Candidates               : 7
+
+TOOL CFG: IBD:1 HAD:1 RDQ:1 RDQTS:1 RDpenalty:0 LQP:0 SQP:0 ASR:0 MinSearchWindow:8 FEN:1 ECU:0 FDM:1 CFM:0 ESD:0 RQT:1 SaveLoadEncInfo: 1SaveLoadSplitDecision: 0TransformSkip:1 TransformSkipFast:1 TransformSkipLog2MaxSize:2 Slice: M=0 SliceSegment: M=0 CIP:0 SAO:1 PCM:0 TransQuantBypassEnabled:0 WPP:0 WPB:0 PME:2  WaveFrontSynchro:0 WaveFrontSubstreams:1 ScalingList:0 TMVPMode:1 AQpS:0 SignBitHidingFlag:1 RecalQP:0 ATMVP:1,  SubPUTLog2Size:2   OBMC: 1  OBMCBLK: 4 FRUC:1 FRUCF:1 FRUCR:8 FRUCRDepth:3  IMV:1  IMVMaxCand:4 IlluCompEnable:1  ALF:1 LCTUFast:1  EMT: 1(intra) 1(inter) FEMT: 1(intra) 1(inter)  KLT: 0(intra) 0(inter) Intra4TapFilter:1 IntraBoundaryFilter:1 ExtIntraAngularMode:1 LMC:1 BIO:1 DMVR:1 PDPC:1 NSST:1 AFFINE:1 RSAF:1 ACLIP:1 
+
+Non-environment-variable-controlled macros set as follows: 
+
+                                RExt__DECODER_DEBUG_BIT_STATISTICS =   0
+                                      RExt__HIGH_BIT_DEPTH_SUPPORT =   0
+                            RExt__HIGH_PRECISION_FORWARD_TRANSFORM =   0
+                                        O0043_BEST_EFFORT_DECODING =   0
+
+                   Input ChromaFormatIDC =   4:2:0
+       Output (internal) ChromaFormatIDC =   4:2:0
+
+POC    0 TId: 0 ( I-SLICE, nQP 32 QP 32 )    1314080 bits [Y 37.7954 dB    U 46.5660 dB    V 47.0913 dB] [ET  4559 ] [L0 ] [L1 ]
+POC    1 TId: 0 ( I-SLICE, nQP 32 QP 32 )    1319296 bits [Y 37.7092 dB    U 46.4806 dB    V 47.1799 dB] [ET  4667 ] [L0 ] [L1 ]
+POC    2 TId: 0 ( I-SLICE, nQP 32 QP 32 )    1342128 bits [Y 37.7205 dB    U 46.5037 dB    V 47.1072 dB] [ET  4630 ] [L0 ] [L1 ]
+
+
+SUMMARY --------------------------------------------------------
+	Total Frames |   Bitrate     Y-PSNR    U-PSNR    V-PSNR    YUV-PSNR 
+	        3    a    4969.3800   37.7417   46.5168   47.1261   39.2414
+
+
+I Slices--------------------------------------------------------
+	Total Frames |   Bitrate     Y-PSNR    U-PSNR    V-PSNR    YUV-PSNR 
+	        3    i    4969.3800   37.7417   46.5168   47.1261   39.2414
+
+
+P Slices--------------------------------------------------------
+	Total Frames |   Bitrate     Y-PSNR    U-PSNR    V-PSNR    YUV-PSNR 
+	        0    p         -nan      -nan      -nan      -nan      -nan
+
+
+B Slices--------------------------------------------------------
+	Total Frames |   Bitrate     Y-PSNR    U-PSNR    V-PSNR    YUV-PSNR 
+	        0    b         -nan      -nan      -nan      -nan      -nan
+
+RVM: 0.000
+Bytes written to file: 496938 (4969.380 kbps)
+
+ Total Time:    13857.497 sec.

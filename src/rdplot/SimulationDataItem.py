@@ -114,9 +114,7 @@ def append_value_to_dict_tree_at_path(dict_tree, path, plot_data):
     plot_data_list.append(plot_data)
     return dict_tree
 
-#-------------------------------------------------------------------------------
-
-
+# -------------------------------------------------------------------------------
 
 #
 # Classes
@@ -142,9 +140,9 @@ class PlotData:
     """
 
     def __init__(self, identifiers, values, path):
-        self.identifiers    = identifiers
-        self.values         = values
-        self.path           = path
+        self.identifiers = identifiers
+        self.values = values
+        self.path = path
 
 
 class SimulationDataItemError(Exception):
@@ -152,7 +150,6 @@ class SimulationDataItemError(Exception):
 
 class IsNotAnAbstractSimulationDataItemSubClassError(SimulationDataItemError):
     pass
-
 
 
 class AbstractSimulationDataItem(metaclass=ABCMeta):
@@ -165,6 +162,9 @@ class AbstractSimulationDataItem(metaclass=ABCMeta):
     :type path: :class: `str`
     """
 
+    # Order value, used to determine order in which parser are tried.
+    parse_order = 100 # large default value. it subclass does not lower it, it will be tried last
+
     # Constructor
 
     def __init__(self, path):
@@ -173,7 +173,6 @@ class AbstractSimulationDataItem(metaclass=ABCMeta):
 
 
     # Abstract Methods/Properties
-
     @classmethod
     @abstractmethod
     def can_parse_file(cls, path):
@@ -245,7 +244,6 @@ class AbstractSimulationDataItem(metaclass=ABCMeta):
 
 
     # Magic Methods
-
     # TODO remove if usefull 'set' is implemented
     def __hash__(self):
         return hash(self.path)
@@ -258,7 +256,6 @@ class AbstractSimulationDataItem(metaclass=ABCMeta):
 
 
     # Helper Methods
-
     @classmethod
     def _is_file_text_matching_re_pattern(cls, path, pattern):
         """Check, if the file at *path* matches the given regex *pattern*
@@ -289,7 +286,6 @@ class SimulationDataItemFactory:
     """
 
     # Constructors
-
     def __init__(self, classes=None):
         self._classes = set()
 
@@ -341,9 +337,7 @@ class SimulationDataItemFactory:
 
         return simulationDataItemFactory
 
-
     # Interface to Set of Classes
-
     def add_class(self, cls):
         """Add a sub class *cls* of :class: `AbstractSimulationDataItem` to the
         factory.
@@ -356,9 +350,7 @@ class SimulationDataItemFactory:
 
         self._classes.add(cls)
 
-
     # Factory Methods
-
     def create_item_from_file(self, file_path):
         """Create an item of a AbstractSimulationDataItem sub class for the
         file specified by *file_path*.
@@ -372,9 +364,11 @@ class SimulationDataItemFactory:
         # Create simulatin data item of the first class which says, it can parse
         # the file
         cls_list = []
-        for cls in self._classes:
+        # try parser, in the order given by their parse_order attribute. use the first one that can parse the file
+        for cls in reversed(sorted(self._classes, key=lambda parser_class: parser_class.parse_order)):
             if cls.can_parse_file(file_path):
                 cls_list.append(cls(file_path))
+                break
         return cls_list
 
         raise SimulationDataItemError((
@@ -432,9 +426,7 @@ class SimulationDataItemFactory:
             " '{}'"
         ).format(path))
 
-
     # Magic Methods
-
     def __str__(self):
         return str(self._classes)
 

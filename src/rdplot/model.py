@@ -6,8 +6,9 @@ from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel, QAbstractTableM
 from SimulationDataItemClasses.EncoderLogs import AbstractEncLog
 from lib.BD import bjontegaard
 from SimulationDataItem import AbstractSimulationDataItem
-
-
+from string import Template
+from tabulate import tabulate
+import pkg_resources
 #
 # Functions
 #
@@ -723,72 +724,92 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
 
         """
 
-        additional_param_found = False
+        additional_param_found = []
 
-        all_enc_configs = []
+        all_enc_configs = {}
         diff_dict = {}
 
+        # build up a diff dict in order let the software handle multiple different parameters
+        # in one simulation directory
+        # some of the diffs should not be interpreted as parameters
+        # those are removed from the dict; for sure QP, RealFormat, InternalFormat, and Warning
+        # are not parameters
+        # if you want to simulate with your own parameters, make sure that they appear in the
+        # logfile
         try:
             for sim_data_item in sim_data_items:
-                all_enc_configs.append(sim_data_item.encoder_config)
+                if sim_data_item.__class__ not in all_enc_configs:
+                    all_enc_configs[sim_data_item.__class__] = []
+                    diff_dict[sim_data_item.__class__] = {}
+                all_enc_configs[sim_data_item.__class__].append(sim_data_item.encoder_config)
                 # print(sim_data_item.summary_data['encoder_config'])
             value_filter = ['.yuv','.bin','.hevc','.jem']
             key_filter = []
-            for i in range(len(all_enc_configs) - 1):
-                current_item, next_item = all_enc_configs[i], all_enc_configs[i + 1]
-                diff = set(current_item.values()) ^ set(next_item.values())
-                for (key, value) in set(current_item.items()) ^ set(next_item.items()):
-                    if all(y not in key for y in key_filter):
-                        if all(x not in value for x in value_filter):
-                            if key not in diff_dict:
-                                diff_dict[key] = []
-                                diff_dict[key].append(value)
-                            else:
-                                if value not in diff_dict[key]:
-                                    diff_dict[key].append(value)
-            if 'QP' in diff_dict:
-                diff_dict.pop('QP',None)
+            for sim_class in all_enc_configs.keys():
+                for i in range(len(all_enc_configs[sim_class]) - 1):
+                    current_item, next_item = all_enc_configs[sim_class][i], all_enc_configs[sim_class][i + 1]
+                    diff = set(current_item.values()) ^ set(next_item.values())
+                    for (key, value) in set(current_item.items()) ^ set(next_item.items()):
+                        if all(y not in key for y in key_filter):
+                            if all(x not in value for x in value_filter):
+                                if key not in diff_dict[sim_class]:
+                                    diff_dict[sim_class][key] = []
+                                    diff_dict[sim_class][key].append(value)
+                                else:
+                                    if value not in diff_dict[sim_class][key]:
+                                        diff_dict[sim_class][key].append(value)
+                if 'QP' in diff_dict[sim_class]:
+                    diff_dict[sim_class].pop('QP',None)
 
-            if 'RealFormat' in diff_dict:
-                diff_dict.pop('RealFormat', None)
+                if 'RealFormat' in diff_dict[sim_class]:
+                    diff_dict[sim_class].pop('RealFormat', None)
 
-            if 'InternalFormat' in diff_dict:
-                diff_dict.pop('InternalFormat', None)
+                if 'InternalFormat' in diff_dict[sim_class]:
+                    diff_dict[sim_class].pop('InternalFormat', None)
 
-            if diff_dict:
-                additional_param_found = True
+                if 'Warning' in diff_dict[sim_class]:
+                    diff_dict[sim_class].pop('Warning', None)
+
+                if 'Byteswrittentofile' in diff_dict[sim_class]:
+                    diff_dict[sim_class].pop('Byteswrittentofile', None)
+                
+                if 'TotalTime' in diff_dict[sim_class]:
+                    diff_dict[sim_class].pop('TotalTime', None)
+                
+                if diff_dict[sim_class]:
+                    additional_param_found.append(sim_class)
 
         except(AttributeError):
             # maybe do something useful here
             # This is for conformance with rd data written out by older versions of rdplot
             pass
 
-        if not additional_param_found:
-            for sim_data_item in sim_data_items:
+        for sim_data_item in sim_data_items:
 
-                # Get *item* of the tree corresponding to *sim_data_item*
-                item = self.create_path(*sim_data_item.tree_identifier_list)
+            has_additional_params = False
+            if sim_data_item.__class__ in additional_param_found:
+                sim_data_item.additional_params = list(diff_dict[sim_data_item.__class__].keys())
+                has_additional_params = True
 
-                # This prevents an sim data item overwriting another one
-                # with same *tree_identifier_list* but different absolute path
-                for value in item.values:
-                    condition = (
-                        value.tree_identifier_list() == sim_data_item.tree_identifier_list
-                        and value.path != sim_data_item.path
-                    )
-                    if condition:
-                        raise AmbiguousSimDataItems((
-                                                        "Ambigious sim data items: Sim Data Item {} and {}"
-                                                        " have different absolute paths but the same"
-                                                        " position at the tree {}"
-                                                    ).format(sim_data_item, value, AbstractEncLog.tree_identifier_list))
-                # Add *sim_data_item* to the set of values of the tree item *item*
-                item.values.add(sim_data_item)
-        else:
-            for sim_data_item in sim_data_items:
-                sim_data_item.additional_params = list(diff_dict.keys())   
-                item = self.create_path(*sim_data_item.tree_identifier_list)
-                item.values.add(sim_data_item)
+            # Get *item* of the tree corresponding to *sim_data_item*
+            item = self.create_path(*sim_data_item.tree_identifier_list)
+
+            # This prevents an sim data item overwriting another one
+            # with same *tree_identifier_list* but different absolute path
+            for value in item.values:
+                condition = (
+                    value.tree_identifier_list == sim_data_item.tree_identifier_list
+                    and value.path != sim_data_item.path
+                    and not has_additional_params
+                )
+                if condition:
+                    raise AmbiguousSimDataItems((
+                                                    "Ambigious sim data items: Sim Data Item {} and {}"
+                                                    " have different absolute paths but the same"
+                                                    " position at the tree {}"
+                                                ).format(sim_data_item, value, AbstractEncLog.tree_identifier_list))
+            # Add *sim_data_item* to the set of values of the tree item *item*
+            item.values.add(sim_data_item)
 
         self.items_changed.emit()
 
@@ -952,8 +973,17 @@ class BdTableModel(QAbstractTableModel):
         self.endInsertRows()
 
         self._plot_data_collection = plot_data_collection
+
         self._data = np.zeros((len(seq_set) + 1, len(config_set)))
-        self.update_table(bd_option, interp_option, 0)
+        # todo: remove this hack, once units are parsed. then tell by the unit whether we have temporal or summary plot, i.e. whether bd tables make sense
+        all_values = []
+        all_vals_are_integers = False
+        for collection in plot_data_collection:
+            all_values += collection.values
+        x_vals = [val[0] for val in all_values]
+        all_vals_are_integers = all(isinstance(item, int) for item in x_vals)
+        if not all_vals_are_integers:
+            self.update_table(bd_option, interp_option, 0)
 
     # This function is called when the anchor, the interpolation method
     # or the output of the bjontegaard delta is changed
@@ -1035,8 +1065,18 @@ class BdTableModel(QAbstractTableModel):
         self.dataChanged.emit(self.index(0, 0), self.index(row, col))
 
     def export_to_latex(self, filename):
-        from tabulate import tabulate
-
         seqs = [seq.split('_')[0] for seq in self._vertical_headers]
-        filehandle = open(filename, 'w')
-        filehandle.write(tabulate(self._data, self._horizontal_headers, showindex=seqs, tablefmt="latex_booktabs"))
+        latex_table = tabulate(self._data, self._horizontal_headers, showindex=seqs, tablefmt="latex_booktabs")
+
+        # creata a template class which uses % as the placeholder introducing delimiter, since this is the
+        # latex comment character
+        class LatexTemplate(Template):
+            delimiter = '%'
+
+        # open the template latex file, which has a preamble and add table
+        # this produces a file which can already be compiled
+        template_file_name = pkg_resources.resource_filename(__name__, 'latex_table_template.tex')
+        with open(template_file_name, 'r') as template_file, open(filename, 'w') as output_file:
+            latex_template = LatexTemplate(template_file.read())
+            new_latex_doc = latex_template.substitute(table_goeth_here=latex_table)
+            output_file.write(new_latex_doc)
