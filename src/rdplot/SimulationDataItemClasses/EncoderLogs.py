@@ -1,3 +1,22 @@
+##################################################################################################
+#    This file is part of RDPlot - A gui for creating rd plots based on pyqt and matplotlib
+#    <https://git.rwth-aachen.de/IENT-Software/rd-plot-gui>
+#    Copyright (C) 2017  Institut fuer Nachrichtentechnik, RWTH Aachen University, GERMANY
+#
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+##################################################################################################
 import re
 
 from os.path import abspath, join, isdir, isfile, normpath, basename, sep, dirname, splitext
@@ -34,9 +53,17 @@ class AbstractEncLog(AbstractSimulationDataItem):
                                     """, log_text, re.M + re.X)
             qp = re.findall(r""" ^QP \s+ : \s+ (\d+(?:.\d+)?) $
                                   """, log_text, re.M + re.X)
+            if not qp:
+                qp = re.findall(r"""^QP\s+:\s+(\d+(?:.\d+)?)\s+\(incrementing internal QP at source frame (\d+)\)$""",log_text, re.M)
+                qp = '/'.join(list(qp[0]))
+
         # join all found qps together, that is necessary
         # for SHM
-        qp = " ".join([str(float(q)) for q in qp])
+        try:
+            qp = " ".join([str(float(q)) for q in qp])
+        except ValueError:
+            pass
+
         if qp == "":
             raise SimulationDataItemError
         # set sequence to the sequence name without path and suffix
@@ -532,7 +559,6 @@ class EncLogSHM(AbstractEncLog):
                     )
             layerstring = 'layer ' + str(layer)
             data[layerstring] = data2
-
         return data
 
 #
