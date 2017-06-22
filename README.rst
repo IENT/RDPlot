@@ -82,7 +82,7 @@ Mac OS X
 =======================
 
 **Note:** things are not tested for Mac. You may have to fiddle a little bit.
-Please contribute, if you have idead for improvements.
+Please contribute, if you have ideas for improvements.
 
 First of all you need to install python3.
 You can get it `here  
