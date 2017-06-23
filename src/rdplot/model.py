@@ -789,6 +789,9 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                 if 'Warning' in diff_dict[sim_class]:
                     diff_dict[sim_class].pop('Warning', None)
 
+                if 'Frameindex' in diff_dict[sim_class]:
+                    diff_dict[sim_class].pop('Frameindex', None)
+
                 if 'Byteswrittentofile' in diff_dict[sim_class]:
                     diff_dict[sim_class].pop('Byteswrittentofile', None)
                 
