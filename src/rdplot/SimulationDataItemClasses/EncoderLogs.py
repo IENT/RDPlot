@@ -127,7 +127,7 @@ class EncLogHM(AbstractEncLog):
     @classmethod
     def can_parse_file(cls, path):
         matches_class = cls._enc_log_file_matches_re_pattern(path, r'^HM \s software')
-        is_finished = cls._is_file_text_matching_re_pattern(path, 'Total\ Time')
+        is_finished = cls._enc_log_file_matches_re_pattern(path, 'Total\ Time')
         return  matches_class and is_finished
 
 
@@ -235,7 +235,7 @@ class EncLogHM14(EncLogHM):
     @classmethod
     def can_parse_file(cls, path):
         matches_class = cls._enc_log_file_matches_re_pattern(path, r'^HM \s software: \s Encoder \s Version \s \[14')
-        is_finished = cls._is_file_text_matching_re_pattern(path, 'Total\ Time')
+        is_finished = cls._enc_log_file_matches_re_pattern(path, 'Total\ Time')
         return  matches_class and is_finished
 
     def _parse_summary_data(self):
@@ -291,7 +291,7 @@ class EncLogHM360Lib(AbstractEncLog):
     @classmethod
     def can_parse_file(cls, path):
         matches_class = cls._enc_log_file_matches_re_pattern(path, r'Y-PSNR_(?:DYN_)?VP0')
-        is_finished = cls._is_file_text_matching_re_pattern(path, 'Total\ Time')
+        is_finished = cls._enc_log_file_matches_re_pattern(path, 'Total\ Time')
         return  matches_class and is_finished
 
     def _parse_encoder_config(self):
@@ -464,7 +464,7 @@ class EncLogSHM(AbstractEncLog):
     @classmethod
     def can_parse_file(cls, path):
         matches_class = cls._enc_log_file_matches_re_pattern(path, r'^SHM \s software')
-        is_finished = cls._is_file_text_matching_re_pattern(path, 'Total\ Time')
+        is_finished = cls._enc_log_file_matches_re_pattern(path, 'Total\ Time')
         return  matches_class and is_finished
 
     def _parse_summary_data(self):
