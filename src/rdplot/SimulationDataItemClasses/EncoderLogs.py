@@ -27,7 +27,6 @@ from SimulationDataItem import (AbstractSimulationDataItem,
 
 
 class AbstractEncLog(AbstractSimulationDataItem):
-
     def __init__(self, path):
         super().__init__(path)
 
@@ -54,7 +53,8 @@ class AbstractEncLog(AbstractSimulationDataItem):
             qp = re.findall(r""" ^QP \s+ : \s+ (\d+(?:.\d+)?) $
                                   """, log_text, re.M + re.X)
             if not qp:
-                qp = re.findall(r"""^QP\s+:\s+(\d+(?:.\d+)?)\s+\(incrementing internal QP at source frame (\d+)\)$""",log_text, re.M)
+                qp = re.findall(r"""^QP\s+:\s+(\d+(?:.\d+)?)\s+\(incrementing internal QP at source frame (\d+)\)$""",
+                                log_text, re.M)
                 qp = '/'.join(list(qp[0]))
 
         # join all found qps together, that is necessary
@@ -81,9 +81,9 @@ class AbstractEncLog(AbstractSimulationDataItem):
         if not hasattr(self, 'additional_params'):
             self.additional_params = []
         return [self.__class__.__name__, self.sequence, self.config] + \
-               list(filter(None,['+'.join("{!s}={!r}".format(key,val) for (key,val) in dict((k, self.encoder_config[k]) for k in self.additional_params).items())])) + \
+               list(filter(None, ['+'.join("{!s}={!r}".format(key, val) for (key, val) in dict(
+                   (k, self.encoder_config[k]) for k in self.additional_params).items())])) + \
                [self.qp]
-
 
     @property
     def data(self):
@@ -93,12 +93,13 @@ class AbstractEncLog(AbstractSimulationDataItem):
         return [
             (
                 [self.sequence, self.config, self.qp],
-                {self.__class__.__name__ : {'Temporal': self.temporal_data}}
+                {self.__class__.__name__: {'Temporal': self.temporal_data}}
             ),
             (
                 [self.sequence, self.config] +
-                list(filter(None,['+'.join("{!s}={!r}".format(key,val) for (key,val) in dict((k, self.encoder_config[k]) for k in self.additional_params).items())])),
-                {self.__class__.__name__ : {'Summary': self.summary_data}}
+                list(filter(None, ['+'.join("{!s}={!r}".format(key, val) for (key, val) in dict(
+                    (k, self.encoder_config[k]) for k in self.additional_params).items())])),
+                {self.__class__.__name__: {'Summary': self.summary_data}}
             ),
         ]
 
@@ -111,10 +112,9 @@ class AbstractEncLog(AbstractSimulationDataItem):
         return False
 
     def _parse_summary_data(self):
-       with open(self.path, 'r') as log_file:
+        with open(self.path, 'r') as log_file:
             log_text = log_file.read()  # reads the whole text file
-            total_time = re.findall(r""" ^\s*Total\s+Time.\s+(\d+.\d+)
-                                """, log_text, re.M + re.X)
+
 
 class EncLogHM(AbstractEncLog):
     # Order value, used to determine order in which parser are tried.
@@ -126,34 +126,54 @@ class EncLogHM(AbstractEncLog):
 
     @classmethod
     def can_parse_file(cls, path):
-        return cls._enc_log_file_matches_re_pattern(
-            path,
-            r'^HM \s software'
-        )
+        matches_class = cls._enc_log_file_matches_re_pattern(path, r'^HM \s software')
+        is_finished = cls._enc_log_file_matches_re_pattern(path, 'Total\ Time')
+        return matches_class and is_finished
 
     def _parse_summary_data(self):
         with open(self.path, 'r') as log_file:
             log_text = log_file.read()  # reads the whole text file
-            # catch summary line
-            summaries = re.findall(r""" ^(\w*)-*.*$
-                           \s* # catch newline and space
-                           (.*)\| # catch phrase Total Frames / I / P / B
-                           (\s+\S+)(\s+\S+)(\s+\S+)(\s+\S+)(\s+\S+)# catch rest of the line
-                           \s* # catch newline and space
-                           (\d+\s+)\w # catch frame number
-                           (\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)# catch the fractional number (rate, PSNRs)
-                           #\s* .+ \s+ \d+.\d+ \s* .+ \s* (\w+ \s+ \w+).\s+ (\d+.\d+) #catch total time
-                      """, log_text, re.M + re.X)
-            total_time = re.findall(r""" ^\s*Total\s+Time.\s+(\d+.\d+)
-                           """, log_text, re.M + re.X)
+
+            hm_match = re.search(r'HM software: Encoder Version \[(\d*)\.(\d*)\]', log_text)
+            hm_major_version = hm_match.group(1)
+            hm_minor_version = hm_match.group(2)
+
+            if hm_major_version == '14':  # HM 14 does not write out average YUV-PSNR
+                # catch summary line
+                summaries = re.findall(r""" ^(\w*)-*.*$
+                                   \s* # catch newline and space
+                                   (.*)\| # catch phrase Total Frames / I / P / B
+                                   (\s+\S+)(\s+\S+)(\s+\S+)(\s+\S+)# catch rest of the line
+                                   \s* # catch newline and space
+                                   (\d+\s+)\w # catch frame number
+                                   (\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+) # catch the fractional number (rate, PSNRs)
+                              """, log_text, re.M + re.X)
+                total_time = re.findall(r""" ^\s*Total\s+Time.\s+(\d+.\d+)
+                               """, log_text, re.M + re.X)
+            else:
+                # catch summary line
+                summaries = re.findall(r""" ^(\w*)-*.*$
+                               \s* # catch newline and space
+                               (.*)\| # catch phrase Total Frames / I / P / B
+                               (\s+\S+)(\s+\S+)(\s+\S+)(\s+\S+)(\s+\S+)# catch rest of the line
+                               \s* # catch newline and space
+                               (\d+\s+)\w # catch frame number
+                               (\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)# catch the fractional number (rate, PSNRs)
+                          """, log_text, re.M + re.X)
+                total_time = re.findall(r""" ^\s*Total\s+Time.\s+(\d+.\d+)
+                               """, log_text, re.M + re.X)
         data = {}
         for summary in summaries:
             summary_type = summary[0]
             # Create upon first access
             if summary_type not in data:
                 data[summary_type] = {}
-            names = summary[1:7]
-            vals = summary[7:]
+
+            # remove first element, we need an even number of elements. then split into two list, values and names
+            # and pack them together
+            summary = summary[1:]
+            names = summary[:len(summary) // 2]
+            vals = summary[len(summary) // 2:]
 
             names = [name.strip() for name in names]  # remove leading and trailing space
             vals = [float(val) for val in vals]  # convert to numbers
@@ -162,7 +182,9 @@ class EncLogHM(AbstractEncLog):
             # print(summary_type)
 
             name_rate = 'Bitrate'
-            names.remove('Bitrate')
+            if summary_type == 'SUMMARY':
+                bitrate = float(vals[names.index(name_rate)])
+            names.remove(name_rate)
 
             # now pack everything together
             for name in names:
@@ -172,8 +194,10 @@ class EncLogHM(AbstractEncLog):
                 data[summary_type][name].append(
                     (name_val_dict[name_rate], name_val_dict[name])
                 )
-        #data['Total Time'] = total_time[0]
-        data['SUMMARY']['Total Time'] = [(float(summaries[0][8]), float(total_time[0]))]
+        # data['Total Time'] = total_time[0]
+        data['SUMMARY']['Total Time'] = [(bitrate, float(total_time[0]))]
+        data['SUMMARY']['HM Major Version'] = [(bitrate, int(hm_major_version))]
+        data['SUMMARY']['HM Minor Version'] = [(bitrate, int(hm_minor_version))]
         return data
 
     def _parse_encoder_config(self):
@@ -189,12 +213,12 @@ class EncLogHM(AbstractEncLog):
                         clean_line = one_line.strip(' \n\t\r')
                         clean_line = clean_line.replace(' ', '')
                         cleanlist.append(clean_line)
-                    #elif one_line.count(':')>1:
-                    # Ignore Multiline stuff for now
-                    # TODO: do something smart
-                    #else:
-                    # Something else happened, do nothing
-                    # TODO: do something smart
+                        # elif one_line.count(':')>1:
+                        # Ignore Multiline stuff for now
+                        # TODO: do something smart
+                        # else:
+                        # Something else happened, do nothing
+                        # TODO: do something smart
         parsed_config = dict(item.split(':') for item in cleanlist)
         return parsed_config
 
@@ -228,59 +252,6 @@ class EncLogHM(AbstractEncLog):
         return data
 
 
-class EncLogHM14(EncLogHM):
-    # Order value, used to determine order in which parser are tried.
-    parse_order = 11
-
-    @classmethod
-    def can_parse_file(cls, path):
-        return cls._enc_log_file_matches_re_pattern(
-            path,
-            r'^HM \s software: \s Encoder \s Version \s \[14'
-        )
-
-    def _parse_summary_data(self):
-        with open(self.path, 'r') as log_file:
-            log_text = log_file.read()  # reads the whole text file
-            # catch summary line
-            summaries = re.findall(r""" ^(\w*)-*.*$
-                               \s* # catch newline and space
-                               (.*)\| # catch phrase Total Frames / I / P / B
-                               (\s+\S+)(\s+\S+)(\s+\S+)(\s+\S+)# catch rest of the line
-                               \s* # catch newline and space
-                               (\d+\s+)\w # catch frame number
-                               (\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+) # catch the fractional number (rate, PSNRs)
-                          """, log_text, re.M + re.X)
-
-        data = {}
-        for summary in summaries:
-            summary_type = summary[0]
-            # Create upon first access
-            if summary_type not in data:
-                data[summary_type] = {}
-            names = summary[1:6]
-            vals = summary[6:]
-
-            names = [name.strip() for name in names]  # remove leading and trailing space
-            vals = [float(val) for val in vals]  # convert to numbers
-
-            name_val_dict = dict(zip(names, vals))  # pack both together in a dict
-            # print(summary_type)
-
-            name_rate = 'Bitrate'
-            names.remove('Bitrate')
-
-            # now pack everything together
-            for name in names:
-                if name not in data[summary_type]:  # create upon first access
-                    data[summary_type][name] = []
-                # Reference all data to *self.qp*
-                data[summary_type][name].append(
-                    (name_val_dict[name_rate], name_val_dict[name])
-                )
-        return data
-
-
 class EncLogHM360Lib(AbstractEncLog):
     # Order value, used to determine order in which parser are tried.
     parse_order = 20
@@ -291,10 +262,9 @@ class EncLogHM360Lib(AbstractEncLog):
 
     @classmethod
     def can_parse_file(cls, path):
-        return cls._enc_log_file_matches_re_pattern(
-            path,
-            r'Y-PSNR_(?:DYN_)?VP0',
-        ) #Y-PSNR_DYN_VP0
+        matches_class = cls._enc_log_file_matches_re_pattern(path, r'Y-PSNR_(?:DYN_)?VP0')
+        is_finished = cls._enc_log_file_matches_re_pattern(path, 'Total\ Time')
+        return matches_class and is_finished
 
     def _parse_encoder_config(self):
         with open(self.path, 'r') as log_file:
@@ -309,12 +279,12 @@ class EncLogHM360Lib(AbstractEncLog):
                         clean_line = one_line.strip(' \n\t\r')
                         clean_line = clean_line.replace(' ', '')
                         cleanlist.append(clean_line)
-                    #elif one_line.count(':')>1:
-                    # Ignore Multiline stuff for now
-                    # TODO: do something smart
-                    #else:
-                    # Something else happened, do nothing
-                    # TODO: do something smart
+                        # elif one_line.count(':')>1:
+                        # Ignore Multiline stuff for now
+                        # TODO: do something smart
+                        # else:
+                        # Something else happened, do nothing
+                        # TODO: do something smart
         parsed_config = dict(item.split(':') for item in cleanlist)
 
         # parse 360 rotation parameter
@@ -465,10 +435,9 @@ class EncLogSHM(AbstractEncLog):
 
     @classmethod
     def can_parse_file(cls, path):
-        return cls._enc_log_file_matches_re_pattern(
-            path,
-            r'^SHM \s software'
-        )
+        matches_class = cls._enc_log_file_matches_re_pattern(path, r'^SHM \s software')
+        is_finished = cls._enc_log_file_matches_re_pattern(path, 'Total\ Time')
+        return matches_class and is_finished
 
     def _parse_summary_data(self):
         with open(self.path, 'r') as log_file:
@@ -508,7 +477,7 @@ class EncLogSHM(AbstractEncLog):
             # add the addition of layers 1 and two in rate. PSNR values are taken from Layer one
             # TODO make this nice one day
             layerstring = 'layer 1 + 2'
-            #data2[layerstring] = {}
+            # data2[layerstring] = {}
             data4 = {}
             bitrate = 0
             for layer in range(0, layer_quantity):
@@ -527,7 +496,8 @@ class EncLogSHM(AbstractEncLog):
 
         data['SUMMARY']['layer 0']['Total Time'] = [(float(summaries[0][2]), float(total_time[0]))]
         data['SUMMARY']['layer 1']['Total Time'] = [(float(summaries[1][2]), float(total_time[0]))]
-        data['SUMMARY']['layer 1 + 2']['Total Time'] = [(float(data['SUMMARY']['layer 1 + 2']['Bitrate'][0][0]), float(total_time[0]))]
+        data['SUMMARY']['layer 1 + 2']['Total Time'] = [
+            (float(data['SUMMARY']['layer 1 + 2']['Bitrate'][0][0]), float(total_time[0]))]
         return data
 
     def _parse_temporal_data(self):
@@ -545,94 +515,18 @@ class EncLogSHM(AbstractEncLog):
         # Association between index of data in temp_data and corresponding
         # output key. Output shape definition is in one place.
         names = {0: 'Frames', 3: 'Bits', 6: 'Y-PSNR', 8: 'U-PSNR',
-                 10: 'V-PSNR', 12:'ET'}
+                 10: 'V-PSNR', 12: 'ET'}
 
         layer_quantity = int(max(temp_data[i][1] for i in range(0, len(temp_data)))) + 1
         layer_quantity = int(layer_quantity)
         data = {}
         for layer in range(0, layer_quantity):  # iterate through layers
             data2 = {name: [] for (index, name) in names.items()}
-            for j in range(0, int(len(temp_data)/layer_quantity)):  # iterate through frames (POCS)
+            for j in range(0, int(len(temp_data) / layer_quantity)):  # iterate through frames (POCS)
                 for (index, name) in names.items():
                     data2[name].append(
-                        (j, temp_data[layer_quantity*j+layer][index])
+                        (j, temp_data[layer_quantity * j + layer][index])
                     )
             layerstring = 'layer ' + str(layer)
             data[layerstring] = data2
         return data
-
-#
-# class EncLogHM360LibOld(AbstractEncLog):
-#     @classmethod
-#     def can_parse_file(cls, path):
-#         return cls._enc_log_file_matches_re_pattern(
-#             path,
-#             r'^-----360 \s video \s parameters----',
-#         )
-#
-#     def _parse_summary_data(self):
-#         with open(self.path, 'r') as log_file:
-#             log_text = log_file.read()  # reads the whole text file
-#             summaries = re.findall(r""" ^(\S+) .+ $ \s .+ $
-#                                         \s+ (\d+) \s+ \D \s+ (\S+)  # Total Frames, Bitrate
-#                                         \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)  # y-, u-, v-, yuv-PSNR
-#                                         \s+ (\S+) \s+ (\S+) \s+ (\S+)  # WSPSNR
-#                                         \s+ (\S+) \s+ (\S+) \s+ (\S+)  # CPPPSNR
-#                                         \s+ (\S+) \s+ (\S+) \s+ (\S+) \s $  # E2EWSPSNR
-#                                         """, log_text, re.M + re.X)
-#         data = {}
-#         names = {1: 'Frames', 2: 'Bitrate', 3: 'Y-PSNR', 4: 'U-PSNR',
-#                  5: 'V-PSNR', 6: 'YUV-PSNR', 7: 'Y-WSPSNR', 8: 'U-WSPSNR',
-#                  9: 'V-WSPSNR', 10: 'Y-CPPSNR', 11: 'U-CPPSNR', 12: 'V-CPPSNR',
-#                  13: 'Y-E2EWSPSNR', 14: 'U-E2EWSPSNR', 15: 'V-E2EWSPSNR'}
-#
-#         for i in range(0, len(summaries)):  # iterate through Summary, I, P, B
-#             data2 = {name: [] for (index, name) in names.items()}
-#             for (index, name) in names.items():
-#                 data2[name].append(
-#                     (float(summaries[i][2]), float(summaries[i][index]))
-#                 )
-#             data[summaries[i][0]] = data2
-#
-#         # viewport = re.findall(r""" ^\s+ (\d+) \s+ \D \s+ (\d+)  # total frames, viewport
-#         #                            \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)  # y-,u-,v-, yuv-PSNR
-#         #                            \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)$  # y-,u-,v-, yuv-MSE
-#         #                             """, log_text, re.M + re.X)
-#         #
-#         # viewportNames = {0: 'Frames', 1: 'Viewport', 2: 'Y-PSNR', 3: 'U-PSNR',
-#         #          4: 'V-PSNR', 5: 'YUV-PSNR', 6: 'Y-MSE', 7: 'U-MSE',
-#         #          8: 'V-MSE', 9: 'Y-MSE'}
-#
-#         return data
-#
-#     def _parse_temporal_data(self):
-#         # this function extracts temporal values
-#         with open(self.path, 'r') as log_file:
-#             log_text = log_file.read()  # reads the whole text file
-#             temp_data = re.findall(r"""
-#                 ^POC \s+ (\d+) \s+ .+ \s+ \d+ \s+ . \s+ (.-\D+) ,  # POC, Slice
-#                 \s .+ \) \s+ (\d+) \s+ \S+ \s+  # bits
-#                 \[ \S \s (\S+) \s \S+ \s+ \S \s (\S+) \s \S+ \s+ \S \s (\S+) \s \S+ ] \s  # y-, u-, v-PSNR
-#                 \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-WSPSNR
-#                 \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-CPPPSNR
-#                 \[ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ \s+ \S+ \s (\S+) \s \S+ ] \s  #y-, u-, v-E2EWSPSNR
-#                 """, log_text, re.M + re.X)
-#
-#         # Association between index of data in temp_data and corresponding
-#         # output key. Output shape definition is in one place.
-#         names = {0: 'Frames', 2: 'Bits',
-#                  3: 'Y-PSNR', 4: 'U-PSNR', 5: 'V-PSNR',
-#                  6: 'Y-WSPSNR', 7: 'U-WSPSNR', 8: 'V-WSPSNR',
-#                  9: 'Y-CPPSNR', 10: 'U-CPPSNR', 11: 'V-CPPSNR',
-#                  12: 'Y-E2EWSPSNR', 13: 'U-E2EWSPSNR', 14: 'V-E2EWSPSNR',
-#                  }
-#
-#         # Define output data dict and fill it with parsed values
-#         data = {name: [] for (index, name) in names.items()}
-#         for i in range(0, len(temp_data)):
-#             # As referencing to frame produces error, reference to index *i*
-#             for (index, name) in names.items():
-#                 data[name].append(
-#                     (i, temp_data[i][index])
-#                 )
-#         return data
