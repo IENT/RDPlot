@@ -5,7 +5,7 @@ from abc import ABCMeta
 
 from SimulationDataItem import (AbstractSimulationDataItem,
                                 SimulationDataItemError)
-
+from collections import defaultdict
 
 class AbstractEncLog(AbstractSimulationDataItem):
 
@@ -52,6 +52,34 @@ class AbstractEncLog(AbstractSimulationDataItem):
         sequence = splitext(basename(sequence[-1]))[0]
 
         return sequence, config, qp
+
+    def _get_label(self, keys):
+        # create all the labels with dictionaries. The leaves are tupels of x, y-labels
+        labels = {}
+        labels['Summary'] = {}
+        labels['Summary']['B'] = labels['Summary']['B']['layer 0'] = labels['Summary']['B']['layer 1'] = labels['Summary']['B']['layer 1 + 2'] = defaultdict(lambda: ('kb/s', 'dB'))
+        labels['Summary']['I'] = labels['Summary']['I']['layer 0'] = labels['Summary']['I']['layer 1'] = labels['Summary']['I']['layer 1 + 2'] = defaultdict(lambda: ('kb/s', 'dB'))
+        labels['Summary']['P'] = labels['Summary']['P']['layer 0'] = labels['Summary']['P']['layer 1'] = labels['Summary']['P']['layer 1 + 2'] = defaultdict(lambda: ('kb/s', 'dB'))
+        labels['Summary']['SUMMARY'] = labels['Summary']['SUMMARY']['layer 0'] = labels['Summary']['SUMMARY']['layer 1'] = labels['Summary']['SUMMARY']['layer 1 + 2'] = defaultdict(lambda: ('kb/s', 'dB'))
+
+        labels['Summary']['B']['Bitrate'] = labels['Summary']['I']['Bitrate'] = labels['Summary']['P']['Bitrate'] = labels['Summary']['SUMMARY']['Bitrate'] = ('kb/s', 'bits')
+        labels['Summary']['B']['Frames'] = labels['Summary']['B']['Total Frames'] = ('kb/s', 'Frames')
+        labels['Summary']['I']['Frames'] = labels['Summary']['I']['Total Frames'] = ('kb/s', 'Frames')
+        labels['Summary']['P']['Frames'] = labels['Summary']['P']['Total Frames'] = ('kb/s', 'Frames')
+        labels['Summary']['SUMMARY']['Frames'] = labels['Summary']['SUMMARY']['Total Frames'] = ('kb/s', 'Frames')
+
+        labels['Temporal'] = labels['Temporal']['layer 0'] = labels['Temporal']['layer 1'] = defaultdict(lambda: ('Frame', 'dB'))
+        labels['Temporal']['Bits'] = ('Frame', 'bits')
+        labels['Temporal']['Frames'] = ('Frame', 'POC')
+        label = labels
+        # return needed label with keys
+
+        for idx in keys[1:]:
+            if isinstance(label[idx], dict):
+                label = label[idx]
+            else:
+                label = label[idx]
+                return label
 
     # Properties
 

@@ -56,13 +56,14 @@ def dict_tree_from_sim_data_items(sim_data_item_collection):
                     for key, item in parent.items():
                         tree_queue.appendleft((keys + [key], item))
                     continue
+                label = sim_data_item._get_label(keys)
 
                 # Non dictionary items are processed ie. their data is
                 # added as PlotData object to the output *dict_tree*
                 dict_tree = append_value_to_dict_tree_at_path(
                     dict_tree,
                     keys,
-                    PlotData(identifiers, copy(parent), keys),
+                    PlotData(identifiers, copy(parent), keys, label),
                 )
 
     return dict_tree
@@ -139,10 +140,11 @@ class PlotData:
     :type path: :class: `list` of :class: `str`
     """
 
-    def __init__(self, identifiers, values, path):
+    def __init__(self, identifiers, values, path, label):
         self.identifiers = identifiers
         self.values = values
         self.path = path
+        self.label = label
 
 
 class SimulationDataItemError(Exception):
