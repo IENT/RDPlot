@@ -134,9 +134,9 @@ class EncLogHM(AbstractEncLog):
         with open(self.path, 'r') as log_file:
             log_text = log_file.read()  # reads the whole text file
 
-            hm_match = re.search(r'HM software: Encoder Version \[(\d*)\.(\d*)\]', log_text)
-            hm_major_version = hm_match.group(1)
-            hm_minor_version = hm_match.group(2)
+            hm_match = re.search(r'HM software: Encoder Version \[([a-zA-Z-]+)?([0-9]+)\.([0-9]+)', log_text)
+            hm_major_version = hm_match.group(2)
+            hm_minor_version = hm_match.group(3)
 
             if hm_major_version == '14':  # HM 14 does not write out average YUV-PSNR
                 # catch summary line
