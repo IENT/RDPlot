@@ -283,8 +283,31 @@ class Main(QMainWindow, Ui_MainWindow):
             except KeyError:
                 pass
 
+    def check_labels(self):
+        selectionmodel = self.variableTreeView.selectionModel()
+        selected = self.variableTreeView.selectedIndexes()
+        # return if no comparison needed
+        if len(selected) < 2:
+            return
+        labelx = []
+        labely = []
+        for index in selected:
+            x = index.internalPointer()
+            if len(x.values) > 0:
+                labelx.append(x.values[0].label[0])
+                labely.append(x.values[0].label[1])
+
+        if all(x == labelx[0] for x in labelx) and all(x == labely[0] for x in labely):
+            return
+
+        else:
+            QtWidgets.QMessageBox.information(self, "Error!",
+                                              "You should not choose curves with different units.")
+            selectionmodel.clearSelection()
+
     # updates the plot if the plot variable is changed
     def update_plot(self):
+        self.check_labels()
         plot_data_collection = self.get_plot_data_collection_from_selected_variables()
 
         self.plotPreview.change_plot(plot_data_collection)

@@ -98,6 +98,9 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.ax.set_prop_cycle(cycler('color', ['r', 'b', 'y', 'k', 'c', 'm', 'g', 'r', 'b', 'y', 'k', 'c', 'm', 'g']) +
                                cycler('marker', ['x', 'x', 'x', 'x', 'x', 'x', 'x', 'o', 'o', 'o', 'o', 'o', 'o', 'o']))
 
+        self.ax.set_xlabel(plot_data_collection[0].label[0])
+        self.ax.set_ylabel(plot_data_collection[0].label[1])
+
         # Now lets create a legend only containing informative
         # content (no duplicates)
         tmp_legend = []
@@ -131,7 +134,8 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
             plot_count += 1
 
-        self.ax.legend(loc='lower right')
+        if not(legend == ['']):
+            self.ax.legend(loc='lower right')
         DataCursor(self.ax.get_lines())
 
         start, end = self.ax.get_ylim()
