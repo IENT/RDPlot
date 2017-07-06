@@ -3,8 +3,7 @@ include LICENSE.txt
 
 include src/rdplot/ui/*
 include src/rdplot/logo/*
-include src/rdplot/rdplot.desktop
-include src/rdplot/latex_table_template.tex
+include src/rdplot/misc/*
 
 
 # Include the data files
