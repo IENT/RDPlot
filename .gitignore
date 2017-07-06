@@ -92,6 +92,11 @@ ENV/
 # example data folder
 example_simulation_data
 
+# ignore project files
+.idea
+.vscode
+*.pyproj
+*.sln
 
 # allow encoder logs in the automatic tests folder
 !src/rdplot/tests/test_logs/examplesForDifferentVersions/*/*.log
