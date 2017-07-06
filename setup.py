@@ -1,8 +1,4 @@
 """A setuptools based setup module.
-
-See:
-https://packaging.python.org/en/latest/distributing.html
-https://github.com/pypa/sampleproject
 """
 
 # Always prefer setuptools over distutils
@@ -14,7 +10,7 @@ import os
 
 # hack to get the version from git tag
 import importlib.util
-spec = importlib.util.spec_from_file_location("version", "src/rdplot/version.py")
+spec = importlib.util.spec_from_file_location("version", "src/rdplot/misc/version.py")
 rdplot_version = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(rdplot_version)
 
@@ -50,14 +46,14 @@ def get_data_files_with_correct_location():
             # install as user
             data_files = [(os.path.join(os.path.expanduser('~'),'.local/share/icons/'), ['src/rdplot/logo/PLOT64.png']),
             #data_files = [(os.path.join('/home/sauer/','.local/share/icons/'), ['src/rdplot/logo/PLOT64.png']),
-                          (os.path.join(os.path.expanduser('~'),'.local/share/applications/'), ['src/rdplot/rdplot.desktop'])]
+                          (os.path.join(os.path.expanduser('~'),'.local/share/applications/'), ['src/rdplot/misc/rdplot.desktop'])]
 
 
         else:
             # install as root or with sudo
             #data_files = [(os.path.join('/home/sauer/', '.local/share/icons/'), ['src/rdplot/logo/PLOT64.png']),
             data_files = [('/usr/share/pixmaps/', ['src/rdplot/logo/PLOT64.png']),
-                          ('/usr/share/applications/', ['src/rdplot/rdplot.desktop'])]
+                          ('/usr/share/applications/', ['src/rdplot/misc/rdplot.desktop'])]
 
     return data_files
 
@@ -82,7 +78,7 @@ setup(
     author_email='schneider@ient.rwth-aachen.de',
 
     # Choose your license
-    license='tbd',
+    license='GPL-v3',
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
@@ -90,7 +86,7 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
 
         # Indicate who your project is intended for
         'Intended Audience :: Science/Research',
@@ -114,7 +110,7 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=['rdplot','rdplot.lib','rdplot.SimulationDataItemClasses'],
+    packages=['rdplot','rdplot.lib','rdplot.SimulationDataItemClasses','rdplot.Widgets'],
     package_dir={'': 'src'},
 
     # Alternatively, if you want to distribute just a my_module.py, uncomment
@@ -139,7 +135,7 @@ setup(
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
     package_data={
-        'rdplot': ['src/rdplot/ui/*','src/rdplot/logo/*','src/rdplot/latex_table_template.tex','rdplot.desktop'],
+        'rdplot': ['src/rdplot/ui/*','src/rdplot/logo/*','src/rdplot/misc/*','src/rdplot/docs/about.html'],
     },
 
     # Although 'package_data' is the preferred approach, in some case you may
@@ -153,7 +149,7 @@ setup(
     # pip to create the appropriate form of executable for the target platform.
     entry_points={
         'console_scripts': [
-            'rdplot=rdplot:main',
+            'rdplot=rdplot.__main__:main',
         ],
     },
 )

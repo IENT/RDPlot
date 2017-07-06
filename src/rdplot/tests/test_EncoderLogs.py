@@ -1,6 +1,6 @@
 import unittest
-from SimulationDataItemClasses import EncoderLogs
-import SimulationDataItem
+from rdplot.SimulationDataItemClasses import EncoderLogs
+import rdplot.SimulationDataItem
 from os import path, listdir, walk
 
 TEST_DIR = path.dirname(path.abspath(__file__))

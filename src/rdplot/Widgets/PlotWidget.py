@@ -35,7 +35,7 @@ from os.path import sep
 
 import pkg_resources
 
-Ui_name = pkg_resources.resource_filename(__name__, 'ui' + sep + 'plotWidget.ui')
+Ui_name = pkg_resources.resource_filename('rdplot', 'ui' + sep + 'plotWidget.ui')
 Ui_PlotWidget, QWidget = loadUiType(Ui_name)
 
 class PlotWidget(QWidget, Ui_PlotWidget):

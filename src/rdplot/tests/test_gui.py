@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtTest import QTest
 from PyQt5 import QtWidgets
-from rdplot import Main
+from rdplot.Widgets.MainWindow import MainWindow
 
 from time import sleep
 
@@ -32,7 +32,7 @@ class TestMain(unittest.TestCase):
     def setUp(self):
         """Create the GUI"""
         self.app = QtWidgets.QApplication(sys.argv)
-        self.main_window = Main()
+        self.main_window = MainWindow()
         self.main_window.show()
         QTest.qWaitForWindowExposed(self.main_window)
 
@@ -70,7 +70,7 @@ class FuzzTestGUI(unittest.TestCase):
     def setUp(self):
         """Create the GUI"""
         self.app = QtWidgets.QApplication(sys.argv)
-        self.main_window = Main()
+        self.main_window = MainWindow()
         self.main_window.show()
         QTest.qWaitForWindowExposed(self.main_window)
 

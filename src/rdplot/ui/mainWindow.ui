@@ -442,12 +442,12 @@ padding: 4px;
   <customwidget>
    <class>SimDataItemTreeView</class>
    <extends>QTreeView</extends>
-   <header>view.h</header>
+   <header>rdplot.view</header>
   </customwidget>
   <customwidget>
    <class>PlottedFilesListView</class>
    <extends>QListView</extends>
-   <header>view.h</header>
+   <header>rdplot.view</header>
   </customwidget>
  </customwidgets>
  <resources/>
