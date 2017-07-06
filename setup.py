@@ -46,14 +46,14 @@ def get_data_files_with_correct_location():
             # install as user
             data_files = [(os.path.join(os.path.expanduser('~'),'.local/share/icons/'), ['src/rdplot/logo/PLOT64.png']),
             #data_files = [(os.path.join('/home/sauer/','.local/share/icons/'), ['src/rdplot/logo/PLOT64.png']),
-                          (os.path.join(os.path.expanduser('~'),'.local/share/applications/'), ['src/rdplot/rdplot.desktop'])]
+                          (os.path.join(os.path.expanduser('~'),'.local/share/applications/'), ['src/rdplot/misc/rdplot.desktop'])]
 
 
         else:
             # install as root or with sudo
             #data_files = [(os.path.join('/home/sauer/', '.local/share/icons/'), ['src/rdplot/logo/PLOT64.png']),
             data_files = [('/usr/share/pixmaps/', ['src/rdplot/logo/PLOT64.png']),
-                          ('/usr/share/applications/', ['src/rdplot/rdplot.desktop'])]
+                          ('/usr/share/applications/', ['src/rdplot/misc/rdplot.desktop'])]
 
     return data_files
 
@@ -135,7 +135,7 @@ setup(
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
     package_data={
-        'rdplot': ['src/rdplot/ui/*','src/rdplot/logo/*','src/rdplot/latex_table_template.tex','rdplot.desktop'],
+        'rdplot': ['src/rdplot/ui/*','src/rdplot/logo/*','src/rdplot/misc/latex_table_template.tex','src/rdplot/misc/rdplot.desktop'],
     },
 
     # Although 'package_data' is the preferred approach, in some case you may
