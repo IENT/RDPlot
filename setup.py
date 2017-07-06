@@ -10,7 +10,7 @@ import os
 
 # hack to get the version from git tag
 import importlib.util
-spec = importlib.util.spec_from_file_location("version", "src/rdplot/version.py")
+spec = importlib.util.spec_from_file_location("version", "src/rdplot/misc/version.py")
 rdplot_version = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(rdplot_version)
 
