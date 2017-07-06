@@ -23,7 +23,7 @@ from PyQt5 import QtGui
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QSize
 
-from Widgets import MainWindow
+from rdplot.Widgets import MainWindow
 
 import pkg_resources
 import sys

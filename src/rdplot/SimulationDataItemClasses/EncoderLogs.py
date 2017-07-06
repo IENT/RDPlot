@@ -22,7 +22,7 @@ import re
 from os.path import abspath, join, isdir, isfile, normpath, basename, sep, dirname, splitext
 from abc import ABCMeta
 
-from SimulationDataItem import (AbstractSimulationDataItem,
+from rdplot.SimulationDataItem import (AbstractSimulationDataItem,
                                 SimulationDataItemError)
 from collections import defaultdict
 

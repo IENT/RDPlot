@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtTest import QTest
 from PyQt5 import QtWidgets
-from Widgets import MainWindow
+from rdplot.Widgets.MainWindow import MainWindow
 
 from time import sleep
 

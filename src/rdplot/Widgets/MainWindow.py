@@ -2,18 +2,22 @@ from os import path
 from os.path import sep, isfile, isdir
 
 import pkg_resources
+import jsonpickle
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QItemSelectionModel
 from PyQt5.uic import loadUiType
 
-from SimulationDataItem import dict_tree_from_sim_data_items
-from Widgets.PlotWidget import PlotWidget
-from model import SimDataItemTreeModel, OrderedDictModel, VariableTreeModel, BdTableModel
-from view import QRecursiveSelectionModel
+
+from rdplot.SimulationDataItem import dict_tree_from_sim_data_items
+from rdplot.Widgets.PlotWidget import PlotWidget
+from rdplot.model import SimDataItemTreeModel, OrderedDictModel, VariableTreeModel, BdTableModel
+from rdplot.view import QRecursiveSelectionModel
 
 Ui_name = pkg_resources.resource_filename('rdplot', 'ui' + sep + 'mainWindow.ui')
 Ui_MainWindow, QMainWindow = loadUiType(Ui_name)
 
+here = pkg_resources.resource_filename('rdplot','')
+#here = path.abspath(path.dirname(__file__) + '/../')
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, ):
@@ -372,8 +376,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def save_current_selection(self):
         """Saves the current selected sim data item collection"""
         if not self.get_selected_simulation_data_items():
-            msg = QMessageBox(self)  # use self as parent here
-            msg.setIcon(QMessageBox.Information)
+            msg = QtWidgets.QMessageBox(self)  # use self as parent here
+            msg.setIcon(QtWidgets.QMessageBox.Information)
             msg.setText("You did not select any simulation data item to store\n"
                         "Please make a selection and try again.")
             msg.setWindowTitle("Info")
@@ -426,7 +430,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             about_text.close()
         except IOError:
             html_error = QtWidgets.QMessageBox()
-            html_error.setIcon(QMessageBox.Critical)
+            html_error.setIcon(QtWidgets.QMessageBox.Critical)
             html_error.setText("Error opening about or help")
             html_error.setInformativeText("The html file from the resource could not be loaded.")
             html_error.exec_()
