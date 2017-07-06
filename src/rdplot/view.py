@@ -33,9 +33,8 @@ from os.path import isdir
 import jsonpickle
 import json
 
-import model
-from SimulationDataItem import SimulationDataItemFactory, SimulationDataItemError
-from model import AmbiguousSimDataItems
+from rdplot.SimulationDataItem import SimulationDataItemFactory, SimulationDataItemError
+from rdplot.model import AmbiguousSimDataItems
 
 
 # Path to the folder containing simulation data sub classes. The classes
