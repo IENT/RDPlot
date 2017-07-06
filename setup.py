@@ -135,7 +135,7 @@ setup(
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
     package_data={
-        'rdplot': ['src/rdplot/ui/*','src/rdplot/logo/*','src/rdplot/misc/*'],
+        'rdplot': ['src/rdplot/ui/*','src/rdplot/logo/*','src/rdplot/misc/*','src/rdplot/docs/about.html'],
     },
 
     # Although 'package_data' is the preferred approach, in some case you may
