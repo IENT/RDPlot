@@ -22,9 +22,8 @@ from os.path import sep
 import numpy as np
 from PyQt5.Qt import Qt, QVariant, QModelIndex, QDialog, QLabel
 from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel, QAbstractTableModel, pyqtSignal
-from SimulationDataItemClasses.EncoderLogs import AbstractEncLog
-from lib.BD import bjontegaard
-from SimulationDataItem import AbstractSimulationDataItem
+from rdplot.SimulationDataItemClasses.EncoderLogs import AbstractEncLog
+from rdplot.lib.BD import bjontegaard
 from string import Template
 from tabulate import tabulate
 import pkg_resources

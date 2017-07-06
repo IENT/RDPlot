@@ -121,4 +121,12 @@ Unistall is also simple: Just delete the local copy of the repositories and all 
     
 
 
+Running from repository without installation
+========================
+
+Linux 
+=======================
+
+You can start rdplot from the command line with::
+    PYTHONPATH=~PATH_TO_RDPLOT/src/ python PATH_TO_RDPLOT/src/rdplot/__main__.py
 
