@@ -110,7 +110,7 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=['rdplot','rdplot.lib','rdplot.SimulationDataItemClasses'],
+    packages=['rdplot','rdplot.lib','rdplot.SimulationDataItemClasses','rdplot.Widgets'],
     package_dir={'': 'src'},
 
     # Alternatively, if you want to distribute just a my_module.py, uncomment
