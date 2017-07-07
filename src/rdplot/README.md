@@ -21,7 +21,7 @@ It can:
 - -> pip install --upgrade pip
 - -> pip install -r requirements.txt
 
-Now you should be able to run the project from the virtual env by running \_\_init\_\_.py.
+Now you should be able to run the project from the virtual env by running \_\_main\_\_.py.
 
 ## on Ubuntu
     sudo apt get install python3-tk
@@ -30,11 +30,5 @@ Now you should be able to run the project from the virtual env by running \_\_in
     
 The install of the requirements via the requirements file may will fail because of
 jsonpickle. 
-But now you should be able to call \_\_init\_\_.py from the command line.
-
-
-# Scripts
-Helper script to start the gui and load all files and folders from the
-*example_simulation_data*. Invoke the script with
-``` python -m script.start_gui_and_parse_simulation_examples ```
-from the project main folder ie. the folder, which contains this file.
+But now you should be able to call \_\_main\_\_.py from the command line.
+Make sure that PYTHONPATH contains the rdplot source directory.
