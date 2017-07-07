@@ -129,4 +129,6 @@ Linux
 
 You can start rdplot from the command line with::
     PYTHONPATH=~PATH_TO_RDPLOT/src/ python PATH_TO_RDPLOT/src/rdplot/__main__.py
+    
+If you want to start the tool out of an IDE like PyCharm, make sure that you have set the PYTHONPATH environment variable correctly.
 
