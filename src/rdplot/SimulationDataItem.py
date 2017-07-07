@@ -336,7 +336,7 @@ class SimulationDataItemFactory:
 
         # Parse *directory_path* for sub classes of *AbstractSimulationDataItem*
         classes = []
-        for importer, name, _ in pkgutil.iter_modules([directory_path]):
+        for importer, name, _ in pkgutil.iter_modules([directory_path],'rdplot.SimulationDataItemClasses.'):
             # Import a module from *directory_path*
             module = importer.find_module(name).load_module(name)
 
