@@ -276,8 +276,11 @@ class Main(QMainWindow, Ui_MainWindow):
             return
 
         else:
-            QtWidgets.QMessageBox.information(self, "Error!",
-                                              "You should not choose curves with different units.")
+            msg = QMessageBox(self)
+            msg.setWindowTitle("Error!")
+            msg.setText("I am not allowed to plot curves with different units. Please choose again!")
+            msg.setIcon(QtWidgets.QMessageBox.Critical)
+            msg.show()
             selectionmodel.clearSelection()
 
     # updates the plot if the plot variable is changed

@@ -68,6 +68,7 @@ class AbstractEncLog(AbstractSimulationDataItem):
         labels['Summary']['P']['Frames'] = labels['Summary']['P']['Total Frames'] = ('kb/s', 'Frames')
         labels['Summary']['SUMMARY']['Frames'] = labels['Summary']['SUMMARY']['Total Frames'] = ('kb/s', 'Frames')
         labels['Summary']['SUMMARY']['Total Time'] = ('kb/s', 's')
+        labels['Summary']['SUMMARY']['HM Major Version'] = labels['Summary']['SUMMARY']['HM Minor Version'] = ('', 's')
 
         labels['Temporal'] = labels['Temporal']['layer 0'] = labels['Temporal']['layer 1'] = defaultdict(lambda: ('Frame', 'dB'))
         labels['Temporal']['Bits'] = ('Frame', 'bits')
