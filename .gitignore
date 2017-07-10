@@ -23,6 +23,7 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+src/pynsist_pkgs
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -92,6 +93,11 @@ ENV/
 # example data folder
 example_simulation_data
 
+# ignore project files
+.idea
+.vscode
+*.pyproj
+*.sln
 
 # allow encoder logs in the automatic tests folder
 !src/rdplot/tests/test_logs/examplesForDifferentVersions/*/*.log

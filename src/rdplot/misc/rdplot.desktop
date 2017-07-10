@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=RDPlot
+Type=Application
+Exec=bash -c 'export PATH="$PATH:~/.local/bin"; rdplot %F'
+Terminal=false
+Icon=PLOT64
+Comment=RDPlot tool
+NoDisplay=false
+Name[en]=RDPlot

@@ -43,16 +43,16 @@ and then::
 Now you can install rdplot, either as user or system wide.
 Install it system wide::
 
-    sudo pip3 install --no-binary dist/rdplot-1.0.0.tar.gz
+    sudo pip3 install --no-binary rdplot dist/rdplot-1.0.0.tar.gz
 
 As user. This will install the binary to ~/.local/bin/rdplot. Make sure it is 
 in your PATH. The desktop launcher also will work only if this is the case::
 
-   pip3 install --user --no-binary  dist/rdplot-1.0.0.tar.gz
+   pip3 install --user --no-binary rdplot  dist/rdplot-1.0.0.tar.gz
 
 If you already have the tool installed run::
 
-     sudo pip3 install --upgrade dist/rdplot-1.0.0.tar.gz 
+     sudo pip3 install --no-binary rdplot --upgrade dist/rdplot-1.0.0.tar.gz 
      
      
 Now you should be able to run rdplot from the command line and have a
@@ -82,7 +82,7 @@ Mac OS X
 =======================
 
 **Note:** things are not tested for Mac. You may have to fiddle a little bit.
-Please contribute, if you have idead for improvements.
+Please contribute, if you have ideas for improvements.
 
 First of all you need to install python3.
 You can get it `here  
@@ -121,4 +121,14 @@ Unistall is also simple: Just delete the local copy of the repositories and all 
     
 
 
+Running from repository without installation
+========================
+
+Linux 
+=======================
+
+You can start rdplot from the command line with::
+    PYTHONPATH=~PATH_TO_RDPLOT/src/ python PATH_TO_RDPLOT/src/rdplot/__main__.py
+    
+If you want to start the tool out of an IDE like PyCharm, make sure that you have set the PYTHONPATH environment variable correctly.
 

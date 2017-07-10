@@ -1,11 +1,29 @@
+##################################################################################################
+#    This file is part of RDPlot - A gui for creating rd plots based on pyqt and matplotlib
+#    <https://git.rwth-aachen.de/IENT-Software/rd-plot-gui>
+#    Copyright (C) 2017  Institut fuer Nachrichtentechnik, RWTH Aachen University, GERMANY
+#
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+##################################################################################################
 from collections import deque
 from os.path import sep
 import numpy as np
 from PyQt5.Qt import Qt, QVariant, QModelIndex, QDialog, QLabel
 from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel, QAbstractTableModel, pyqtSignal
-from SimulationDataItemClasses.EncoderLogs import AbstractEncLog
-from lib.BD import bjontegaard
-from SimulationDataItem import AbstractSimulationDataItem
+from rdplot.SimulationDataItemClasses.EncoderLogs import AbstractEncLog
+from rdplot.lib.BD import bjontegaard
 from string import Template
 from tabulate import tabulate
 import pkg_resources
@@ -770,6 +788,9 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                 if 'Warning' in diff_dict[sim_class]:
                     diff_dict[sim_class].pop('Warning', None)
 
+                if 'Frameindex' in diff_dict[sim_class]:
+                    diff_dict[sim_class].pop('Frameindex', None)
+
                 if 'Byteswrittentofile' in diff_dict[sim_class]:
                     diff_dict[sim_class].pop('Byteswrittentofile', None)
                 
@@ -1075,7 +1096,7 @@ class BdTableModel(QAbstractTableModel):
 
         # open the template latex file, which has a preamble and add table
         # this produces a file which can already be compiled
-        template_file_name = pkg_resources.resource_filename(__name__, 'latex_table_template.tex')
+        template_file_name = pkg_resources.resource_filename(__name__, 'misc/latex_table_template.tex')
         with open(template_file_name, 'r') as template_file, open(filename, 'w') as output_file:
             latex_template = LatexTemplate(template_file.read())
             new_latex_doc = latex_template.substitute(table_goeth_here=latex_table)
