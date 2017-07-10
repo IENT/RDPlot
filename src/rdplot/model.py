@@ -1096,7 +1096,7 @@ class BdTableModel(QAbstractTableModel):
 
         # open the template latex file, which has a preamble and add table
         # this produces a file which can already be compiled
-        template_file_name = pkg_resources.resource_filename(__name__, 'latex_table_template.tex')
+        template_file_name = pkg_resources.resource_filename(__name__, 'misc/latex_table_template.tex')
         with open(template_file_name, 'r') as template_file, open(filename, 'w') as output_file:
             latex_template = LatexTemplate(template_file.read())
             new_latex_doc = latex_template.substitute(table_goeth_here=latex_table)
