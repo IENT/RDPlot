@@ -271,6 +271,7 @@ padding: 4px;
     <addaction name="actionOpen_Directory_List"/>
     <addaction name="separator"/>
     <addaction name="actionSave_Table"/>
+    <addaction name="actionExport_TableWidget"/>
     <addaction name="separator"/>
     <addaction name="actionSave_Data"/>
    </widget>
@@ -417,6 +418,11 @@ padding: 4px;
   <action name="actionSave_Table">
    <property name="text">
     <string>&amp;Save Table</string>
+   </property>
+  </action>
+  <action name="actionExport_TableWidget">
+   <property name="text">
+    <string>&amp;Export table view ... as</string>
    </property>
   </action>
   <action name="actionSave_Data">
