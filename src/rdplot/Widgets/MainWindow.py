@@ -88,13 +88,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
 
         self.actionExport_TableWidget.triggered.connect(
-            self.export_TabletoCSV
+            self.export_table_to_csv
         )
 
         self.actionSave_Data.triggered.connect(
             self.save_current_selection
         )
-
 
         self.action_About.triggered.connect(
             self.open_about_page
@@ -366,7 +365,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.bdTableModel.update_table(self.combo_rate_psnr.currentText(),
                                        self.combo_interp.currentText(), index)
 
-    def export_TabletoCSV(self):
+    def export_table_to_csv(self):
         # remember that the decimal mark is '.'
         if self.tableWidget.rowCount() > 0:
             path = QtWidgets.QFileDialog.getSaveFileName(self, 'Save Table View as', '.', '*.csv')
