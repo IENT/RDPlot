@@ -1,5 +1,6 @@
 from os import path
 from os.path import sep, isfile, isdir
+import csv
 
 import pkg_resources
 import jsonpickle
@@ -86,10 +87,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.save_bd_table
         )
 
+        self.actionExport_TableWidget.triggered.connect(
+            self.export_table_to_csv
+        )
+
         self.actionSave_Data.triggered.connect(
             self.save_current_selection
         )
-
 
         self.action_About.triggered.connect(
             self.open_about_page
@@ -360,6 +364,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # anchor
         self.bdTableModel.update_table(self.combo_rate_psnr.currentText(),
                                        self.combo_interp.currentText(), index)
+
+    def export_table_to_csv(self):
+        # remember that the decimal mark is '.'
+        if self.tableWidget.rowCount() > 0:
+            path = QtWidgets.QFileDialog.getSaveFileName(self, 'Save Table View as', '.', '*.csv')
+            path = path[0] + path[1][1:]
+            if len(path) > 0:
+                with open(str(path), 'w', newline='') as stream:
+                    writer = csv.writer(stream)
+                    for row in range(self.tableWidget.rowCount()):
+                        rowdata = []
+                        rowdata.append(str(self.tableWidget.verticalHeaderItem(row).data(0))) #data(0) = data(Qt.displayRole)
+                        for column in range(self.tableWidget.columnCount()):
+                            item = self.tableWidget.item(row, column)
+                            if item is not None:
+                                rowdata.append(str(item.text()))
+                            else:
+                                rowdata.append('')
+                        writer.writerow(rowdata)
 
     def save_bd_table(self):
         if self.bdTableModel.rowCount(self) == 0:
