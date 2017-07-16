@@ -20,6 +20,9 @@
 from PyQt5.uic import loadUiType
 from PyQt5.QtWidgets import QDialog, QPushButton, QLabel, QMessageBox
 
+import matplotlib
+matplotlib.use('Qt5Agg')
+
 from matplotlib.figure import Figure
 from matplotlib import cbook
 from scipy import spatial
