@@ -6,15 +6,15 @@ branches:
 platform: x86
 
 install:
-  - cmd: pip3 install cycler matplotlib py pyparsing PyQt5 pytest python-dateutil pytz sip six tabulate mpldatacursor jsonpickle xmltodict pynsist
-  - cmd: git clone https://github.com/JensAc/WinPythonModules.git
-  - cmd: cd WinPythonModules
-  - cmd: pip3 install numpy-1.13.1+mkl-cp36-cp36m-win32.whl scipy-0.19.1-cp36-cp36m-win32.whl
-  - cmd: cd ..
+  - pip3 install cycler matplotlib py pyparsing PyQt5 pytest python-dateutil pytz sip six tabulate mpldatacursor jsonpickle xmltodict pynsist
+  - git clone https://github.com/JensAc/WinPythonModules.git
+  - cd WinPythonModules
+  - pip3 install numpy-1.13.1+mkl-cp36-cp36m-win32.whl scipy-0.19.1-cp36-cp36m-win32.whl
+  - cd ..
 
 build_script:
-  - cmd: cd src
-  - cmd: pynsist installer.cfg
+  - cd src
+  - pynsist installer.cfg
 
 artifacts:
   - path: ../build/nsis/rd-plot-install
