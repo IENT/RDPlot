@@ -1,9 +1,6 @@
-branches:
-
-  only:
-  - master
-
-platform: x86
+image: Visual Studio 2015
+platform:
+  -x86
 
 install:
   - pip3 install cycler matplotlib py pyparsing PyQt5 pytest python-dateutil pytz sip six tabulate mpldatacursor jsonpickle xmltodict pynsist
@@ -16,7 +13,10 @@ build_script:
   - cd src
   - pynsist installer.cfg
 
+after_build:
+  - cd ..
+
 artifacts:
-  - path: ../build/nsis/rd-plot-install
+  - path: /build/nsis/rd-plot-install
   
-  test: off
+test: off
