@@ -18,3 +18,5 @@ build_script:
 
 artifacts:
   - path: ../build/nsis/rd-plot-install
+  
+  test: off
