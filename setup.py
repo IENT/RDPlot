@@ -71,7 +71,7 @@ setup(
     long_description=long_description,
 
     # The project's main homepage.
-    url='https://git.rwth-aachen.de/IENT-Software/rd-plot-gui',
+    url='https://github.com/IENT/RDPlot',
 
     # Author details
     author='Jens Schneider, Johannes Sauer, Christoph Weyer, Alex Schmidt',
