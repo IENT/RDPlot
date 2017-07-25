@@ -45,13 +45,11 @@ def get_data_files_with_correct_location():
         if os.geteuid() != 0:
             # install as user
             data_files = [(os.path.join(os.path.expanduser('~'),'.local/share/icons/'), ['src/rdplot/logo/PLOT64.png']),
-            #data_files = [(os.path.join('/home/sauer/','.local/share/icons/'), ['src/rdplot/logo/PLOT64.png']),
                           (os.path.join(os.path.expanduser('~'),'.local/share/applications/'), ['src/rdplot/misc/rdplot.desktop'])]
 
 
         else:
             # install as root or with sudo
-            #data_files = [(os.path.join('/home/sauer/', '.local/share/icons/'), ['src/rdplot/logo/PLOT64.png']),
             data_files = [('/usr/share/pixmaps/', ['src/rdplot/logo/PLOT64.png']),
                           ('/usr/share/applications/', ['src/rdplot/misc/rdplot.desktop'])]
 
