@@ -5,7 +5,6 @@ sudo: required
 dist: trusty
 
 python:
-  - 3.4
   - 3.5
   - 3.6
 virtualenv:
@@ -20,7 +19,7 @@ before_install:
  - pip3 install gitversion
  - python3 setup.py sdist
 install:
-    sudo pip3 install --no-binary rdplot dist/rdplot-1.0.0.tar.gz 
+    sudo pip3 install  dist/rdplot-1.0.0.tar.gz
 script:
  - python -m unittest discover
 
