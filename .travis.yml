@@ -15,7 +15,7 @@ before_install:
 # - sudo apt-get update
 # - sudo apt-get install -qq python-numpy python-six
 # - sudo apt-get install libquantlib0-dev
- - pip3 install -r requirements.txt
+# - pip3 install -r requirements.txt
  - python3 setup.py sdist
 install:
     sudo pip3 install --no-binary rdplot dist/rdplot-1.0.0.tar.gz 
