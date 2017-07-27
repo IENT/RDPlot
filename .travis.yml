@@ -17,6 +17,7 @@ before_install:
 # - sudo apt-get install libquantlib0-dev
 # - pip3 install -r requirements.txt
  - sudo apt-get install python3-jsonpickle python3-tk  python3-pip  python3-setuptools
+ - pip3 install gitversion
  - python3 setup.py sdist
 install:
     sudo pip3 install --no-binary rdplot dist/rdplot-1.0.0.tar.gz 
