@@ -19,7 +19,7 @@ before_install:
  - pip3 install gitversion
  - python3 setup.py sdist
 install:
-    sudo pip3 install  --no-binary rdplot dist/rdplot-*.tar.gz
+    sudo pip3 install  dist/rdplot-*.tar.gz
 script:
  - python -m unittest discover
 
