@@ -21,7 +21,7 @@ before_install:
  - pwd  
  - ls 
 install:
-    sudo pip3 install  dist/rdplot-1.0.0.tar.gz
+    sudo pip3 install  dist/rdplrdplot-*.tar.gz
 script:
  - python -m unittest discover
 
