@@ -18,10 +18,8 @@ before_install:
  - sudo apt-get install python3-jsonpickle python3-tk  python3-pip  python3-setuptools
  - pip3 install gitversion
  - python3 setup.py sdist
- - pwd  
- - ls 
 install:
-    sudo pip3 install  dist/rdplot-*.tar.gz
+    sudo pip3 install  --no-binary rdplot dist/rdplot-*.tar.gz
 script:
  - python -m unittest discover
 
