@@ -12,7 +12,7 @@ before_install:
   - sudo apt-get update
 # - pip3 install -r requirements.txt
 #  - sudo apt-get install -y python3 python3-jsonpickle python3-tk  python3-pip  python3-setuptools
-  - pip3 install install jsonpickle  setuptools
+  - pip3 install jsonpickle  setuptools
   - pip3 install gitversion
   - python3 setup.py sdist
 install:
