@@ -18,6 +18,12 @@ before_install:
 install:
     pip3 install --no-binary rdplot  dist/rdplot-*.tar.gz
 #    sudo pip3 install  dist/rdplot-*.tar.gz
+
+before_script:
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
+  - sleep 3 # give xvfb some time to start
+  
 script:
  - ls
  - cd src
