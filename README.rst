@@ -10,6 +10,12 @@ Build status
 =======================
 .. image:: https://ci.appveyor.com/api/projects/status/y4gvft2pb3vmm4qe/branch/master?svg=true
 
+Code Coverage
+=======================
+.. image:: https://coveralls.io/repos/github/IENT/RDPlot/badge.svg?branch=master
+:target: https://coveralls.io/github/IENT/RDPlot?branch=master
+see for  `<https://coveralls.io/github/IENT/RDPlot>` details
+
 Installation
 ========================
 
