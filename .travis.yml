@@ -3,21 +3,18 @@
 language: python
 sudo: required
 dist: trusty
+
 python:
   - 3.5
   - 3.6
-#virtualenv:
-#    system_site_packages: true
+
 before_install:
-  - sudo apt-get update
-# - pip3 install -r requirements.txt
-#  - sudo apt-get install -y python3 python3-jsonpickle python3-tk  python3-pip  python3-setuptools
   - pip3 install jsonpickle  setuptools
   - pip3 install gitversion
   - python3 setup.py sdist
+
 install:
     pip3 install --no-binary rdplot  dist/rdplot-*.tar.gz
-#    sudo pip3 install  dist/rdplot-*.tar.gz
 
 before_script:
   - "export DISPLAY=:99.0"
@@ -25,7 +22,6 @@ before_script:
   - sleep 3 # give xvfb some time to start
   
 script:
- - ls
  - cd src
  - python -m unittest discover
 
