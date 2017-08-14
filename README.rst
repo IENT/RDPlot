@@ -40,6 +40,8 @@ You can also install the tool directly from pypi. E.g. as root::
      
 You can also build an app for OS X.
 
+For Windows an installer is available on the release page.
+
 Linux 
 =======================
 
