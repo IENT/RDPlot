@@ -29,3 +29,9 @@ script:
 after_success:
     - coveralls
 
+deploy:
+  provider: pypi
+  user: JensAc
+  password: secure: "Yl7xzj3iI0LZfdi3KxiqINdFlVsw2rgyz+WYgIqpNJAt5IJf0txw43oxmc0uBI7cW2CUoBZJloUXtgyvvbdj6uvND+ZGtNLI70AyhEaylKJNLtNQJxpZY1kJ/3109+ytdcEKPVYLsfUsAWBbtLJ4pBdIyME4xxvjj05gC1xEk9/HnQHRIR7gvpIUqLGseJ5H6Lilwx+DnWJv0FDIKH94iBACPmKU6lXRfSXbS/zFN56+O//lMgweR0At9APkTfi+EFn4f499z4cHbIWurjCfSClRpRWOYrIfQBfzSMKyI1YiZubjBzxgxsae8QwIdChRxQBmuChOAEsQ0q8WRus4XkniBwcLJ685Da82lk7ZqKfq18oRGG+3kCwRlnMfODotBI1eKXABx2NC/zkL55GaKWkfs50uNlTU1MXQ1QfIXwYeDtebNLnMQNKJi2kejuNrKPHjA1m1OSwSISTBC/L0xi7UgnzHaJwSAAtTKHc4do6IvIHOLNyc6uIt651WnJtyQc6Ow7AQu8hRqFiw6PiFackkhURfcnCwrSdwYrOZsU1eb6nY4HFcwRW4Tio8E+KYDo56RPVTWa12vfiVCBw5KspaGNABhqO5amw7jRScvXm6/gaQtgi2dv07l156l4M3Yn/T+S5ciuZhOw90TYYHDuz1oWK1WxV2/PFEqXXWtaU="
+#  on:
+#    tags: true
