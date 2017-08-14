@@ -8,7 +8,15 @@ Further information can be found in `src/rdplot/README.md
 
 Build status
 =======================
-.. image:: https://ci.appveyor.com/api/projects/status/y4gvft2pb3vmm4qe/branch/master?svg=true
+.. |Appveyor| image:: https://ci.appveyor.com/api/projects/status/y4gvft2pb3vmm4qe/branch/master?svg=true
+  :target: https://ci.appveyor.com/project/JensAc/rdplot
+.. |TravisCI| image:: https://travis-ci.org/IENT/RDPlot.svg?branch=master
+  :target: https://travis-ci.org/IENT/RDPlot 
++------------+------------+
+|  AppVeyor  | Travis CI  |
++============+============+
+| |Appveyor| | |TravisCI| |
++------------+------------+
 
 Code Coverage
 =======================
@@ -24,6 +32,12 @@ In the following sections different installation strategies are outlined:
 On this level of the repository you can build a python package which is 
 installable via pip3.
 
+You can also install the tool directly from pypi. E.g. as root::
+
+     sudo pip3 install rdplot
+     
+**Note:** In this case you will obtain the last tagged version. If you want to have the newest version available on Github, follow the instructions below.
+     
 You can also build an app for OS X.
 
 Linux 
