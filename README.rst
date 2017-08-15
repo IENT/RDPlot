@@ -21,7 +21,7 @@ Build status
 Code Coverage
 =======================
 .. image:: https://coveralls.io/repos/github/IENT/RDPlot/badge.svg?branch=master
-:target: https://coveralls.io/github/IENT/RDPlot
+  :target: https://coveralls.io/github/IENT/RDPlot
 
 see  `here 
 <https://coveralls.io/github/IENT/RDPlot>`_ for details.
