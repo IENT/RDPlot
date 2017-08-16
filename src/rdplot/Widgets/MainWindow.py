@@ -4,7 +4,7 @@ import csv
 
 import pkg_resources
 import jsonpickle
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import QItemSelectionModel
 from PyQt5.uic import loadUiType
 
