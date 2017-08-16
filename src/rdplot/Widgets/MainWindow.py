@@ -4,7 +4,7 @@ import csv
 
 import pkg_resources
 import jsonpickle
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import QItemSelectionModel
 from PyQt5.uic import loadUiType
 
@@ -135,7 +135,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             self.actionHide_PlotSettings.setChecked(False)
         self._variable_tree_selection_model.selectionChanged.connect(self.update_plot)
-        self._variable_tree_selection_model.selectionChanged.connect(self.update_table)
 
         self.simDataItemTreeView.deleteKey.connect(self.remove)
 
@@ -176,7 +175,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self._variable_tree_selection_model.selectionChanged.disconnect()
         self.simDataItemTreeModel.remove(list(values))
         self._variable_tree_selection_model.selectionChanged.connect(self.update_plot)
-        self._variable_tree_selection_model.selectionChanged.connect(self.update_table)
 
     def change_list(self, q_selected, q_deselected):
         """Extend superclass behavior by automatically adding the values of
@@ -291,6 +289,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         plot_data_collection = self.get_plot_data_collection_from_selected_variables()
 
         self.plotPreview.change_plot(plot_data_collection)
+        self.update_table(plot_data_collection)
 
         # update the model for the bd table, note the anchor is always
         # the first config if new simDataItems are selected
@@ -299,64 +298,168 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def get_table_header(self, plot_data_collection):
         tmp_legend = []
+        tmp_config = []
+
+        # make legend
         for plot_data in plot_data_collection:
             tmp = []
             for identifiers in plot_data.identifiers[1:]:
                 tmp += identifiers.split(sep)
             tmp2 = tmp + plot_data.path
             tmp_legend.append(tmp2)
+            tmp_config.append(tmp)
 
         legend = []
+        config = []
         for c in tmp_legend:
             result = list(filter(lambda x: all(x in l for l in tmp_legend) == False, c))
+            if result == []: result = [plot_data.path[-1]]
             legend.append(" ".join(result))
         if len(tmp_legend) == 1:
             legend = [plot_data.path[-1]]
 
-        return legend
+        #make config
+        for c in tmp_config:
+            result = list(filter(lambda x: all(x in l for l in tmp_config) == False, c))
+            if ((set([" ".join(result)]) - set(config) != set()) & (result != [])): config.append(" ".join(result))
+
+        result = (legend, config)
+        return result
 
     #updates the table
-    def update_table(self):
+    def update_table(self,plot_data_collection):
 
         self.tableWidget.clear()
         self.tableWidget.setColumnCount(0)
         self.tableWidget.setRowCount(0)
 
-        plot_data_collection = self.get_plot_data_collection_from_selected_variables()
+        if plot_data_collection != []:
+            if 'Temporal' in plot_data_collection[0].path: self.change_table_temporal(plot_data_collection)
+            else: self.change_table_summary(plot_data_collection)
 
+        self.tableWidget.resizeColumnsToContents()
+
+    def change_table_temporal(self, plot_data_collect):
+
+        plot_data_collection = plot_data_collect
         self.tableWidget.setRowCount(len(plot_data_collection))
-        header_count = plot_count = data_count = 0
+        plot_count = data_count = 0
         data_names = []
         plot_data_collection.sort(key=lambda plot_data: (plot_data.identifiers))
-        header = self.get_table_header(plot_data_collection)
+        legend = self.get_table_header(plot_data_collection)
+        header = legend[0]
 
         for plot_data in plot_data_collection:
             values = ((float(x), float(y)) for (x, y) in plot_data.values)
 
             sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
             [xs, ys] = list(zip(*sorted_value_pairs))
-            #make header
+
+            # make header
             if plot_data.identifiers[0] not in data_names:
                 self.tableWidget.insertRow(plot_count)
-                self.tableWidget.setVerticalHeaderItem(plot_count, QtWidgets.QTableWidgetItem(str(plot_data.identifiers[0])))
+                v_item = QtWidgets.QTableWidgetItem(str(plot_data.identifiers[0]))
+                font = self.tableWidget.font()
+                v_item.setData(6, QtGui.QFont(self.tableWidget.font().setBold(True)))
+                v_item.setData(6, QtGui.QFont("Ubuntu", 11, QtGui.QFont.Bold))
+                self.tableWidget.setVerticalHeaderItem(plot_count, v_item)
                 header_count = plot_count
                 data_names.append(plot_data.identifiers[0])
                 plot_count += 1
 
-            #fill up column per column
-            for column_count in range(0,len(xs))  :
+            # round data
+            if plot_data.label[1] == 'dB':
+                ys = tuple(map(lambda i: round(i, 1), ys))
+
+            self.tableWidget.horizontalHeader().setVisible(False)
+            # fill up column per column
+            for column_count in range(0, len(xs)):
 
                 self.tableWidget.setCurrentCell(plot_count, column_count)
                 if column_count > self.tableWidget.currentColumn():   self.tableWidget.insertColumn(column_count)
                 self.tableWidget.setItem(plot_count, column_count, QtWidgets.QTableWidgetItem(str(ys[column_count])))
-                self.tableWidget.setVerticalHeaderItem(plot_count, QtWidgets.QTableWidgetItem(str(header[data_count])))
-                self.tableWidget.setItem(header_count, column_count, QtWidgets.QTableWidgetItem(str(xs[column_count])))
+                self.tableWidget.setVerticalHeaderItem(plot_count, QtWidgets.QTableWidgetItem(str(header[data_count])+ " [" + str(plot_data.label[1]) + "] "))
+                new_item = QtWidgets.QTableWidgetItem(str(xs[column_count]))
+                new_item.setData(6, QtGui.QFont("Ubuntu", 11, QtGui.QFont.Bold))
+                self.tableWidget.setItem(header_count, column_count, new_item)
+
                 column_count += 1
 
             plot_count += 1
             data_count += 1
 
-        self.tableWidget.resizeColumnsToContents()
+    def change_table_summary(self, plot_data_collect):
+
+        plot_data_collection = plot_data_collect
+        header_count = plot_count = data_count = config_count = column_saver = 0
+        data_names = []
+        plot_data_collection.sort(key=lambda plot_data: plot_data.path[-1])
+        plot_data_collection.sort(key=lambda plot_data: plot_data.identifiers[0])
+        legend = self.get_table_header(plot_data_collection)
+        header = legend[0]
+        config = legend[1]
+
+        if ((config == []) | (len(config) == 1)):
+            self.change_table_temporal(plot_data_collection)
+            return
+
+        self.tableWidget.setRowCount(len(plot_data_collection)/len(config))
+
+        for plot_data in plot_data_collection:
+
+            values = ((float(x), float(y)) for (x, y) in plot_data.values)
+
+            sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
+            [xs, ys] = list(zip(*sorted_value_pairs))
+
+            # make header, important if more than one plot
+            if plot_data.identifiers[0] not in data_names:
+                self.tableWidget.insertRow(plot_count)
+                v_item = QtWidgets.QTableWidgetItem(str(plot_data.identifiers[0]))
+                v_item.setData(6, QtGui.QFont("Ubuntu", 11, QtGui.QFont.Bold))
+                self.tableWidget.setVerticalHeaderItem(plot_count, v_item)
+                header_count = plot_count
+                data_names.append(plot_data.identifiers[0])
+                plot_count += 1
+
+            # round data
+            if plot_data.label[1] == 'dB':
+                ys = tuple(map(lambda i: round(i, 1), ys))
+
+            #horizontal header if more than one config
+            if len(config) > 1: self.tableWidget.horizontalHeader().setVisible(True)
+            else: self.tableWidget.horizontalHeader().setVisible(False)
+
+            for column_count in range(0, len(xs)):
+
+                columns = column_saver + column_count
+                if (((column_saver+column_count) >= self.tableWidget.columnCount()) | (self.tableWidget.columnCount()==0) ):
+                    self.tableWidget.insertColumn(column_saver + column_count)
+                if plot_count >= self.tableWidget.rowCount():
+                    self.tableWidget.insertRow(plot_count)
+                # units in first row of table
+                new_item = QtWidgets.QTableWidgetItem(plot_data.label[0] + ' | ' + plot_data.label[1])
+                new_item.setData(6, QtGui.QFont("Ubuntu", 11, QtGui.QFont.Bold))
+                self.tableWidget.setItem(header_count, column_saver + column_count, new_item)
+                #self.tableWidget.setItem(header_count, column_saver + column_count, QtWidgets.QTableWidgetItem(plot_data.label[0] + ' | ' + plot_data.label[1]))
+                # x and y-value in one cell
+                self.tableWidget.setItem(plot_count, columns, QtWidgets.QTableWidgetItem(str(xs[column_count]) + ' | ' + str(ys[column_count])))
+                # header
+                self.tableWidget.setHorizontalHeaderItem(column_saver+column_count, QtWidgets.QTableWidgetItem(str(config[config_count])))
+                column_count += 1
+
+            if config[config_count] == header[data_count]: header[data_count] =  header[data_count].replace(config[config_count], plot_data.path[-1])
+            elif config[config_count] in header[data_count]: header[data_count] = header[data_count].replace(config[config_count], '')
+
+            self.tableWidget.setVerticalHeaderItem(plot_count, QtWidgets.QTableWidgetItem(str(header[data_count])))
+            column_saver = column_saver + column_count
+            config_count += 1
+
+            if config_count == len(config):
+                plot_count += 1
+                column_saver = config_count = 0
+            data_count += 1
+
 
     def update_bd_table(self, index):
         # update bd table, the index determines the anchor,

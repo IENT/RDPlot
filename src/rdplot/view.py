@@ -219,8 +219,9 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
                 self,
                 "Open Directory",
                 "/home/ient/Software/rd-plot-gui/examplLogs")
+            if not result: raise TypeError
             return result
-        except IndexError:
+        except (IndexError):
             return
 
     # open one or more files
