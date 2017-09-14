@@ -22,6 +22,7 @@ from os.path import sep
 import numpy as np
 from PyQt5.Qt import Qt, QVariant, QModelIndex, QDialog, QLabel
 from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel, QAbstractTableModel, pyqtSignal
+from rdplot.Widgets import MainWindow
 from rdplot.SimulationDataItemClasses.EncoderLogs import AbstractEncLog
 from rdplot.lib.BD import bjontegaard
 from string import Template
@@ -948,7 +949,12 @@ class BdTableModel(QAbstractTableModel):
         self.headerDataChanged.emit(Qt.Horizontal, 0, self._data.shape[1])
         self.headerDataChanged.emit(Qt.Vertical, 0, self._data.shape[0])
 
-    def update(self, plot_data_collection, bd_option, interp_option):
+    def update_new(self, plot_data_collection, bd_option, interp_option):
+        self.beginResetModel()
+        self.reset_model()
+        self.endResetModel()
+
+    def update(self, plot_data_collection, bd_option, interp_option, bd_plot):
         # reset the model in the first place and set data afterwards appropriately
         self.beginResetModel()
         self.reset_model()
@@ -996,20 +1002,24 @@ class BdTableModel(QAbstractTableModel):
         self._plot_data_collection = plot_data_collection
 
         self._data = np.zeros((len(seq_set) + 1, len(config_set)))
+
+        if all(collection.label == ("kb/s", "dB") for collection in plot_data_collection):
+            self.update_table(bd_option, interp_option, 0, bd_plot)
+
         # todo: remove this hack, once units are parsed. then tell by the unit whether we have temporal or summary plot, i.e. whether bd tables make sense
-        all_values = []
-        all_vals_are_integers = False
-        for collection in plot_data_collection:
-            all_values += collection.values
-        x_vals = [val[0] for val in all_values]
-        all_vals_are_integers = all(isinstance(item, int) for item in x_vals)
-        if not all_vals_are_integers:
-            self.update_table(bd_option, interp_option, 0)
+        #all_values = []
+        #all_vals_are_integers = False
+        #for collection in plot_data_collection:
+        #    all_values += collection.values
+        #x_vals = [val[0] for val in all_values]
+        #all_vals_are_integers = all(isinstance(item, int) for item in x_vals)
+        #if not all_vals_are_integers:
+        #    self.update_table(bd_option, interp_option, 0)
 
     # This function is called when the anchor, the interpolation method
     # or the output of the bjontegaard delta is changed
-    def update_table(self, bd_option, interp_option, anchor_index):
-        # if there are no rows and colums in the model,
+    def update_table(self, bd_option, interp_option, anchor_index, bd_plot):
+        # if there are no rows and columns in the model,
         # nothing can be updated
         if self.rowCount(self) == 0 and self.columnCount(self) == 0:
             return
@@ -1075,7 +1085,7 @@ class BdTableModel(QAbstractTableModel):
                 # calculate the bd, actually this can be extended by some plots
                 # TODO: Those plots could be a future project
                 configs = [anchor, identifiers_tmp[1]]
-                self._data[row, col] = bjontegaard(c1, c2, bd_option, interp_option, 'TEST', configs, True)
+                self._data[row, col] = bjontegaard(c1, c2, bd_option, interp_option, 'BD Plot', configs, bd_plot)
                 col += 1
             row += 1
 

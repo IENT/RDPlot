@@ -119,6 +119,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.combo_interp.currentIndexChanged.connect(self.on_combo_box)
         self.combo_rate_psnr.currentIndexChanged.connect(self.on_combo_box)
 
+        # set up bd plot checkbox
+        self.checkBox_bdplot.stateChanged.connect(self.on_combo_box)
+
     # sets Visibility for the Plotsettings Widget
     def set_plot_settings_visibility(self):
         self.plotsettings.visibilityChanged.disconnect(self.plot_settings_visibility_changed)
@@ -294,7 +297,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # update the model for the bd table, note the anchor is always
         # the first config if new simDataItems are selected
         self.bdTableModel.update(plot_data_collection, self.combo_rate_psnr.currentText(),
-                                 self.combo_interp.currentText())
+                                 self.combo_interp.currentText(), not(self.checkBox_bdplot.isChecked()))
 
     def get_table_header(self, plot_data_collection):
         tmp_legend = []
@@ -460,13 +463,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 column_saver = config_count = 0
             data_count += 1
 
-
     def update_bd_table(self, index):
         # update bd table, the index determines the anchor,
         # if it is non integer per default the first config is regarded as
         # anchor
         self.bdTableModel.update_table(self.combo_rate_psnr.currentText(),
-                                       self.combo_interp.currentText(), index)
+                                       self.combo_interp.currentText(), index, not(self.checkBox_bdplot.isChecked()))
 
     def export_table_to_csv(self):
         # remember that the decimal mark is '.'

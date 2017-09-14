@@ -9,7 +9,7 @@ import numpy as np
 from scipy.interpolate import pchip
 from scipy import integrate
 import matplotlib.pyplot as plt
-from matplotlib.pyplot import show
+from matplotlib.pyplot import show, close
 
 
 def bdrint(rate, dist, low, high):
@@ -151,6 +151,7 @@ def bdsnr(rate1, psnr1, rate2, psnr2, interpol, seq, directories, testmode):
     avg_diff = find_diff(pp1, pp2, max_int, min_int)
 
     if not testmode:
+        plt.close()
         plt.figure(seq)
 
         plt.fill_between(tmpx, ptmp1, ptmp2, alpha='0.3', lw='0')
@@ -216,7 +217,7 @@ def brate(rate1, psnr1, rate2, psnr2, interpol, seq, directories, testmode):
 
             int1 = pv(p_int1, max_int) - pv(p_int1, min_int)
             int2 = pv(p_int2, max_int) - pv(p_int2, min_int)
-
+            # calculate average difference???
             out = (int2 - int1) / (max_int - min_int)
 
             return out
@@ -260,6 +261,7 @@ def brate(rate1, psnr1, rate2, psnr2, interpol, seq, directories, testmode):
 
     if not testmode:
 
+        plt.close()
         plt.figure(seq)
 
         # plt.fill_between(zui3, ptmp1, ptmp2, alpha='0.3', lw='0')
