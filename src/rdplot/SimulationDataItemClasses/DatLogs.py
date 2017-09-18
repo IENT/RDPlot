@@ -29,10 +29,6 @@ class AbstractDatLog(AbstractSimulationDataItem):
     def __init__(self, path):
         super().__init__(path)
 
-        # Parse file path and set additional identifiers
-        # self.logType = self._get_Type(path)
-        self.sequence, self.config, self.qp = self._parse_path(self.path)
-
         with open(self.path, 'r') as dat_log:
             xml = dat_log.read()
             sim_data = xmltodict.parse(xml)
@@ -40,35 +36,24 @@ class AbstractDatLog(AbstractSimulationDataItem):
             # store the parsed xml dict
             self.sim_data = sim_data
 
+        # Parse file path and set additional identifiers
+        # self.logType = self._get_Type(path)
+        self.sequence, self.config, self.qp = self._parse_path(self.path)
+
         # Dictionaries holding the parsed values
         self.summary_data = self._parse_summary_data()
         self.temporal_data = {}  # Dat logs have no temporal data
 
     def _parse_path(self, path):
-        filename = basename(path)
+        """ parses the identifiers for an encoder log out of the
+        path of the logfile and the sequence name and qp given in
+         the logfile"""
+        # set config to path of sim data item
+        config = dirname(normpath(path))
+        sim_data = self.sim_data
 
-        separator = '-'
-        try:
-            filename_split = filename.split('_QP')[0].split(separator)
-            sequence = filename_split[-1]
-            config = separator.join(filename_split[0: -2])
-        except IndexError:
-            raise SimulationDataItemError((
-                "Filename {} can not be split into config until '{}' and"
-                " sequence between last '{}' and '_QP'"
-            ).format(filename, separator, separator))
-
-        # prepend simulation directory to config
-        config = dirname(normpath(path)) + config
-        qp = None
-        with open(self.path, 'r') as dat_log:
-            try:
-                xml = dat_log.read()
-                sim_data = xmltodict.parse(xml)
-                # TODO support for layer specific qp
-                qp = sim_data['Logfile']['QP']['Value']
-            except (IndexError, ExpatError):
-                raise SimulationDataItemError
+        sequence = sim_data['SeqName']['Value']
+        qp = sim_data['QP']['Value']
 
         return sequence, config, qp
 

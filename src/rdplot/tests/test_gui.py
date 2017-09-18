@@ -55,6 +55,14 @@ class TestMain(unittest.TestCase):
             with wait_signal(self.main_window.simDataItemTreeView.parserThread.allParsed, timeout=10000):
                 self.main_window.process_cmd_line_args(['dummyAppName', rd_data_file])
 
+        # try all dat log directories
+        rd_data_root = path.join(TEST_DIR, 'test_logs/exampleDatLogDirs/')
+        rd_data_files = listdir(rd_data_root)
+        rd_data_files = [path.join(rd_data_root, file) for file in rd_data_files]
+        for rd_data_file in rd_data_files:
+            with wait_signal(self.main_window.simDataItemTreeView.parserThread.allParsed, timeout=10000):
+                self.main_window.process_cmd_line_args(['dummyAppName', rd_data_file])
+
     def tearDown(self):
         #EXIT
         self.main_window.close()
@@ -83,6 +91,10 @@ class FuzzTestGUI(unittest.TestCase):
         sim_dirs = [path.join(sim_dirs_root, dir) for dir in sim_dirs]
         # find all rd-data
         rd_data_root = path.join(TEST_DIR, 'test_logs/exampleRDData/')
+        rd_data_files = listdir(rd_data_root)
+        rd_data_files = [path.join(rd_data_root, file) for file in rd_data_files]
+        # find all dat log dirs
+        rd_data_root = path.join(TEST_DIR, 'test_logs/exampleDatLogDirs/')
         rd_data_files = listdir(rd_data_root)
         rd_data_files = [path.join(rd_data_root, file) for file in rd_data_files]
 
