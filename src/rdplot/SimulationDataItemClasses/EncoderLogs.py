@@ -73,6 +73,10 @@ class AbstractEncLog(AbstractSimulationDataItem):
         return sequence, config, qp
 
     def _get_label(self, keys):
+        """
+        :param keys: Variable/Path for which to get the labels
+        :return: tuple of labels: (x-axis label, y-axis label)
+        """
         # create all the labels with dictionaries. The leaves are tupels of x, y-labels
         labels = {}
         labels['Summary'] = {}

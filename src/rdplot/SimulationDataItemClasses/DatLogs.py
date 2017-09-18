@@ -33,6 +33,13 @@ class AbstractDatLog(AbstractSimulationDataItem):
         # self.logType = self._get_Type(path)
         self.sequence, self.config, self.qp = self._parse_path(self.path)
 
+        with open(self.path, 'r') as dat_log:
+            xml = dat_log.read()
+            sim_data = xmltodict.parse(xml)
+            sim_data = sim_data['Logfile']
+            # store the parsed xml dict
+            self.sim_data = sim_data
+
         # Dictionaries holding the parsed values
         self.summary_data = self._parse_summary_data()
         self.temporal_data = {}  # Dat logs have no temporal data
@@ -109,26 +116,37 @@ class DatLogBasedOnClassName(AbstractDatLog):
                 return False
 
     def _parse_summary_data(self):
-        with open(self.path, 'r') as dat_log:
-            try:
-                xml = dat_log.read()
-                sim_data = xmltodict.parse(xml)
-                sim_data = sim_data['Logfile']
-                rate = float(sim_data['Rate']['Value'])
-                del sim_data['Rate']
+        try:
+            # create local copy of sim data. we don't want to delete the rate field outside of this function
+            sim_data = dict(self.sim_data)
+            rate = float(sim_data['Rate']['Value'])
+            del sim_data['Rate']
 
-                data = {}
-                for key, value in sim_data.items():
-                    try:
-                        data[key] = [(rate, float(sim_data[key]['Value']))]
-                    except ValueError:
-                        print("Could not convert %s: %s to float" % (key,sim_data[key]['Value'] ))
-                        continue
+            data = {}
+            for key, value in sim_data.items():
+                try:
+                    data[key] = [(rate, float(sim_data[key]['Value']))]
+                except ValueError:
+                    print("Could not convert %s: %s to float" % (key,sim_data[key]['Value'] ))
+                    continue
 
-                return data
-            except IndexError:
-                raise
+            return data
+        except IndexError:
+            raise
 
+    def _get_label(self, keys):
+        """
+        :param keys: Variable/Path for which to get the labels
+        :return: tuple of labels: (x-axis label, y-axis label)
+        """
+        sim_data = self.sim_data
+        unit_rate = sim_data['Rate']['Unit']
+        if 'Unit' in sim_data[keys[-1]]:
+            label = (unit_rate, sim_data[keys[-1]]['Unit'])
+        else:
+            label = ('dummy', 'dummy')
+
+        return label
 
 class DatLogHEVC(DatLogBasedOnClassName):
     pass
