@@ -146,9 +146,9 @@ class AbstractEncLog(AbstractSimulationDataItem):
             return cls._is_file_text_matching_re_pattern(path, pattern)
         return False
 
-    def _parse_summary_data(self):
-        with open(self.path, 'r') as log_file:
-            log_text = log_file.read()  # reads the whole text file
+    # def _parse_summary_data(self):
+    #     with open(self.path, 'r') as log_file:
+    #         log_text = log_file.read()  # reads the whole text file
 
 
 class EncLogHM(AbstractEncLog):
