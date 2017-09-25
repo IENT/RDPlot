@@ -13,7 +13,7 @@ TEST_DIR = path.dirname(path.abspath(__file__))
 SIMULATION_DATA_ITEM_CLASSES_PATH = path.normpath(path.join(TEST_DIR, '../SimulationDataItemClasses'))
 
 
-class TestEncoderLogs(unittest.TestCase):
+class TestDatLogs(unittest.TestCase):
     def setUp(self):
         self._factory = SimulationDataItemFactory.from_path(
             SIMULATION_DATA_ITEM_CLASSES_PATH
@@ -188,21 +188,6 @@ class TestEncoderLogs(unittest.TestCase):
                                                       ['Frames', 'Bitrate', 'Y-PSNR', 'U-PSNR', 'V-PSNR',
                                                        'YUV-PSNR'])
 
-                if isinstance(parsed_instance, DatLogs.DatLogBasedOnClassName):
-                    summary_data = parsed_instance.summary_data
-                    sequence = parsed_instance.sequence
-                    config = parsed_instance.config
-                    qp = parsed_instance.qp
-
-                    # run checks on the parsed data
-                    # check variable types
-                    self.assertTrue(isinstance(sequence, str))
-                    self.assertTrue(path.isdir(config))
-                    self.assertTrue(isinstance(float(qp), float))
-
-                    # no further checks possible, since the structure is defined by the xml format. not specific to a
-                    # specific version
-
                 # todo: need to add test code for these:
                 elif isinstance(parsed_instance, DatLogs.DatLogHEVC):
                     # we are only testing concrete implementations, not the abstract base class
@@ -235,8 +220,14 @@ class TestEncoderLogs(unittest.TestCase):
         # this will be triggered if there is a test implementation, but no logs to do the testing with
         for parser, was_tested in self.tested_parsers.items():
             if not was_tested:
-                # only testing encoder logs here
-                if not issubclass(parser, EncoderLogs.AbstractEncLog):
+                # only testing dat logs here
+                if not issubclass(parser, DatLogs.AbstractDatLog):
+                    continue
+                # todo: add test code for these, then remove this
+                if (
+                            parser is DatLogs.DatLogConversionPSNRLoss360
+                            or parser is DatLogs.DatLogJEM501_360
+                            or parser is DatLogs.DatLogHEVC):
                     continue
                 self.fail('%s was not tested! Did you add log files for it?' % parser)
 
