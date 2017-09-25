@@ -48,6 +48,8 @@ class AbstractDecAnalyserLog(AbstractSimulationDataItem):
         except:  # could not get name and qp from file name
             raise SimulationDataItemError
 
+        self.qp = float(qp)
+
         return sequence, config, qp
 
     def _get_label(self, keys):
@@ -56,8 +58,8 @@ class AbstractDecAnalyserLog(AbstractSimulationDataItem):
         :return: tuple of labels: (x-axis label, y-axis label)
         """
 
-        # everything is plotted over rate:
-        label = ('kb/s', keys[-1])
+        # everything is plotted over QP:
+        label = ('QP', keys[-1])
 
         return label
 
@@ -113,9 +115,6 @@ class DecAnalyserLogHM(AbstractDecAnalyserLog):
             variables_list = ['CABAC Count', 'CABAC Sum', 'CABAC bits', 'EP Count', 'EP Sum', 'EP bits', 'Total bits',
                               'Total bytes']
 
-            # get bitrate from last line of file
-            bitrate = float(re.search('\[TOTAL.*\(\s*(\d+)\)', log_text).group(1))
-
             # process each line
             for statistic in dec_statistics:
                 # try to match non total items
@@ -150,7 +149,7 @@ class DecAnalyserLogHM(AbstractDecAnalyserLog):
                         data[statistic_type][statistic_width][statistic_name][var_name] = []
                         # add an entry for each variable in variables_list
                         data[statistic_type][statistic_width][statistic_name][var_name].append(
-                            (bitrate, float(m.group(idx + 4))))
+                            (self.qp, float(m.group(idx + 4))))
                         pass
 
                     continue
@@ -177,10 +176,10 @@ class DecAnalyserLogHM(AbstractDecAnalyserLog):
                         data['Total'][statistic_name] = {}
 
                     for idx, var_name in enumerate(variables_list):
-                        # Reference all data to bit rate
+                        # Reference all data to qp
                         data['Total'][statistic_name][var_name] = []
                         # add an entry for each variable in variables_list
-                        data['Total'][statistic_name][var_name].append((bitrate, float(m.group(idx + 4))))
+                        data['Total'][statistic_name][var_name].append((self.qp, float(m.group(idx + 4))))
                         pass
 
                     continue
