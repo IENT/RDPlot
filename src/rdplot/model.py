@@ -675,22 +675,23 @@ class OrderedDictTreeModel(QAbstractItemModel):
 
         parent = item.parent
 
-        # Remove *item* itself and notify view
-        self.beginRemoveRows(q_index_parent, row, row)
-        parent._remove(item)
-        self.endRemoveRows()
+        if parent:  # todo: this check is necessary. fixing a bug. Still, how can parent be None?
+            # Remove *item* itself and notify view
+            self.beginRemoveRows(q_index_parent, row, row)
+            parent._remove(item)
+            self.endRemoveRows()
 
-        # Remove parent item recursively if
-        # * the parent item has no children
-        # * the parent item does not contain any values
-        # * the parent item is not the root item
-        condition = (
-            len(parent) == 0
-            and len(parent.values) == 0
-            and parent.parent is not None
-        )
-        if condition:
-            self.remove_item(parent, self.parent(q_index_parent))
+            # Remove parent item recursively if
+            # * the parent item has no children
+            # * the parent item does not contain any values
+            # * the parent item is not the root item
+            condition = (
+                len(parent) == 0
+                and len(parent.values) == 0
+                and parent.parent is not None
+            )
+            if condition:
+                self.remove_item(parent, self.parent(q_index_parent))
 
     def clear(self):
         """Remove all items except the *root* item from the tree."""
