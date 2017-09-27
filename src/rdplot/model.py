@@ -1024,67 +1024,70 @@ class BdTableModel(QAbstractTableModel):
             anchor = self._horizontal_headers[anchor_index]
             self._anchor_index = anchor_index
 
-        # iterate over all rows (sequences) and columns (configurations)
-        # of the table. Calculate one bd for each cell and store it in the
-        # model. Emit in the very end the dataChanged signal
-        row = 0
-        for seq in self._vertical_headers:
-            # the AVG seq is actually not a sequence, so just skip it
-            if(seq == 'AVG'):
-                continue
-            col = 0
-            for config in self._horizontal_headers:
-                # for the anchor vs anchor measurement the bd is zero,
-                # so just skip that case
-                if config == anchor:
-                    col += 1
+        try:
+            # iterate over all rows (sequences) and columns (configurations)
+            # of the table. Calculate one bd for each cell and store it in the
+            # model. Emit in the very end the dataChanged signal
+            row = 0
+            for seq in self._vertical_headers:
+                # the AVG seq is actually not a sequence, so just skip it
+                if(seq == 'AVG'):
                     continue
-                # determine the identifiers of the current cell
-                identifiers_tmp = [seq, config]
+                col = 0
+                for config in self._horizontal_headers:
+                    # for the anchor vs anchor measurement the bd is zero,
+                    # so just skip that case
+                    if config == anchor:
+                        col += 1
+                        continue
+                    # determine the identifiers of the current cell
+                    identifiers_tmp = [seq, config]
 
-                # if the anchor configuration is not available for the current seq continue
-                if len([x for x in self._plot_data_collection if
-                        '+'.join(x.identifiers).__eq__('+'.join([identifiers_tmp[0], anchor]))]) == 0:
-                    self._data[row, col] = np.nan
+                    # if the anchor configuration is not available for the current seq continue
+                    if len([x for x in self._plot_data_collection if
+                            '+'.join(x.identifiers).__eq__('+'.join([identifiers_tmp[0], anchor]))]) == 0:
+                        self._data[row, col] = np.nan
+                        col += 1
+                        continue
+
+                    # get the rd values for curve c1 which is the anchor
+                    c1 = [x for x in self._plot_data_collection if
+                          '+'.join(x.identifiers).__eq__('+'.join([identifiers_tmp[0], anchor]))][0].values
+                    c1 = sorted(list(set(c1)))  # remove duplicates, this is just a workaround for the moment....
+
+                    # if the configuration is not available for the current seq continue
+                    if len([x for x in self._plot_data_collection if
+                            '+'.join(x.identifiers).__eq__('+'.join(identifiers_tmp))]) == 0:
+                        self._data[row, col] = np.nan
+                        col += 1
+                        continue
+
+                    # get the rd values for curve c2
+                    c2 = [x for x in self._plot_data_collection
+                          if '+'.join(x.identifiers).__eq__('+'.join(identifiers_tmp))][0].values
+                    c2 = sorted(list(set(c2)))
+
+                    # if a simulation does not contain at least 4 rate points,
+                    # we do not want to calculate the bd
+                    if len(c1) < 4 or len(c2) < 4:
+                        self._data[row, col] = np.nan
+                        col += 1
+                        continue
+
+                    # calculate the bd, actually this can be extended by some plots
+                    # TODO: Those plots could be a future project
+                    configs = [anchor, identifiers_tmp[1]]
+                    self._data[row, col] = bjontegaard(c1, c2, bd_option, interp_option, 'TEST', configs, True)
                     col += 1
-                    continue
+                row += 1
 
-                # get the rd values for curve c1 which is the anchor
-                c1 = [x for x in self._plot_data_collection if
-                      '+'.join(x.identifiers).__eq__('+'.join([identifiers_tmp[0], anchor]))][0].values
-                c1 = sorted(list(set(c1)))  # remove duplicates, this is just a workaround for the moment....
+            # calculate the AVG rate savings or delta psnr and round the output to something meaningful
+            self._data[row,:] = np.mean(self._data[:-1,:][~np.isnan(self._data[:-1,:]).any(axis=1)], axis=0)
+            self._data = np.around(self._data, decimals=2)
 
-                # if the configuration is not available for the current seq continue
-                if len([x for x in self._plot_data_collection if
-                        '+'.join(x.identifiers).__eq__('+'.join(identifiers_tmp))]) == 0:
-                    self._data[row, col] = np.nan
-                    col += 1
-                    continue
-
-                # get the rd values for curve c2
-                c2 = [x for x in self._plot_data_collection
-                      if '+'.join(x.identifiers).__eq__('+'.join(identifiers_tmp))][0].values
-                c2 = sorted(list(set(c2)))
-
-                # if a simulation does not contain at least 4 rate points,
-                # we do not want to calculate the bd
-                if len(c1) < 4 or len(c2) < 4:
-                    self._data[row, col] = np.nan
-                    col += 1
-                    continue
-
-                # calculate the bd, actually this can be extended by some plots
-                # TODO: Those plots could be a future project
-                configs = [anchor, identifiers_tmp[1]]
-                self._data[row, col] = bjontegaard(c1, c2, bd_option, interp_option, 'TEST', configs, True)
-                col += 1
-            row += 1
-
-        # calculate the AVG rate savings or delta psnr and round the output to something meaningful
-        self._data[row,:] = np.mean(self._data[:-1,:][~np.isnan(self._data[:-1,:]).any(axis=1)], axis=0)
-        self._data = np.around(self._data, decimals=2)
-
-        self.dataChanged.emit(self.index(0, 0), self.index(row, col))
+            self.dataChanged.emit(self.index(0, 0), self.index(row, col))
+        except TypeError as e:
+            print('Error in creating table: %s' % e)
 
     def export_to_latex(self, filename):
         seqs = [seq.split('_')[0] for seq in self._vertical_headers]
