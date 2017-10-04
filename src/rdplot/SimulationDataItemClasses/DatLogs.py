@@ -140,6 +140,9 @@ class DatLogHEVC(DatLogBasedOnClassName):
 class DatLogJEM501_360(DatLogBasedOnClassName):
     pass
 
+class DatLogJEM70_360(DatLogBasedOnClassName):
+    pass
+
 class DatLogConversionPSNRLoss360(DatLogBasedOnClassName):
 
     def _parse_path(self, path):
