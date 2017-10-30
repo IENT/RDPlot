@@ -225,7 +225,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def update_variable_tree(self):
         """Collect all SimDataItems currently selected, and create variable
-        tree and corresponding data from it. Additionaly reselect all prevously
+        tree and corresponding data from it. Additionaly reselect all previously
         selected variables.
         """
 
@@ -244,6 +244,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # tree
         sim_data_items = self.get_selected_simulation_data_items()
         dict_tree = dict_tree_from_sim_data_items(sim_data_items)
+        #check if qp values are the same
+        self.check_qp(sim_data_items)
+
         # Reset variable tree and update it with *dict_tree*
         self.variableTreeModel.clear_and_update_from_dict_tree(dict_tree)
 
@@ -263,6 +266,38 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 )
             except KeyError:
                 pass
+
+    def check_qp(self, sim_data_items): # check if qp values are the same for each sequence
+        if len(sim_data_items) < 2: return
+        sim_data_items.sort(key=lambda item: (item.sequence))
+
+        qp_list,list = [],[]
+        seq = sim_data_items[0].sequence
+        config = sim_data_items[0].config
+
+        for item in sim_data_items:
+            if ((seq == item.sequence) & (config == item.config)):
+                list.append(item.qp)
+            elif (seq == item.sequence): #same sequence different config
+                config = item.config
+                qp_list.append(list)
+                list = []
+                list.append(item.qp)
+            else:  # different sequence
+                seq = item.sequence
+                config = item.config
+                qp_list.append(list)
+                if not(all(list == qp_list[0] for list in qp_list)):
+                    QtWidgets.QMessageBox.warning(self, "Warning",
+                                                  "Be careful! You chose a sequence with different QP.")
+                    return
+                list, qp_list = [], []
+                list.append(item.qp)
+        qp_list.append(list)
+
+        if not(all(list == qp_list[0] for list in qp_list )):
+            QtWidgets.QMessageBox.warning(self, "Warning",
+                                            "Be careful! You chose a sequence with different QP.")
 
     def check_labels(self):
         selectionmodel = self.variableTreeView.selectionModel()

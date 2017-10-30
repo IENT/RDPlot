@@ -20,9 +20,9 @@
 from collections import deque
 from os.path import sep
 import numpy as np
-from PyQt5.Qt import Qt, QVariant, QModelIndex, QDialog, QLabel
+import matplotlib.pyplot as plt
+from PyQt5.Qt import Qt, QVariant, QModelIndex, QDialog, QLabel, QMessageBox
 from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel, QAbstractTableModel, pyqtSignal
-from rdplot.Widgets import MainWindow
 from rdplot.SimulationDataItemClasses.EncoderLogs import AbstractEncLog
 from rdplot.lib.BD import bjontegaard
 from string import Template
@@ -949,10 +949,8 @@ class BdTableModel(QAbstractTableModel):
         self.headerDataChanged.emit(Qt.Horizontal, 0, self._data.shape[1])
         self.headerDataChanged.emit(Qt.Vertical, 0, self._data.shape[0])
 
-    def update_new(self, plot_data_collection, bd_option, interp_option):
-        self.beginResetModel()
-        self.reset_model()
-        self.endResetModel()
+        if plt.get_fignums() != []:
+            plt.cla()
 
     def update(self, plot_data_collection, bd_option, interp_option, bd_plot):
         # reset the model in the first place and set data afterwards appropriately
@@ -962,6 +960,7 @@ class BdTableModel(QAbstractTableModel):
 
         # there is no need to calculate a bd for just one curve
         if len(plot_data_collection) < 2:
+            plt.close()
             return
 
         seq_set = set()
@@ -980,9 +979,25 @@ class BdTableModel(QAbstractTableModel):
         seq_set = sorted(seq_set)
         config_set = sorted(config_set)
 
+        if len(seq_set) > 1:
+            plt.close()
+            bd_plot = True
+
         # there is no need to calculate a bjontegaard delta, if only one configuration is loaded
         if len(config_set) < 2:
+            plt.close()
             return
+        elif len(config_set) > 5 and (not bd_plot):
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Information)
+            msg.setText("Your BD plot will contain more than 5 curves, do you really want to continue?")
+            msg.setWindowTitle("Info")
+            msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+            result = msg.exec()
+
+            if result == QMessageBox.Cancel:
+                plt.close()
+                bd_plot = True
 
         self._horizontal_headers = list(config_set)
         self._vertical_headers = list(seq_set)
@@ -1005,22 +1020,31 @@ class BdTableModel(QAbstractTableModel):
 
         if all(collection.label == ("kb/s", "dB") for collection in plot_data_collection):
             self.update_table(bd_option, interp_option, 0, bd_plot)
-
-        # todo: remove this hack, once units are parsed. then tell by the unit whether we have temporal or summary plot, i.e. whether bd tables make sense
-        #all_values = []
-        #all_vals_are_integers = False
-        #for collection in plot_data_collection:
-        #    all_values += collection.values
-        #x_vals = [val[0] for val in all_values]
-        #all_vals_are_integers = all(isinstance(item, int) for item in x_vals)
-        #if not all_vals_are_integers:
-        #    self.update_table(bd_option, interp_option, 0)
+        else:
+            self.beginResetModel()
+            self.reset_model()
+            self.endResetModel()
+            plt.close()
 
     # This function is called when the anchor, the interpolation method
     # or the output of the bjontegaard delta is changed
     def update_table(self, bd_option, interp_option, anchor_index, bd_plot):
         # if there are no rows and columns in the model,
         # nothing can be updated
+        if bd_plot:
+            plt.close()
+        elif ((not bd_plot) and len(self._horizontal_headers) > 5):
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Information)
+            msg.setText("Your BD plot will contain more than 5 curves, do you really want to continue?")
+            msg.setWindowTitle("Info")
+            msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+            result = msg.exec()
+
+            if result == QMessageBox.Cancel:
+                plt.close()
+                bd_plot = True
+
         if self.rowCount(self) == 0 and self.columnCount(self) == 0:
             return
 
@@ -1083,9 +1107,8 @@ class BdTableModel(QAbstractTableModel):
                     continue
 
                 # calculate the bd, actually this can be extended by some plots
-                # TODO: Those plots could be a future project
                 configs = [anchor, identifiers_tmp[1]]
-                self._data[row, col] = bjontegaard(c1, c2, bd_option, interp_option, 'BD Plot', configs, bd_plot)
+                self._data[row, col] = bjontegaard(c1, c2, bd_option, interp_option, 'BD Plot '+seq, configs, bd_plot)
                 col += 1
             row += 1
 

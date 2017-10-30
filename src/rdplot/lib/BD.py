@@ -5,12 +5,12 @@
 
 import math
 from  math import log10
+
+from rdplot.Widgets.PlotWidget import BDPlotWidget
+
 import numpy as np
 from scipy.interpolate import pchip
 from scipy import integrate
-import matplotlib.pyplot as plt
-from matplotlib.pyplot import show, close
-
 
 def bdrint(rate, dist, low, high):
     log_rate = sorted([log10(t) for t in rate])
@@ -151,33 +151,10 @@ def bdsnr(rate1, psnr1, rate2, psnr2, interpol, seq, directories, testmode):
     avg_diff = find_diff(pp1, pp2, max_int, min_int)
 
     if not testmode:
-        plt.close()
-        plt.figure(seq)
 
-        plt.fill_between(tmpx, ptmp1, ptmp2, alpha='0.3', lw='0')
-
-        plt.plot(xi1, p1, label='{dir} i'.format(dir=directories[0]))
-        plt.plot(xi2, p2, label='{dir} i'.format(dir=directories[1]))
-        # plot 2 vertical lines at min and max
-        plt.vlines(min_int, y1min, y2min)
-        plt.vlines(max_int, y1max, y2max)
-
-        # plot scattered points of original psnr(log(rate))
-
-        plt.scatter(x1, y1, color='b', label='{dir} o'.format(dir=directories[0]))
-        plt.scatter(x2, y2, color='g', label='{dir} o'.format(dir=directories[1]))
-
-        plt.legend(loc='upper left')
-
-        plt.xlabel('Rate')
-        plt.ylabel('PSNR [dB]')
-
-        plt.grid()
-
-        suptitle = u'\u0394 PSNR = {diff}'.format(diff=avg_diff)
-        plt.suptitle(suptitle)
-
-        show(block=False)
+        bd = BDPlotWidget(seq)
+        bd.create_legend(directories)
+        bd.bd_plot_dsnr(p1, p2, xi1, xi2, min_int, max_int, y1min, y1max, y2min, y2max, x1, x2, y1, y2, avg_diff)
 
     return avg_diff
 
@@ -260,33 +237,11 @@ def brate(rate1, psnr1, rate2, psnr2, interpol, seq, directories, testmode):
     y2max = pv(pp2, max_int)
 
     if not testmode:
+        bd = BDPlotWidget(seq)
+        bd.create_legend(directories)
+        bd.bd_plot_drate(p1, p2, xi1, xi2, min_int, max_int, y1min, y1max, y2min, y2max, rate1, psnr1, rate2, psnr2,
+                         avg_diff)
 
-        plt.close()
-        plt.figure(seq)
-
-        # plt.fill_between(zui3, ptmp1, ptmp2, alpha='0.3', lw='0')
-        plt.plot(p1, xi1, label='{dir} i'.format(dir=directories[0]))
-        plt.plot(p2, xi2, label='{dir} i'.format(dir=directories[1]))
-
-        # plot 2 vertical lines at min and max
-        plt.hlines(min_int, y1min, y2min)
-        plt.hlines(max_int, y1max, y2max)
-
-        # plot scattered points of original psnr(log(rate))
-        plt.scatter(rate1, psnr1, color='b', label='{dir} o'.format(dir=directories[0]))
-        plt.scatter(rate2, psnr2, color='g', label='{dir} o'.format(dir=directories[1]))
-
-        plt.legend(loc='upper left')
-
-        plt.xlabel('Rate')
-        plt.ylabel('PSNR [dB]')
-
-        plt.grid()
-
-        suptitle = u'\u0394 Rate = {diff} %'.format(diff=round(avg_diff, 3))
-        plt.suptitle(suptitle)
-        if avg_diff:
-            show(block=False)
     return avg_diff
 
 
@@ -344,6 +299,7 @@ def bjontegaard(curve1, curve2, mode='dsnr', interpol='pol', seq='', d=list(), t
         print("Wrong mode was given. Use either 'dsnr' or 'rate' mode.")
         exit(1)
 
+
 # if __name__ == '__main__':
 #     c1 = [(1000, 28.47), (1200, 32.07), (1400, 34.77), (1600, 36.87)]
 #     c2 = [(900, 28.9), (1100, 32.5), (1300, 35.2), (1500, 37.3)]
@@ -359,3 +315,7 @@ def bjontegaard(curve1, curve2, mode='dsnr', interpol='pol', seq='', d=list(), t
 #
 #     # plt.show()
 #     # print x
+
+
+
+
