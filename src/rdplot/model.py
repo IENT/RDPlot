@@ -1018,7 +1018,7 @@ class BdTableModel(QAbstractTableModel):
 
         self._data = np.zeros((len(seq_set) + 1, len(config_set)))
 
-        if all(collection.label == ("kb/s", "dB") for collection in plot_data_collection):
+        if all(collection.label == ("kbps", "dB") for collection in plot_data_collection):
             self.update_table(bd_option, interp_option, 0, bd_plot)
         else:
             self.beginResetModel()
@@ -1054,6 +1054,7 @@ class BdTableModel(QAbstractTableModel):
         # if we have passed the index of the column for the anchor select that one as anchor
         anchor = self._horizontal_headers[self._anchor_index]
         if isinstance(anchor_index, int) and anchor_index != -1:
+            if (self._anchor_index != anchor_index) and not bd_plot: plt.clf()
             anchor = self._horizontal_headers[anchor_index]
             self._anchor_index = anchor_index
 

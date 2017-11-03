@@ -311,9 +311,9 @@ class BDPlotWidget(PlotWidget):
         legend = []
         for c in tmp_legend:
             result = list(filter(lambda x: all(x in l for l in tmp_legend) == False, c))
-            legend.append(" ".join(result))
-        if len(tmp_legend) == 1:
-            legend = ['']
+            if result: legend.append("".join(result[0]))
+        #if len(tmp_legend) == 1:
+        #   legend = ['']
 
         if len(legend) == 2:
             self._legend = legend

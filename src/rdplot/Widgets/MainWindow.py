@@ -120,7 +120,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.combo_rate_psnr.currentIndexChanged.connect(self.on_combo_box)
 
         # set up bd plot checkbox
-        self.checkBox_bdplot.stateChanged.connect(self.on_combo_box)
+        self.checkBox_bdplot.stateChanged.connect(self.update_bd_plot)
 
     # sets Visibility for the Plotsettings Widget
     def set_plot_settings_visibility(self):
@@ -503,7 +503,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # if it is non integer per default the first config is regarded as
         # anchor
         self.bdTableModel.update_table(self.combo_rate_psnr.currentText(),
-                                       self.combo_interp.currentText(), index, not(self.checkBox_bdplot.isChecked()))
+                                           self.combo_interp.currentText(), index, not(self.checkBox_bdplot.isChecked()))
+    def update_bd_plot(self):
+        plot_data_collection = self.get_plot_data_collection_from_selected_variables()
+        self.bdTableModel.update(plot_data_collection, self.combo_rate_psnr.currentText(),
+                                 self.combo_interp.currentText(), not (self.checkBox_bdplot.isChecked()))
 
     def export_table_to_csv(self):
         # remember that the decimal mark is '.'
