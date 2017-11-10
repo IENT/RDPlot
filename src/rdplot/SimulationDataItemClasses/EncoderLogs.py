@@ -17,7 +17,7 @@
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 ##################################################################################################
-import re
+import re, os
 
 from os.path import abspath, join, isdir, isfile, normpath, basename, sep, dirname, splitext
 from abc import ABCMeta
@@ -32,7 +32,8 @@ class AbstractEncLog(AbstractSimulationDataItem):
 
         # Parse file path and set additional identifiers
         # self.logType = self._get_Type(path)
-        self.sequence, self.config, self.qp = self._parse_path(self.path)
+        self.sequence, self.config = self._parse_path(self.path)
+
 
         # Dictionaries holding the parsed values
         self.summary_data = self._parse_summary_data()
@@ -50,27 +51,12 @@ class AbstractEncLog(AbstractSimulationDataItem):
             log_text = log_file.read()  # reads the whole text file
             sequence = re.findall(r""" ^Input \s+ File \s+ : \s+ (\S+) $
                                     """, log_text, re.M + re.X)
-            qp = re.findall(r""" ^QP \s+ : \s+ (\d+(?:.\d+)?) $
-                                  """, log_text, re.M + re.X)
-            if not qp:
-                qp = re.findall(r"""^QP\s+:\s+(\d+(?:.\d+)?)\s+\(incrementing internal QP at source frame (\d+)\)$""",
-                                log_text, re.M)
-                qp = '/'.join(list(qp[0]))
 
-        # join all found qps together, that is necessary
-        # for SHM
-        try:
-            qp = " ".join([str(float(q)) for q in qp])
-        except ValueError:
-            pass
-
-        if qp == "":
-            raise SimulationDataItemError
         # set sequence to the sequence name without path and suffix
         # not for
         sequence = splitext(basename(sequence[-1]))[0]
 
-        return sequence, config, qp
+        return sequence, config
 
     def _get_label(self, keys):
         """
@@ -115,25 +101,29 @@ class AbstractEncLog(AbstractSimulationDataItem):
         # This is for conformance with rd data written out by older versions of rdplot
         if not hasattr(self, 'additional_params'):
             self.additional_params = []
-        return [self.__class__.__name__, self.sequence, self.config] + \
-               list(filter(None, ['+'.join("{!s}={!r}".format(key, val) for (key, val) in dict(
-                   (k, self.encoder_config[k]) for k in self.additional_params).items())])) + \
-               [self.qp]
+        try:
+            l1 = list(zip(self.additional_params, [self.encoder_config[i] for i in self.additional_params]))
+            l1 = list(map(lambda x: '='.join(x), l1))
+            return [self.__class__.__name__, self.sequence, self.config] + l1
+        except:
+            # MESSAGEBOX
+            self.additional_params = ['QP']
+            return [self.__class__.__name__, self.sequence, self.config]
 
     @property
     def data(self):
         # This is for conformance with rd data written out by older versions of rdplot
         if not hasattr(self, 'additional_params'):
             self.additional_params = []
+        l1 = list(zip(self.additional_params, [self.encoder_config[i] for i in self.additional_params]))
+        l1 = list(map(lambda x: '='.join(x), l1))
         return [
             (
-                [self.sequence, self.config, self.qp],
+                [self.sequence, self.config] + l1[0:len(l1)],
                 {self.__class__.__name__: {'Temporal': self.temporal_data}}
             ),
             (
-                [self.sequence, self.config] +
-                list(filter(None, ['+'.join("{!s}={!r}".format(key, val) for (key, val) in dict(
-                    (k, self.encoder_config[k]) for k in self.additional_params).items())])),
+                [self.sequence, self.config] + l1[0:len(l1)-1],
                 {self.__class__.__name__: {'Summary': self.summary_data}}
             ),
         ]
@@ -146,9 +136,9 @@ class AbstractEncLog(AbstractSimulationDataItem):
             return cls._is_file_text_matching_re_pattern(path, pattern)
         return False
 
-    # def _parse_summary_data(self):
-    #     with open(self.path, 'r') as log_file:
-    #         log_text = log_file.read()  # reads the whole text file
+    def _parse_summary_data(self):
+        with open(self.path, 'r') as log_file:
+            log_text = log_file.read()  # reads the whole text file
 
 
 class EncLogHM(AbstractEncLog):
@@ -163,6 +153,10 @@ class EncLogHM(AbstractEncLog):
     def can_parse_file(cls, path):
         matches_class = cls._enc_log_file_matches_re_pattern(path, r'^HM \s software')
         is_finished = cls._enc_log_file_matches_re_pattern(path, 'Total\ Time')
+        if is_finished is False and matches_class is True:
+            # In case an enc.log file has not a Total Time mark it is very likely that the file is erroneous.
+            # TODO: Inform user with a dialog window
+            print("Warning: The file" + path + " might be erroneous.")
         return matches_class and is_finished
 
     def _parse_summary_data(self):
@@ -240,21 +234,29 @@ class EncLogHM(AbstractEncLog):
             log_text = log_file.read()  # reads the whole text file
             lines = log_text.split('\n')
             cleanlist = []
+            # some of the configs should not be interpreted as parameters
+            # those are removed from the cleanlist
+            param_not_considered = ['RealFormat', 'Warning', 'InternalFormat', 'Byteswrittentofile', 'Frameindex',
+                                    'TotalTime', 'HMsoftware']
             for one_line in lines:
                 if one_line:
                     if 'Non-environment-variable-controlled' in one_line:
                         break
                     if one_line.count(':') == 1:
                         clean_line = one_line.strip(' \n\t\r')
-                        clean_line = clean_line.replace(' ', '')
-                        cleanlist.append(clean_line)
-                        # elif one_line.count(':')>1:
-                        # Ignore Multiline stuff for now
-                        # TODO: do something smart
-                        # else:
-                        # Something else happened, do nothing
-                        # TODO: do something smart
-        parsed_config = dict(item.split(':') for item in cleanlist)
+                        clean_line = re.sub('\s+', '', clean_line)
+                        if not any(re.search(param,clean_line) for param in param_not_considered):
+                            cleanlist.append(clean_line)
+                    elif one_line.count(':') > 1:
+                        if re.search('\w+ \s+ \w+ \s+ \w+ \s+ :\s+ \( \w+ : \d+ , \s+ \w+ : \d+ \)', one_line, re.X):
+                            clean_line = re.findall('\w+ \s+ \w+ \s+ \w+ \s+ :\s+ \( \w+ : \d+ , \s+ \w+ : \d+ \)', one_line, re.X)
+                        else:
+                            clean_line = re.findall('\w+ : \d+ | \w+ : \s+ \w+ = \d+', one_line, re.X)
+                        for clean_item in clean_line:
+                            if not any(re.search(param,clean_item) for param in param_not_considered):
+                                cleanlist.append(clean_item)
+
+        parsed_config = dict(item.split(':', 1) for item in cleanlist)
         return parsed_config
 
     def _parse_temporal_data(self):

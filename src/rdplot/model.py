@@ -20,7 +20,9 @@
 from collections import deque
 from os.path import sep
 import numpy as np
-from PyQt5.Qt import Qt, QVariant, QModelIndex, QDialog, QLabel
+from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtWidgets import QPushButton
+from PyQt5.Qt import Qt, QVariant, QModelIndex, QDialog, QHBoxLayout, QVBoxLayout, QAbstractItemView
 from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel, QAbstractTableModel, pyqtSignal
 from rdplot.SimulationDataItemClasses.EncoderLogs import AbstractEncLog
 from rdplot.lib.BD import bjontegaard
@@ -493,7 +495,7 @@ class OrderedDictTreeModel(QAbstractItemModel):
         :rtype: Leaf :class: `OrderedDictTreeItem` item of the created path
         """
 
-        # Callback, which is used to create items not already preent at the
+        # Callback, which is used to create items not already present at the
         # *path*
         def create_item(key, item_parent, q_index_parent):
             # Always add as last child
@@ -777,28 +779,43 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                                 else:
                                     if value not in diff_dict[sim_class][key]:
                                         diff_dict[sim_class][key].append(value)
-                if 'QP' in diff_dict[sim_class]:
-                    diff_dict[sim_class].pop('QP',None)
 
-                if 'RealFormat' in diff_dict[sim_class]:
-                    diff_dict[sim_class].pop('RealFormat', None)
-
-                if 'InternalFormat' in diff_dict[sim_class]:
-                    diff_dict[sim_class].pop('InternalFormat', None)
-
-                if 'Warning' in diff_dict[sim_class]:
-                    diff_dict[sim_class].pop('Warning', None)
-
-                if 'Frameindex' in diff_dict[sim_class]:
-                    diff_dict[sim_class].pop('Frameindex', None)
-
-                if 'Byteswrittentofile' in diff_dict[sim_class]:
-                    diff_dict[sim_class].pop('Byteswrittentofile', None)
-                
-                if 'TotalTime' in diff_dict[sim_class]:
-                    diff_dict[sim_class].pop('TotalTime', None)
-                
+                # dialog window which displays all parameters with varying values in a list
+                # the user can drag the parameters, he wants to analyse further into an other list
+                # the order of the parameters in the list determines the order of the parameter tree
                 if diff_dict[sim_class]:
+                    par_list = [item for item in diff_dict[sim_class] if item != 'QP']
+                    qp_item = QtWidgets.QListWidgetItem('QP')
+                    chosen_par = QtWidgets.QListWidget()
+                    chosen_par.addItem(qp_item)
+                    chosen_par.setDragDropMode(QAbstractItemView.DragDrop)
+                    chosen_par.setDefaultDropAction(QtCore.Qt.MoveAction)
+                    not_chosen_par = QtWidgets.QListWidget()
+                    not_chosen_par.addItems(par_list)
+                    not_chosen_par.setDragDropMode(QAbstractItemView.DragDrop)
+                    not_chosen_par.setDefaultDropAction(QtCore.Qt.MoveAction)
+                    if len(diff_dict[sim_class]) > 1:
+                        main_layout = QVBoxLayout()
+                        dialog = QDialog()
+                        dialog.setWindowTitle('Choose Parameters')
+                        dialog.setLayout(main_layout)
+                        msg = QtWidgets.QLabel()
+                        msg.setText('Additional Parameters have been found.\n'
+                                    'Move Parameters you want to consider further to the right list.\n')
+                        main_layout.addWidget(msg)
+                        list_layout = QHBoxLayout()
+                        main_layout.addLayout(list_layout)
+                        # TODO: all items dragged into chosen_par should appear above the qp_item
+                        list_layout.addWidget(not_chosen_par)
+                        list_layout.addWidget(chosen_par)
+                        not_chosen_par.show()
+                        chosen_par.show()
+                        ok_button = QPushButton('OK')
+                        main_layout.addWidget(ok_button)
+                        ok_button.clicked.connect(dialog.close)
+                        dialog.exec()
+                    for i in range(len(not_chosen_par)):
+                        diff_dict[sim_class].pop(not_chosen_par.item(i).text(), None)
                     additional_param_found.append(sim_class)
 
         except(AttributeError):
