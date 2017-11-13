@@ -827,7 +827,7 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
 
             has_additional_params = False
             if sim_data_item.__class__ in additional_param_found:
-                sim_data_item.additional_params = list(diff_dict[sim_data_item.__class__].keys())
+                sim_data_item.additional_params = [chosen_par.item(i).text() for i in range(len(chosen_par))]
                 has_additional_params = True
 
             # Get *item* of the tree corresponding to *sim_data_item*
