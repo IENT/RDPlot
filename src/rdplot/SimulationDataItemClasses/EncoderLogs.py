@@ -80,23 +80,23 @@ class AbstractEncLog(AbstractSimulationDataItem):
         # create all the labels with dictionaries. The leaves are tupels of x, y-labels
         labels = {}
         labels['Summary'] = {}
-        labels['Summary']['B'] = labels['Summary']['B']['layer 0'] = labels['Summary']['B']['layer 1'] = labels['Summary']['B']['layer 1 + 2'] = defaultdict(lambda: ('kb/s', 'dB'))
-        labels['Summary']['I'] = labels['Summary']['I']['layer 0'] = labels['Summary']['I']['layer 1'] = labels['Summary']['I']['layer 1 + 2'] = defaultdict(lambda: ('kb/s', 'dB'))
-        labels['Summary']['P'] = labels['Summary']['P']['layer 0'] = labels['Summary']['P']['layer 1'] = labels['Summary']['P']['layer 1 + 2'] = defaultdict(lambda: ('kb/s', 'dB'))
-        labels['Summary']['SUMMARY'] = labels['Summary']['SUMMARY']['layer 0'] = labels['Summary']['SUMMARY']['layer 1'] = labels['Summary']['SUMMARY']['layer 1 + 2'] = defaultdict(lambda: ('kb/s', 'dB'))
+        labels['Summary']['B'] = labels['Summary']['B']['layer 0'] = labels['Summary']['B']['layer 1'] = labels['Summary']['B']['layer 1 + 2'] = defaultdict(lambda: ('kbps', 'dB'))
+        labels['Summary']['I'] = labels['Summary']['I']['layer 0'] = labels['Summary']['I']['layer 1'] = labels['Summary']['I']['layer 1 + 2'] = defaultdict(lambda: ('kbps', 'dB'))
+        labels['Summary']['P'] = labels['Summary']['P']['layer 0'] = labels['Summary']['P']['layer 1'] = labels['Summary']['P']['layer 1 + 2'] = defaultdict(lambda: ('kbps', 'dB'))
+        labels['Summary']['SUMMARY'] = labels['Summary']['SUMMARY']['layer 0'] = labels['Summary']['SUMMARY']['layer 1'] = labels['Summary']['SUMMARY']['layer 1 + 2'] = defaultdict(lambda: ('kbps', 'dB'))
 
-        labels['Summary']['B']['Bitrate'] = labels['Summary']['I']['Bitrate'] = labels['Summary']['P']['Bitrate'] = labels['Summary']['SUMMARY']['Bitrate'] = ('kb/s', 'bits')
-        labels['Summary']['B']['Frames'] = labels['Summary']['B']['Total Frames'] = ('kb/s', 'Frames')
-        labels['Summary']['I']['Frames'] = labels['Summary']['I']['Total Frames'] = ('kb/s', 'Frames')
-        labels['Summary']['P']['Frames'] = labels['Summary']['P']['Total Frames'] = ('kb/s', 'Frames')
-        labels['Summary']['SUMMARY']['Frames'] = labels['Summary']['SUMMARY']['Total Frames'] = ('kb/s', 'Frames')
-        labels['Summary']['SUMMARY']['Total Time'] = ('kb/s', 's')
-        labels['Summary']['SUMMARY']['HM Major Version'] = labels['Summary']['SUMMARY']['HM Minor Version'] = ('', 's')
+        labels['Summary']['B']['Bitrate'] = labels['Summary']['I']['Bitrate'] = labels['Summary']['P']['Bitrate'] = labels['Summary']['SUMMARY']['Bitrate'] = ('kbps', 'bits')
+        labels['Summary']['B']['Frames'] = labels['Summary']['B']['Total Frames'] = ('kbps', 'Frames')
+        labels['Summary']['I']['Frames'] = labels['Summary']['I']['Total Frames'] = ('kbps', 'Frames')
+        labels['Summary']['P']['Frames'] = labels['Summary']['P']['Total Frames'] = ('kbps', 'Frames')
+        labels['Summary']['SUMMARY']['Frames'] = labels['Summary']['SUMMARY']['Total Frames'] = ('kbps', 'Frames')
+        labels['Summary']['SUMMARY']['Total Time'] = ('kbps', 'sec')
+        labels['Summary']['SUMMARY']['HM Major Version'] = labels['Summary']['SUMMARY']['HM Minor Version'] = ('', 'sec')
 
         labels['Temporal'] = labels['Temporal']['layer 0'] = labels['Temporal']['layer 1'] = defaultdict(lambda: ('Frame', 'dB'))
         labels['Temporal']['Bits'] = ('Frame', 'bits')
         labels['Temporal']['Frames'] = ('Frame', 'POC')
-        labels['Temporal']['ET'] = ('Frame', 's')
+        labels['Temporal']['ET'] = ('Frame', 'sec')
         label = labels
         # return needed label with keys
 

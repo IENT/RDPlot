@@ -35,6 +35,9 @@ from matplotlib.backends.backend_qt5agg import (
 import numpy as np
 import math
 from os.path import sep
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import show
+
 
 import pkg_resources
 
@@ -72,6 +75,24 @@ class PlotWidget(QWidget, Ui_PlotWidget):
                                          self.plotAreaWidget, coordinates=True)
         self.toolbar.pan()
         self.verticalLayout_3.addWidget(self.toolbar)
+
+    def create_legend(self, plot_data_collection):
+        tmp_legend = []
+        for plot_data in plot_data_collection:
+            tmp = []
+            for identifiers in plot_data.identifiers:
+                tmp += identifiers.split(sep)
+            tmp2 = tmp + plot_data.path
+            tmp_legend.append(tmp2)
+
+        legend = []
+        for c in tmp_legend:
+            result = list(filter(lambda x: all(x in l for l in tmp_legend) == False, c))
+            legend.append(" ".join(result))
+        if len(tmp_legend) == 1:
+            legend = ['']
+
+        return legend
 
     # refreshes the figure according to new changes done
     def change_plot(self, plot_data_collection):
@@ -258,3 +279,92 @@ class DataCursor(object):
             annotation.set_text(self.template % (x, y))
             annotation.set_visible(True)
             event.canvas.draw()
+
+class BDPlotWidget(PlotWidget):
+    def __init__(self, seq=''):
+        super(BDPlotWidget, self).__init__()
+        self._seq = seq
+        self._legend = []
+
+        self.check_open_fig()
+        plt.ion()
+        self.plotAreaWidget.fig = plt.figure(self._seq)
+        self.plotAreaWidget.canvas = self.plotAreaWidget.fig.canvas
+        self.toolbar = self.plotAreaWidget.canvas.manager.toolbar
+        self.toolbar.pan('on')
+
+        self.plotAreaWidget.fig.canvas.mpl_connect('scroll_event', self.on_wheel_cpy)
+        self.plotAreaWidget.canvas.mpl_connect('button_press_event', self.on_db_click_cpy)
+
+    def check_open_fig(self):
+        # checks if other bd plots are open and closes them
+        labels = plt.get_figlabels()
+        if self._seq not in labels: plt.close()
+
+    def create_legend(self, d):
+        tmp_legend = []
+        for data in d:
+            tmp = []
+            tmp += data.split(sep)
+            tmp_legend.append(tmp)
+
+        legend = []
+        for c in tmp_legend:
+            result = list(filter(lambda x: all(x in l for l in tmp_legend) == False, c))
+            if result: legend.append("".join(result[0]))
+        #if len(tmp_legend) == 1:
+        #   legend = ['']
+
+        if len(legend) == 2:
+            self._legend = legend
+
+    def bd_plot_drate(self, p1, p2, xi1, xi2, min_int, max_int, y1min, y1max, y2min, y2max, rate1, psnr1, rate2, psnr2,
+                      avg_diff):
+
+        handles, legend = plt.axes().get_legend_handles_labels()
+        if (self._legend[0] + ' original') not in legend:
+            plt.plot(p1, xi1, label=self._legend[0] + ' interpolated')
+            plt.hlines(min_int, y1min, y2min)
+            plt.scatter(rate1, psnr1, label=self._legend[0] + ' original')
+        if (self._legend[1] + ' original') not in legend:
+            plt.plot(p2, xi2, label=self._legend[1] + ' interpolated ')
+            plt.hlines(max_int, y1max, y2max)
+            plt.scatter(rate2, psnr2, label=self._legend[1] + ' original')
+
+        plt.legend(loc='upper left')
+
+        plt.xlabel('Rate')
+        plt.ylabel('PSNR [dB]')
+
+        plt.grid('on')
+
+        suptitle = u'\u0394 Rate = {diff} %'.format(diff=round(avg_diff, 3))
+        plt.suptitle(suptitle)
+
+        show(block=False)
+
+    def bd_plot_dsnr(self, p1, p2, xi1, xi2, min_int, max_int, y1min, y1max, y2min, y2max, x1, x2, y1, y2, avg_diff):
+
+        handles, legend = plt.axes().get_legend_handles_labels()
+
+        if (self._legend[0] + ' original') not in legend:
+            plt.plot(xi1, p1, label=self._legend[0] + ' interpolated')
+            plt.vlines(min_int, y1min, y2min)
+            plt.scatter(x1, y1, label=self._legend[0] + ' original')
+
+        if (self._legend[1] + ' original') not in legend:
+            plt.plot(xi2, p2, label=self._legend[1] + ' interpolated')
+            plt.vlines(max_int, y1max, y2max)
+            plt.scatter(x2, y2, label=self._legend[1] + ' original')
+
+        plt.legend(loc='upper left')
+
+        plt.xlabel('Rate')
+        plt.ylabel('PSNR [dB]')
+
+        plt.grid('on')
+
+        suptitle = u'\u0394 PSNR = {diff}'.format(diff=avg_diff)
+        plt.suptitle(suptitle)
+
+        show(block=False)
