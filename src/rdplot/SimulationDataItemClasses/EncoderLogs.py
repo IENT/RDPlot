@@ -377,19 +377,20 @@ class EncLogHM360Lib(AbstractEncLog):
         if self._enc_log_file_matches_re_pattern(self.path, r'-----360Lib\ software\ version\ \[3.0\]-----'):
             with open(self.path, 'r') as log_file:
                 log_text = log_file.read()  # reads the whole text file
+                # todo: \s can not be used, since it contains newline. can [ \t\r\f\v] be declared somehow?
                 summaries = re.findall(r""" ^(\S+) .+ $ \s .+ $
-                                            \s+ (\d+) \s+ \D \s+ (\S+)  # Total Frames, Bitrate
-                                            \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+)  # y-, u-, v-, yuv-PSNR
-                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # WSPSNR
-                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # E2ESPSNR_NN
-                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # E2ESPSNR_I
-                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # E2ECPPPSNR
-                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # E2EWSPSNR
-                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # PSNR_DYN_VP0
-                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # PSNR_DYN_VP1
-                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # CFSPSNR_NN
-                                            \s+ (\S+) \s+ (\S+) \s+ (\S+)  # CFSPSNR_I
-                                            \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+  $# CFCPPPSNR
+                                            \s+ (\d+) [ \t\r\f\v]+ \D [ \t\r\f\v]+ (\S+)  # Total Frames, Bitrate
+                                            [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+ (\S+)  # y-, u-, v-, yuv-PSNR
+                                            [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+ (\S+)  # WSPSNR
+                                            [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+ (\S+)  # E2ESPSNR_NN
+                                            [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+ (\S+)  # E2ESPSNR_I
+                                            [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+ (\S+)  # E2ECPPPSNR
+                                            [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+ (\S+)  # E2EWSPSNR
+                                            [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+ (\S+)  # PSNR_DYN_VP0
+                                            [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+ (\S+)  # PSNR_DYN_VP1
+                                            [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+ (\S+)  # CFSPSNR_NN
+                                            [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+ (\S+)  # CFSPSNR_I
+                                            [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+ (\S+) [ \t\r\f\v]+  $# CFCPPPSNR
                                             """, log_text, re.M + re.X)
 
             data = {}
