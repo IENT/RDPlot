@@ -257,6 +257,7 @@ class EncLogHM(AbstractEncLog):
                                 cleanlist.append(clean_item)
 
         parsed_config = dict(item.split(':', 1) for item in cleanlist)
+        self.qp = parsed_config['QP']
         return parsed_config
 
     def _parse_temporal_data(self):

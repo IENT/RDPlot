@@ -22,9 +22,11 @@ from os.path import sep
 import numpy as np
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QPushButton
-from PyQt5.Qt import Qt, QVariant, QModelIndex, QDialog, QHBoxLayout, QVBoxLayout, QAbstractItemView
+from PyQt5.Qt import Qt, QVariant, QModelIndex, QDialog, QHBoxLayout, QVBoxLayout, QAbstractItemView ,QMessageBox
 
 from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel, QAbstractTableModel, pyqtSignal
+
+import matplotlib.pyplot as plt
 from rdplot.SimulationDataItemClasses.EncoderLogs import AbstractEncLog
 from rdplot.lib.BD import bjontegaard
 from string import Template
