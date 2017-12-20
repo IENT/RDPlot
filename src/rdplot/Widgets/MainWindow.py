@@ -571,7 +571,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 continue
 
             self.simDataItemTreeView.msg.show()
-            self.simDataItemTreeView.parserThread.addPath(path)
+            self.simDataItemTreeView.parserThread.add_path(path)
             self.simDataItemTreeView.parserThread.start()
 
     def open_about_page(self):

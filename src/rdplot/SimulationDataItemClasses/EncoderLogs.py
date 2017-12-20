@@ -17,14 +17,13 @@
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 ##################################################################################################
-import re, os
-
-from os.path import abspath, join, isdir, isfile, normpath, basename, sep, dirname, splitext
-from abc import ABCMeta
-
-from rdplot.SimulationDataItem import (AbstractSimulationDataItem,
-                                SimulationDataItemError)
+import re
+from abc import abstractmethod
 from collections import defaultdict
+from os.path import normpath, basename, dirname, splitext
+
+from rdplot.SimulationDataItem import (AbstractSimulationDataItem)
+
 
 class AbstractEncLog(AbstractSimulationDataItem):
     def __init__(self, path):
@@ -34,11 +33,12 @@ class AbstractEncLog(AbstractSimulationDataItem):
         # self.logType = self._get_Type(path)
         self.sequence, self.config = self._parse_path(self.path)
 
-
         # Dictionaries holding the parsed values
         self.summary_data = self._parse_summary_data()
         self.temporal_data = self._parse_temporal_data()
         self.additional_params = []
+
+        self.encoder_config = self._parse_encoder_config()
 
     def _parse_path(self, path):
         """ parses the identifiers for an encoder log out of the
@@ -58,28 +58,39 @@ class AbstractEncLog(AbstractSimulationDataItem):
 
         return sequence, config
 
-    def _get_label(self, keys):
+    @staticmethod
+    def _get_label(keys):
         """
         :param keys: Variable/Path for which to get the labels
         :return: tuple of labels: (x-axis label, y-axis label)
         """
-        # create all the labels with dictionaries. The leaves are tupels of x, y-labels
+        # create all the labels with dictionaries. The leaves are tuples of x, y-labels
         labels = {}
         labels['Summary'] = {}
-        labels['Summary']['B'] = labels['Summary']['B Slices'] = labels['Summary']['B']['layer 0'] = labels['Summary']['B']['layer 1'] = labels['Summary']['B']['layer 1 + 2'] = defaultdict(lambda: ('kbps', 'dB'))
-        labels['Summary']['I'] = labels['Summary']['I Slices'] = labels['Summary']['I']['layer 0'] = labels['Summary']['I']['layer 1'] = labels['Summary']['I']['layer 1 + 2'] = defaultdict(lambda: ('kbps', 'dB'))
-        labels['Summary']['P'] = labels['Summary']['P Slices'] = labels['Summary']['P']['layer 0'] = labels['Summary']['P']['layer 1'] = labels['Summary']['P']['layer 1 + 2'] = defaultdict(lambda: ('kbps', 'dB'))
-        labels['Summary']['SUMMARY'] = labels['Summary']['SUMMARY']['layer 0'] = labels['Summary']['SUMMARY']['layer 1'] = labels['Summary']['SUMMARY']['layer 1 + 2'] = defaultdict(lambda: ('kbps', 'dB'))
+        labels['Summary']['B'] = labels['Summary']['B Slices'] = labels['Summary']['B']['layer 0'] = \
+            labels['Summary']['B']['layer 1'] = labels['Summary']['B']['layer 1 + 2'] = defaultdict(
+            lambda: ('kbps', 'dB'))
+        labels['Summary']['I'] = labels['Summary']['I Slices'] = labels['Summary']['I']['layer 0'] = \
+            labels['Summary']['I']['layer 1'] = labels['Summary']['I']['layer 1 + 2'] = defaultdict(
+            lambda: ('kbps', 'dB'))
+        labels['Summary']['P'] = labels['Summary']['P Slices'] = labels['Summary']['P']['layer 0'] = \
+            labels['Summary']['P']['layer 1'] = labels['Summary']['P']['layer 1 + 2'] = defaultdict(
+            lambda: ('kbps', 'dB'))
+        labels['Summary']['SUMMARY'] = labels['Summary']['SUMMARY']['layer 0'] = labels['Summary']['SUMMARY'][
+            'layer 1'] = labels['Summary']['SUMMARY']['layer 1 + 2'] = defaultdict(lambda: ('kbps', 'dB'))
 
-        labels['Summary']['B']['Bitrate'] = labels['Summary']['I']['Bitrate'] = labels['Summary']['P']['Bitrate'] = labels['Summary']['SUMMARY']['Bitrate'] = ('kbps', 'bits')
+        labels['Summary']['B']['Bitrate'] = labels['Summary']['I']['Bitrate'] = labels['Summary']['P']['Bitrate'] = \
+            labels['Summary']['SUMMARY']['Bitrate'] = ('kbps', 'bits')
         labels['Summary']['B']['Frames'] = labels['Summary']['B']['Total Frames'] = ('kbps', 'Frames')
         labels['Summary']['I']['Frames'] = labels['Summary']['I']['Total Frames'] = ('kbps', 'Frames')
         labels['Summary']['P']['Frames'] = labels['Summary']['P']['Total Frames'] = ('kbps', 'Frames')
         labels['Summary']['SUMMARY']['Frames'] = labels['Summary']['SUMMARY']['Total Frames'] = ('kbps', 'Frames')
         labels['Summary']['SUMMARY']['Total Time'] = ('kbps', 'sec')
-        labels['Summary']['SUMMARY']['HM Major Version'] = labels['Summary']['SUMMARY']['HM Minor Version'] = labels['Summary']['SUMMARY']['360Lib Version'] = ('', 'sec')
+        labels['Summary']['SUMMARY']['HM Major Version'] = labels['Summary']['SUMMARY']['HM Minor Version'] = \
+            labels['Summary']['SUMMARY']['360Lib Version'] = ('', 'sec')
 
-        labels['Temporal'] = labels['Temporal']['layer 0'] = labels['Temporal']['layer 1'] = defaultdict(lambda: ('Frame', 'dB'))
+        labels['Temporal'] = labels['Temporal']['layer 0'] = labels['Temporal']['layer 1'] = defaultdict(
+            lambda: ('Frame', 'dB'))
         labels['Temporal']['Bits'] = ('Frame', 'bits')
         labels['Temporal']['Frames'] = ('Frame', 'POC')
         labels['Temporal']['ET'] = ('Frame', 'sec')
@@ -123,10 +134,28 @@ class AbstractEncLog(AbstractSimulationDataItem):
                 {self.__class__.__name__: {'Temporal': self.temporal_data}}
             ),
             (
-                [self.sequence, self.config] + l1[0:len(l1)-1],
+                [self.sequence, self.config] + l1[0:len(l1) - 1],
                 {self.__class__.__name__: {'Summary': self.summary_data}}
             ),
         ]
+
+    # Abstract Methods/Properties
+    @classmethod
+    @abstractmethod
+    def can_parse_file(cls, path):
+        """Check, if the file at *path* can be parsed by the class. The class
+        can can for example check, if the file name or the file extension
+        matches a certain pattern, or inspect the contents of the file. Note,
+        that the first class which returns ``True`` with respect to a file on
+        this method, will be be used to parse the file. Thus, classes should
+        implement this method as specific as possible.
+
+        :param path:  path to file
+        :type path: :class: `String`
+
+        :rtype: :class: `Bool`
+        """
+        pass
 
     # Non-abstract Helper Functions
     @classmethod
@@ -136,18 +165,34 @@ class AbstractEncLog(AbstractSimulationDataItem):
             return cls._is_file_text_matching_re_pattern(path, pattern)
         return False
 
+    @abstractmethod
     def _parse_summary_data(self):
-        with open(self.path, 'r') as log_file:
-            log_text = log_file.read()  # reads the whole text file
+        """
+        Method which parses the summary data of a simulation. I.e. summaries for All, Intra, P and B Slices
+        :return:
+        """
+        pass
+
+    def _parse_temporal_data(self):
+        """
+        Method which parses the temporal data of a simulation. I.e. rate over poc, quality over poc ...
+        :return:
+        """
+        pass
+
+    @abstractmethod
+    def _parse_encoder_config(self):
+        """
+        Method which parses log file to get config (QP, other parameters).
+        Abstract, needs to be implemented by encoder log parsers
+        :return:
+        """
+        pass
 
 
 class EncLogHM(AbstractEncLog):
     # Order value, used to determine order in which parser are tried.
     parse_order = 10
-
-    def __init__(self, path):
-        super().__init__(path)
-        self.encoder_config = self._parse_encoder_config()
 
     @classmethod
     def can_parse_file(cls, path):
@@ -174,8 +219,8 @@ class EncLogHM(AbstractEncLog):
                                    (.*)\| # catch phrase Total Frames / I / P / B
                                    (\s+\S+)(\s+\S+)(\s+\S+)(\s+\S+)# catch rest of the line
                                    \s* # catch newline and space
-                                   (\d+\s+)\w # catch frame number
-                                   (\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+) # catch the fractional number (rate, PSNRs)
+                                   (\d+\s+)\w # catch frame number (integer)
+                                   (\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+) # other numbers (rate, PSNRs)
                               """, log_text, re.M + re.X)
                 total_time = re.findall(r""" ^\s*Total\s+Time.\s+(\d+.\d+)
                                """, log_text, re.M + re.X)
@@ -186,8 +231,8 @@ class EncLogHM(AbstractEncLog):
                                (.*)\| # catch phrase Total Frames / I / P / B
                                (\s+\S+)(\s+\S+)(\s+\S+)(\s+\S+)(\s+\S+)# catch rest of the line
                                \s* # catch newline and space
-                               (\d+\s+)\w # catch frame number
-                               (\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)# catch the fractional number (rate, PSNRs)
+                               (\d+\s+)\w # catch frame number (integer)
+                               (\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)(\s+\d+\.\d+)# others (rate, PSNRs)
                           """, log_text, re.M + re.X)
                 total_time = re.findall(r""" ^\s*Total\s+Time.\s+(\d+.\d+)
                                """, log_text, re.M + re.X)
@@ -245,18 +290,19 @@ class EncLogHM(AbstractEncLog):
                     if one_line.count(':') == 1:
                         clean_line = one_line.strip(' \n\t\r')
                         clean_line = re.sub('\s+', '', clean_line)
-                        if not any(re.search(param,clean_line) for param in param_not_considered):
+                        if not any(re.search(param, clean_line) for param in param_not_considered):
                             cleanlist.append(clean_line)
                     elif one_line.count(':') > 1:
                         if re.search('\w+ \s+ \w+ \s+ \w+ \s+ :\s+ \( \w+ : \d+ , \s+ \w+ : \d+ \)', one_line, re.X):
-                            clean_line = re.findall('\w+ \s+ \w+ \s+ \w+ \s+ :\s+ \( \w+ : \d+ , \s+ \w+ : \d+ \)', one_line, re.X)
+                            clean_line = re.findall('\w+ \s+ \w+ \s+ \w+ \s+ :\s+ \( \w+ : \d+ , \s+ \w+ : \d+ \)',
+                                                    one_line, re.X)
                         else:
                             clean_line = re.findall('\w+ : \d+ | \w+ : \s+ \w+ = \d+', one_line, re.X)
                         for clean_item in clean_line:
-                            if not any(re.search(param,clean_item) for param in param_not_considered):
+                            if not any(re.search(param, clean_item) for param in param_not_considered):
                                 cleanlist.append(clean_item)
 
-        parsed_config = dict(item.split(':', 1) for item in cleanlist)
+        parsed_config = dict(item.split(':', maxsplit=1) for item in cleanlist)
         self.qp = parsed_config['QP']
         return parsed_config
 
@@ -294,10 +340,6 @@ class EncLogHM360Lib(AbstractEncLog):
     # Order value, used to determine order in which parser are tried.
     parse_order = 20
 
-    def __init__(self, path):
-        super().__init__(path)
-        self.encoder_config = self._parse_encoder_config()
-
     @classmethod
     def can_parse_file(cls, path):
         matches_class = cls._enc_log_file_matches_re_pattern(path, r'Y-PSNR_(?:DYN_)?VP0')
@@ -309,21 +351,32 @@ class EncLogHM360Lib(AbstractEncLog):
             log_text = log_file.read()  # reads the whole text file
             lines = log_text.split('\n')
             cleanlist = []
+            # some of the configs should not be interpreted as parameters
+            # those are removed from the cleanlist
+            param_not_considered = ['RealFormat', 'Warning', 'InternalFormat', 'Byteswrittentofile', 'Frameindex',
+                                    'TotalTime', 'HMsoftware']
             for one_line in lines:
                 if one_line:
                     if '-----360 video parameters----' in one_line:
                         break
+                    if 'Non-environment-variable-controlled' in one_line:
+                        break
                     if one_line.count(':') == 1:
                         clean_line = one_line.strip(' \n\t\r')
-                        clean_line = clean_line.replace(' ', '')
-                        cleanlist.append(clean_line)
-                        # elif one_line.count(':')>1:
-                        # Ignore Multiline stuff for now
-                        # TODO: do something smart
-                        # else:
-                        # Something else happened, do nothing
-                        # TODO: do something smart
-        parsed_config = dict(item.split(':') for item in cleanlist)
+                        clean_line = re.sub('\s+', '', clean_line)
+                        if not any(re.search(param, clean_line) for param in param_not_considered):
+                            cleanlist.append(clean_line)
+                    elif one_line.count(':') > 1:
+                        if re.search('\w+ \s+ \w+ \s+ \w+ \s+ :\s+ \( \w+ : \d+ , \s+ \w+ : \d+ \)', one_line, re.X):
+                            clean_line = re.findall('\w+ \s+ \w+ \s+ \w+ \s+ :\s+ \( \w+ : \d+ , \s+ \w+ : \d+ \)',
+                                                    one_line, re.X)
+                        else:
+                            clean_line = re.findall('\w+ : \d+ | \w+ : \s+ \w+ = \d+', one_line, re.X)
+                        for clean_item in clean_line:
+                            if not any(re.search(param, clean_item) for param in param_not_considered):
+                                cleanlist.append(clean_item)
+
+        parsed_config = dict(item.split(':', maxsplit=1) for item in cleanlist)
 
         # parse 360 rotation parameter
         m = re.search('Rotation in 1/100 degrees:\s+\(yaw:(\d+)\s+pitch:(\d+)\s+roll:(\d+)\)', log_text)
@@ -333,6 +386,7 @@ class EncLogHM360Lib(AbstractEncLog):
             roll = m.group(3)
             parsed_config['SVideoRotation'] = 'Y%sP%sR%s' % (yaw, pitch, roll)
 
+        self.qp = parsed_config['QP']
         return parsed_config
 
     def _parse_summary_data(self):
@@ -343,7 +397,7 @@ class EncLogHM360Lib(AbstractEncLog):
                             """, log_text, re.M + re.X)
 
         # get 360 Lib version
-        m = re.match(r'-----360Lib\ software\ version\ (\[3.0\])-----',log_text)
+        m = re.match(r'-----360Lib\ software\ version\ (\[3.0\])-----', log_text)
         if m:
             version = m.group(1)
         else:
@@ -353,29 +407,31 @@ class EncLogHM360Lib(AbstractEncLog):
         data = {}
 
         # get the summaries as pair of summary type and summary text, splitting at summary type and capturing it
-        summaries_texts_and_types = re.split('((?:\w )?\w+) ?--------------------------------------------------------',log_text)
-        del summaries_texts_and_types[0] # remove the log text up to the first summary item
+        summaries_texts_and_types = re.split('((?:\w )?\w+) ?--------------------------------------------------------',
+                                             log_text)
+        del summaries_texts_and_types[0]  # remove the log text up to the first summary item
         if len(summaries_texts_and_types) % 2:
             # each summary type should match a text, thus the list must have even length
-            raise('Could not parse 360 enc log file.')
-        for summary_type, summary_text in zip(summaries_texts_and_types[0::2],summaries_texts_and_types[1::2]):
-            summary_text = summary_text.strip().splitlines() # first line is header, second line are the values
+            raise Exception('Could not parse 360 enc log file.')
+        for summary_type, summary_text in zip(summaries_texts_and_types[0::2], summaries_texts_and_types[1::2]):
+            summary_text = summary_text.strip().splitlines()  # first line is header, second line are the values
 
             # parsing header
-            first_header_item, remaining_items = re.split('\|', summary_text[0]) # since first item has a space
+            first_header_item, remaining_items = re.split('\|', summary_text[0])  # since first item has a space
             remaining_items = re.split('\s+', remaining_items.strip())
             header = [first_header_item] + remaining_items
 
             # parsing values
             values = re.split('\s+', summary_text[1].strip())
-            del values[1] # remove the letter below the | in the header (a, b, p or i)
+            del values[1]  # remove the letter below the | in the header (a, b, p or i)
 
             if header[1] != 'Bitrate':
-                raise('Could not parse bitrate.')
+                raise Exception('Could not parse bitrate.')
             rate = values[1]
 
             data[summary_type] = {}
             for name, value in zip(header, values):
+                name = name.strip()
                 summary_item = {name: [(float(rate), float(value))]}
 
                 data[summary_type].update(summary_item)
@@ -532,3 +588,6 @@ class EncLogSHM(AbstractEncLog):
             layerstring = 'layer ' + str(layer)
             data[layerstring] = data2
         return data
+
+    def _parse_encoder_config(self):
+        pass

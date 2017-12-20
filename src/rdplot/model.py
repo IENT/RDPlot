@@ -22,7 +22,7 @@ from os.path import sep
 import numpy as np
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QPushButton
-from PyQt5.Qt import Qt, QVariant, QModelIndex, QDialog, QHBoxLayout, QVBoxLayout, QAbstractItemView ,QMessageBox
+from PyQt5.Qt import Qt, QVariant, QModelIndex, QDialog, QHBoxLayout, QVBoxLayout, QAbstractItemView, QMessageBox
 
 from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel, QAbstractTableModel, pyqtSignal
 
@@ -32,6 +32,8 @@ from rdplot.lib.BD import bjontegaard
 from string import Template
 from tabulate import tabulate
 import pkg_resources
+
+
 #
 # Functions
 #
@@ -58,6 +60,7 @@ class AmbiguousSimDataItems(ModelError):
     pass
 
 
+# noinspection PyMethodOverriding
 class OrderedDictModel(QAbstractListModel):
     """Subclass of :class: `QAbstractListModel` implementing an
     :class: `OrderedDict`, whose keys are also the items of the qt list. If
@@ -99,7 +102,7 @@ class OrderedDictModel(QAbstractListModel):
                     return QVariant(key)
         return QVariant()
 
-    # Reimplement dictionary methods.
+    # Reimplemented dictionary methods.
     # Note, that implementation of __setitem__ and pop is done using
     # custom methods, so that *items_changed* is emitted correctly.
 
@@ -223,8 +226,8 @@ class OrderedDictTreeItem:
 
     >>> parent['child_identifier']
 
-    In contrast to that, slice assignement is **not** supported. This
-    would not be very usefull, as the key to an item is **always** its
+    In contrast to that, slice assignment is **not** supported. This
+    would not be very useful, as the key to an item is **always** its
     identifier, thus, an *item* is always assigned to its *identifier* as
     key. Therefore, the functions for appending children are named as with
     sets, ie. :func: `_add` for single items and :func: `_update` for
@@ -240,7 +243,7 @@ class OrderedDictTreeItem:
     :param identifier: Unique/hashable identifier of the item. The item is
         referenced from the parent item by using this identifier.
     :param parent: Parent item
-    :param children: Iterable of childrens of the item
+    :param children: Iterable of children of the item
     :param values: Values contained by the item
     :param identifier_compare_function: Function to compare two identifiers,
         defines the order of children.
@@ -357,7 +360,7 @@ class OrderedDictTreeItem:
         child._parent = None
         self._children.remove(child)
 
-    # Reimplement some dictionary functions
+    # Reimplemented some dictionary functions
 
     def __getitem__(self, identifier):
         """Get child by *identifier*"""
@@ -395,6 +398,7 @@ class OrderedDictTreeItem:
         return str(self.dict_tree)
 
 
+# noinspection PyMethodOverriding
 class OrderedDictTreeModel(QAbstractItemModel):
     def __init__(self, *args, default_item_values=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -442,7 +446,7 @@ class OrderedDictTreeModel(QAbstractItemModel):
 
     def columnCount(self, q_parent_index):
         # All items only hold their own identifier as data to be displayed,
-        # thus, the agument is irrelevant
+        # thus, the argument is irrelevant
         return 1
 
     def data(self, q_parent_index, q_role):
@@ -475,7 +479,7 @@ class OrderedDictTreeModel(QAbstractItemModel):
             leaf_item.append(item_parent)
 
         # Raise an error, if an item of the path does not exist
-        def function_item_is_not_existend(key, item_parent, q_index_parent):
+        def function_item_not_existing(key, item_parent, q_index_parent):
             raise KeyError("Key {} does not exist on path {}".format(
                 key,
                 path
@@ -484,7 +488,7 @@ class OrderedDictTreeModel(QAbstractItemModel):
         # Walk the path and return the leaf item
         self._walk_path(
             *path,
-            function_item_is_not_existend=function_item_is_not_existend,
+            function_item_not_existing=function_item_not_existing,
             function_leaf_item=function_leaf_item
         )
         return leaf_item[0]
@@ -530,12 +534,12 @@ class OrderedDictTreeModel(QAbstractItemModel):
         #   * Save the leaf item of the path, so it can be returned
         self._walk_path(
             *path,
-            function_item_is_not_existend=create_item,
+            function_item_not_existing=create_item,
             function_leaf_item=function_leaf_item
         )
         return leaf_item[0]
 
-    def _walk_path(self, *path, function_item_is_not_existend=None,
+    def _walk_path(self, *path, function_item_not_existing=None,
                    function_leaf_item=None):
         """Generalization of path walking, which supports callback functions
         if an item of the *path* is not present and for the leaf item of the
@@ -544,8 +548,8 @@ class OrderedDictTreeModel(QAbstractItemModel):
 
         :param *path: :class: `list` of identifiers which correspond to a path
             of the tree
-        :param function_item_is_not_existend: Function, which is called if
-            an identfiier of *path* is not present at the tree with arguments:
+        :param function_item_not_existing: Function, which is called if
+            an identifier of *path* is not present at the tree with arguments:
                 * the current key/identifier
                 * the current parent item :class: `OrderedDictTreeItem`
                 * its parent index :class: `QModelIndex`
@@ -564,9 +568,9 @@ class OrderedDictTreeModel(QAbstractItemModel):
             # Set the current item as *item_parent* for next iteration, and
             # update the *q_index_parent* accordingly
             if key not in item_parent:
-                if function_item_is_not_existend is not None:
-                    function_item_is_not_existend(key, item_parent,
-                                                  q_index_parent)
+                if function_item_not_existing is not None:
+                    function_item_not_existing(key, item_parent,
+                                               q_index_parent)
             item_parent = item_parent[key]
             row = self._get_row_from_item_and_index_parent(
                 item_parent,
@@ -581,7 +585,7 @@ class OrderedDictTreeModel(QAbstractItemModel):
     def _get_index_parent_from_item(self, item):
         """Get the :class: `QModelIndex` *q_parent_index* of the parent item of
         *item*. Note, that the tree has to walked up and down again
-        to find the index, so performance depens on the depth of the tree.
+        to find the index, so performance depends on the depth of the tree.
 
         :param item: The parent index of this item is found.
 
@@ -713,7 +717,7 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
     the tree, how to store their data at the tree and how to access them, using
     the tree. Implements *item_changed* signal, which is emitted after the
     tree model has been altered. With :func: `add`, :func: `update` and :func:
-    `emove`, the signal allows altering a collection of items and efficiently
+    `remove`, the signal allows altering a collection of items and efficiently
     updating the GUI, as *item_changed* is emitted, after all model alterations
     have been processed.
 
@@ -767,12 +771,11 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                     diff_dict[sim_data_item.__class__] = {}
                 all_enc_configs[sim_data_item.__class__].append(sim_data_item.encoder_config)
                 # print(sim_data_item.summary_data['encoder_config'])
-            value_filter = ['.yuv','.bin','.hevc','.jem']
+            value_filter = ['.yuv', '.bin', '.hevc', '.jem']
             key_filter = []
             for sim_class in all_enc_configs.keys():
                 for i in range(len(all_enc_configs[sim_class]) - 1):
                     current_item, next_item = all_enc_configs[sim_class][i], all_enc_configs[sim_class][i + 1]
-                    diff = set(current_item.values()) ^ set(next_item.values())
                     for (key, value) in set(current_item.items()) ^ set(next_item.items()):
                         if all(y not in key for y in key_filter):
                             if all(x not in value for x in value_filter):
@@ -821,7 +824,7 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                         diff_dict[sim_class].pop(not_chosen_par.item(i).text(), None)
                     additional_param_found.append(sim_class)
 
-        except(AttributeError):
+        except AttributeError:
             # maybe do something useful here
             # This is for conformance with rd data written out by older versions of rdplot
             pass
@@ -846,7 +849,7 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                 )
                 if condition:
                     raise AmbiguousSimDataItems((
-                                                    "Ambigious sim data items: Sim Data Item {} and {}"
+                                                    "Ambiguous sim data items: Sim Data Item {} and {}"
                                                     " have different absolute paths but the same"
                                                     " position at the tree {}"
                                                 ).format(sim_data_item, value, AbstractEncLog.tree_identifier_list))
@@ -916,6 +919,7 @@ class VariableTreeModel(OrderedDictTreeModel):
 
 
 # This is the model for storing the bd table
+# noinspection PyMethodOverriding
 class BdTableModel(QAbstractTableModel):
     def __init__(self, parent=None, *args):
         super(BdTableModel, self).__init__()
@@ -969,7 +973,7 @@ class BdTableModel(QAbstractTableModel):
         self.headerDataChanged.emit(Qt.Horizontal, 0, self._data.shape[1])
         self.headerDataChanged.emit(Qt.Vertical, 0, self._data.shape[0])
 
-        if plt.get_fignums() != []:
+        if plt.get_fignums():
             plt.cla()
 
     def update(self, plot_data_collection, bd_option, interp_option, bd_plot):
@@ -985,14 +989,14 @@ class BdTableModel(QAbstractTableModel):
 
         seq_set = set()
         config_set = set()
-        indentifiers_list = []
+        identifier_list = []
         for i in plot_data_collection:
             # there is no reason for calculating a bjontegaard, if we want to plot
-            # serveral variables from the same sequence and config, so return in that case
+            # several variables from the same sequence and config, so return in that case
             # otherwise append the identifiers to the list and go on
-            if indentifiers_list.__contains__(i.identifiers):
+            if identifier_list.__contains__(i.identifiers):
                 return
-            indentifiers_list.append(i.identifiers)
+            identifier_list.append(i.identifiers)
 
             seq_set.add(i.identifiers[0])
             config_set.add('+'.join(i.identifiers[1:]))
@@ -1053,7 +1057,7 @@ class BdTableModel(QAbstractTableModel):
         # nothing can be updated
         if bd_plot:
             plt.close()
-        elif ((not bd_plot) and len(self._horizontal_headers) > 5):
+        elif (not bd_plot) and len(self._horizontal_headers) > 5:
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Information)
             msg.setText("Your BD plot will contain more than 5 curves, do you really want to continue?")
@@ -1074,7 +1078,8 @@ class BdTableModel(QAbstractTableModel):
         # if we have passed the index of the column for the anchor select that one as anchor
         anchor = self._horizontal_headers[self._anchor_index]
         if isinstance(anchor_index, int) and anchor_index != -1:
-            if (self._anchor_index != anchor_index) and not bd_plot: plt.clf()
+            if (self._anchor_index != anchor_index) and not bd_plot:
+                plt.clf()
             anchor = self._horizontal_headers[anchor_index]
             self._anchor_index = anchor_index
 
@@ -1084,7 +1089,7 @@ class BdTableModel(QAbstractTableModel):
         row = 0
         for seq in self._vertical_headers:
             # the AVG seq is actually not a sequence, so just skip it
-            if(seq == 'AVG'):
+            if seq == 'AVG':
                 continue
             col = 0
             for config in self._horizontal_headers:
@@ -1129,12 +1134,12 @@ class BdTableModel(QAbstractTableModel):
 
                 # calculate the bd, actually this can be extended by some plots
                 configs = [anchor, identifiers_tmp[1]]
-                self._data[row, col] = bjontegaard(c1, c2, bd_option, interp_option, 'BD Plot '+seq, configs, bd_plot)
+                self._data[row, col] = bjontegaard(c1, c2, bd_option, interp_option, 'BD Plot ' + seq, configs, bd_plot)
                 col += 1
             row += 1
 
         # calculate the AVG rate savings or delta psnr and round the output to something meaningful
-        self._data[row,:] = np.mean(self._data[:-1,:][~np.isnan(self._data[:-1,:]).any(axis=1)], axis=0)
+        self._data[row, :] = np.mean(self._data[:-1, :][~np.isnan(self._data[:-1, :]).any(axis=1)], axis=0)
         self._data = np.around(self._data, decimals=2)
 
         self.dataChanged.emit(self.index(0, 0), self.index(row, col))
@@ -1143,7 +1148,7 @@ class BdTableModel(QAbstractTableModel):
         seqs = [seq.split('_')[0] for seq in self._vertical_headers]
         latex_table = tabulate(self._data, self._horizontal_headers, showindex=seqs, tablefmt="latex_booktabs")
 
-        # creata a template class which uses % as the placeholder introducing delimiter, since this is the
+        # create a template class which uses % as the placeholder introducing delimiter, since this is the
         # latex comment character
         class LatexTemplate(Template):
             delimiter = '%'

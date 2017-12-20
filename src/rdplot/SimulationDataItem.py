@@ -19,12 +19,11 @@
 ##################################################################################################
 import pkgutil
 import re
-
-from abc import ABCMeta, abstractmethod, abstractproperty
-from os.path import basename, dirname, join, abspath, isfile, isdir
-from os import listdir
+from abc import ABCMeta, abstractmethod
 from collections import deque
 from copy import copy
+from os import listdir
+from os.path import join, abspath, isfile, isdir
 
 
 #
@@ -134,6 +133,7 @@ def append_value_to_dict_tree_at_path(dict_tree, path, plot_data):
     plot_data_list.append(plot_data)
     return dict_tree
 
+
 # -------------------------------------------------------------------------------
 
 #
@@ -169,6 +169,7 @@ class PlotData:
 class SimulationDataItemError(Exception):
     pass
 
+
 class IsNotAnAbstractSimulationDataItemSubClassError(SimulationDataItemError):
     pass
 
@@ -184,14 +185,13 @@ class AbstractSimulationDataItem(metaclass=ABCMeta):
     """
 
     # Order value, used to determine order in which parser are tried.
-    parse_order = 100 # large default value. it subclass does not lower it, it will be tried last
+    parse_order = 100  # large default value. it subclass does not lower it, it will be tried last
 
     # Constructor
 
     def __init__(self, path):
         # Path is unique identifier
         self.path = abspath(path)
-
 
     # Abstract Methods/Properties
     @classmethod
@@ -211,7 +211,8 @@ class AbstractSimulationDataItem(metaclass=ABCMeta):
         """
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def data(self):
         """Property to access the parsed data. The data is given as a list of
         pairs. The first element are the identifiers associated with the data,
@@ -254,27 +255,26 @@ class AbstractSimulationDataItem(metaclass=ABCMeta):
             :class: `str` identifiers as first, and a nested :"""
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def tree_identifier_list(self):
-        """Property to acces a list of identifiers, used to specify the position
+        """Property to access a list of identifiers, used to specify the position
         of simulation data items in the tree view.
 
         :rtype: :class: `list` of :class: `str`
         """
         pass
 
-
     # Magic Methods
-    # TODO remove if usefull 'set' is implemented
+    # TODO remove if useful 'set' is implemented
     def __hash__(self):
         return hash(self.path)
 
     def __str__(self):
-        return str( "SimulationDataItem at path {}".format(self.path) )
+        return str("SimulationDataItem at path {}".format(self.path))
 
     def __repr__(self):
         return str(self)
-
 
     # Helper Methods
     @classmethod
@@ -283,9 +283,7 @@ class AbstractSimulationDataItem(metaclass=ABCMeta):
         """
         with open(path, 'r') as simulation_data_item_file:
             text = simulation_data_item_file.read()
-            return bool( re.search(pattern, text, re.M + re.X) )
-        raise SimulationDataItemError( "Could not open file {}".format(path) )
-
+            return bool(re.search(pattern, text, re.M + re.X))
 
 
 class SimulationDataItemFactory:
@@ -321,42 +319,42 @@ class SimulationDataItemFactory:
         python modules in the directory are parsed, and all sub classes are
         passed to the factory. Packages are NOT parsed.
 
-        :param directory_path String: Path to parse for
+        :param directory_path: String
+            Path to parse for
             *AbstractSimulationDataItem* sub classes
 
         :rtype: :class: `SimulationDataItemFactory` with sub classes of
             :class: `AbstractSimulationDataItem` from *directory_path*
         """
 
-        simulationDataItemFactory = cls()
+        simulation_data_item_factory = cls()
 
         # Automated loading of modules mechanism adapted
         # from answer on stackoverflow at http://stackoverflow.com/a/8556471
         # from user http://stackoverflow.com/users/633403/luca-invernizzi
 
         # Parse *directory_path* for sub classes of *AbstractSimulationDataItem*
-        classes = []
-        for importer, name, _ in pkgutil.iter_modules([directory_path],'rdplot.SimulationDataItemClasses.'):
+        for importer, name, _ in pkgutil.iter_modules([directory_path], 'rdplot.SimulationDataItemClasses.'):
             # Import a module from *directory_path*
-            module = importer.find_module(name).load_module(name)
+            imported_module = importer.find_module(name).load_module(name)
 
             # Add all sub classes of AbstractSimulationDataItem from the module
             # to the factory
-            for _, module_item in module.__dict__.items():
+            for module_item in imported_module.__dict__.values():
                 if is_class(module_item):
                     try:
-                        simulationDataItemFactory.add_class(module_item)
-                        # TODO usefull logging
+                        simulation_data_item_factory.add_class(module_item)
+                        # TODO useful logging
                         print((
-                            "Added sub class '{}' to simualtion data item "
-                            " factory"
-                        ).format(module_item))
+                                  "Added sub class '{}' to simulation data item "
+                                  " factory"
+                              ).format(module_item))
                     except IsNotAnAbstractSimulationDataItemSubClassError:
                         pass
 
         # end snippet
 
-        return simulationDataItemFactory
+        return simulation_data_item_factory
 
     # Interface to Set of Classes
     def add_class(self, cls):
@@ -364,10 +362,9 @@ class SimulationDataItemFactory:
         factory.
         """
         if not issubclass(cls, AbstractSimulationDataItem):
-            raise IsNotAnAbstractSimulationDataItemSubClassError((
-                "Can not add class '{}' to SimulationDataItemFactory, as it is "
-                "not a sub class of AbstractSimulationDataItem"
-            ).format(cls))
+            raise IsNotAnAbstractSimulationDataItemSubClassError(
+                ("Can not add class '{}' to SimulationDataItemFactory, as it is "
+                 "not a sub class of AbstractSimulationDataItem").format(cls))
 
         self._classes.add(cls)
 
@@ -382,7 +379,7 @@ class SimulationDataItemFactory:
         :rtype: object of sub class of :class: `AbstractSimulationDataItem`
         """
 
-        # Create simulatin data item of the first class which says, it can parse
+        # Create simulation data item of the first class which says, it can parse
         # the file
         cls_list = []
         # try parser, in the order given by their parse_order attribute. use the first one that can parse the file
@@ -391,12 +388,6 @@ class SimulationDataItemFactory:
                 cls_list.append(cls(file_path))
                 break
         return cls_list
-
-        raise SimulationDataItemError((
-            "Could not create a simulation data item from file at '{}' using"
-            " the sub classes of *AbstractSimulationDataItem* known to the"
-            " SimulationDataItemFactory."
-        ).format(file_path))
 
     def create_item_list_from_directory(self, directory_path):
         """Try to create simulation data items for all files in a directory at
@@ -412,14 +403,14 @@ class SimulationDataItemFactory:
             path = join(directory_path, file_name)
             try:
                 item_list.extend(self.create_item_from_file(path))
-                print(("Parsed '{}' ").format(path))
+                print("Parsed '{}' ".format(path))
             except SimulationDataItemError as error:
                 pass
-                # We definitely cannot accept thousands of execptions on the command line
-                #print((AbstractEncLog
+                # We definitely cannot accept thousands of exceptions on the command line
+                # print((AbstractEncLog
                 #    "Could not create simulation data item from file '{}'"
                 #    " due to {}"
-                #).format(path, error))
+                # ).format(path, error))
 
         return item_list
 
@@ -443,16 +434,13 @@ class SimulationDataItemFactory:
             return item_list
 
         raise SimulationDataItemError((
-            "Not at least one simulation data item can be created from path"
-            " '{}'"
-        ).format(path))
+                                          "Not at least one simulation data item can be created from path"
+                                          " '{}'"
+                                      ).format(path))
 
     # Magic Methods
     def __str__(self):
         return str(self._classes)
 
     def __repr__(self):
-        return str(
-            "SimulationDataItemFactory with loaded classes: "
-            .format(str(self))
-        )
+        return str("SimulationDataItemFactory with loaded classes: ".format(str(self)))
