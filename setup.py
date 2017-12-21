@@ -10,12 +10,6 @@ from codecs import open
 import platform
 import os
 
-# hack to get the version from git tag
-from importlib.util import spec_from_file_location, module_from_spec
-spec = spec_from_file_location("version", "src/rdplot/misc/version.py")
-rdplot_version = module_from_spec(spec)
-spec.loader.exec_module(rdplot_version)
-
 here = os.path.abspath(os.path.dirname(__file__))
 
 # Get the long description from the README file
@@ -57,6 +51,50 @@ def get_data_files_with_correct_location():
 
     return data_files
 
+
+def get_version():
+    """
+    Read git tag and version given by environment variable and convert it to a version number.
+    Git describe gives something like
+        v1.0.0-158-g6c5be28
+    From the git describe help:
+        The command finds the most recent tag that is reachable from a commit.
+        If the tag points to the commit, then only the tag is shown. Otherwise,
+        it suffixes the tag name with the number of additional commits on top
+        of the tagged object and the abbreviated object name of the most recent
+        commit.
+    We will keep the first two number and replace the last with the number of commits since the tag:
+        v1.0.0-158-g6c5be28 -> v1.0.158
+    :return:
+    """
+
+    if not 'git_describe' in os.environ:
+        raise Exception("Environment variable 'git_describe' does not exist!")
+
+    git_describe = os.environ['git_describe']
+
+    version = None
+    split_describe = git_describe.split('-')
+    if len(split_describe) == 1:
+        version = git_describe
+    elif len(split_describe) == 3:
+        tag = split_describe[0]
+        commits_since_tag = split_describe[1]
+
+        # replace last digit with commits_since_tag
+        split_tag = tag.split('.')
+        if len(split_tag) == 1:
+            raise Exception("Tag does not comply to the versioning spec. It should be something like v1.0.0, but is %s"
+                            % tag)
+        split_tag[-1] = commits_since_tag
+        version = '.'.join(split_tag)
+
+    else:
+        raise Exception("Can not handle this type of git describe, there should be either no or two '-'. %s"
+                        % git_describe)
+
+    return version
+
 setup(
     app=APP,
     options={'py2app':OPTIONS},
@@ -65,7 +103,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version=rdplot_version.__VERSION__,
+    version=get_version(),
     
     description='A plot tool for rate distortion curves',
     long_description=long_description,

@@ -9,10 +9,10 @@ python:
   - 3.6
 
 before_install:
-  - pip3 install jsonpickle  setuptools gitversion
+  - pip3 install jsonpickle  setuptools
   - pip3 install pytest pytest-cov
   - pip3 install coveralls
-  - python3 setup.py sdist
+  - git_describe=$(git describe) python3 setup.py sdist
 
 install:
     pip3 install --no-binary rdplot  dist/rdplot-*.tar.gz
