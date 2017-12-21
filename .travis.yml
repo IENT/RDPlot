@@ -12,7 +12,7 @@ before_install:
   - pip3 install jsonpickle  setuptools
   - pip3 install pytest pytest-cov
   - pip3 install coveralls
-  - export git_describe=$(git describe)
+  - export git_describe=$(git describe --always)
   - echo $git_describe
   - python3 setup.py sdist
 
