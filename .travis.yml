@@ -12,7 +12,9 @@ before_install:
   - pip3 install jsonpickle  setuptools
   - pip3 install pytest pytest-cov
   - pip3 install coveralls
-  - git_describe=$(git describe) python3 setup.py sdist
+  - export git_describe=$(git describe)
+  - echo $git_describe
+  - python3 setup.py sdist
 
 install:
     pip3 install --no-binary rdplot  dist/rdplot-*.tar.gz
