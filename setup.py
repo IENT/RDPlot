@@ -16,16 +16,16 @@ here = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
-APP = ['src/rdplot/__main__.py']	
-OPTIONS = {'iconfile':'src/rdplot/logo/PLOT1024.icns',
-    'plist': {
-        'CFBundleName': 'RDPlot',
-        'CFBundleDisplayName': 'RDPlot',
-        'CFBundleGetInfoString': "Making Sandwiches",
-        'CFBundleIdentifier': "com.metachris.osx.sandwich",
-        'CFBundleVersion': "0.1.0",
-        'CFBundleShortVersionString': "0.1.0"}
-        }
+APP = ['src/rdplot/__main__.py']
+OPTIONS = {'iconfile': 'src/rdplot/logo/PLOT1024.icns',
+           'plist': {
+               'CFBundleName': 'RDPlot',
+               'CFBundleDisplayName': 'RDPlot',
+               'CFBundleGetInfoString': "Making Sandwiches",
+               'CFBundleIdentifier': "com.metachris.osx.sandwich",
+               'CFBundleVersion': "0.1.0",
+               'CFBundleShortVersionString': "0.1.0"}
+           }
 
 
 def get_data_files_with_correct_location():
@@ -40,8 +40,10 @@ def get_data_files_with_correct_location():
     if 'Linux' in platform.system():
         if os.geteuid() != 0:
             # install as user
-            data_files = [(os.path.join(os.path.expanduser('~'),'.local/share/icons/'), ['src/rdplot/logo/PLOT64.png']),
-                          (os.path.join(os.path.expanduser('~'),'.local/share/applications/'), ['src/rdplot/misc/rdplot.desktop'])]
+            data_files = [
+                (os.path.join(os.path.expanduser('~'), '.local/share/icons/'), ['src/rdplot/logo/PLOT64.png']),
+                (os.path.join(os.path.expanduser('~'), '.local/share/applications/'),
+                 ['src/rdplot/misc/rdplot.desktop'])]
 
 
         else:
@@ -76,6 +78,9 @@ def get_version():
     version = None
     split_describe = git_describe.split('-')
     if len(split_describe) == 1:
+        if '.' not in git_describe:
+            raise Exception("Tag does not comply to the versioning spec. It should be something like v1.0.0, but is %s"
+                            % git_describe)
         version = git_describe
     elif len(split_describe) == 3:
         tag = split_describe[0]
@@ -95,16 +100,17 @@ def get_version():
 
     return version
 
+
 setup(
     app=APP,
-    options={'py2app':OPTIONS},
+    options={'py2app': OPTIONS},
     name='rdplot',
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
     version=get_version(),
-    
+
     description='A plot tool for rate distortion curves',
     long_description=long_description,
 
@@ -148,20 +154,21 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=['rdplot','rdplot.lib','rdplot.SimulationDataItemClasses','rdplot.Widgets'],
+    packages=['rdplot', 'rdplot.lib', 'rdplot.SimulationDataItemClasses', 'rdplot.Widgets'],
     package_dir={'': 'src'},
 
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
-    #py_modules=["my_module"],
+    # py_modules=["my_module"],
     include_package_data=True,
 
     # List run-time dependencies here.  These will be installed by pip when
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['cycler', 'matplotlib', 'numpy','py','pyparsing','pyqt5','pytest','python-dateutil','pytz','sip','six','scipy','tabulate','mpldatacursor',
-                      'xmltodict','jsonpickle'],
+    install_requires=['cycler', 'matplotlib', 'numpy', 'py', 'pyparsing', 'pyqt5', 'pytest', 'python-dateutil', 'pytz',
+                      'sip', 'six', 'scipy', 'tabulate', 'mpldatacursor',
+                      'xmltodict', 'jsonpickle'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
@@ -173,7 +180,7 @@ setup(
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
     package_data={
-        'rdplot': ['src/rdplot/ui/*','src/rdplot/logo/*','src/rdplot/misc/*','src/rdplot/docs/about.html'],
+        'rdplot': ['src/rdplot/ui/*', 'src/rdplot/logo/*', 'src/rdplot/misc/*', 'src/rdplot/docs/about.html'],
     },
 
     # Although 'package_data' is the preferred approach, in some case you may
