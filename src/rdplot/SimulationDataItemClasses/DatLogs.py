@@ -143,6 +143,15 @@ class DatLogJEM501_360(DatLogBasedOnClassName):
 class DatLogJEM70_360(DatLogBasedOnClassName):
     pass
 
+class DatLogJEM70(DatLogBasedOnClassName):
+    pass
+
+class DatLogJEM70Geo(DatLogBasedOnClassName):
+    pass
+
+class DatLogJEM70GeoHOMC(DatLogBasedOnClassName):
+    pass
+
 class DatLogConversionPSNRLoss360(DatLogBasedOnClassName):
 
     def _parse_path(self, path):
