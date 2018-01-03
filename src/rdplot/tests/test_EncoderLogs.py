@@ -13,6 +13,20 @@ TEST_DIR = path.dirname(path.abspath(__file__))
 SIMULATION_DATA_ITEM_CLASSES_PATH = path.normpath(path.join(TEST_DIR, '../SimulationDataItemClasses'))
 
 
+def filter_by_ending(paths, value):
+    """
+    Filter file paths, remove paths, file ending does not match
+    :param paths: list of file paths
+    :param value: file ending
+    :return: paths which have matching file ending
+    """
+    for a_path in paths:
+        if '.' in a_path:
+            dont_care, ending = a_path.rsplit('.', maxsplit=1)
+            if ending == value:
+                yield a_path
+
+
 class TestEncoderLogs(unittest.TestCase):
     def setUp(self):
         self._factory = SimulationDataItemFactory.from_path(
@@ -29,6 +43,7 @@ class TestEncoderLogs(unittest.TestCase):
         self.log_paths = []
         for log_dir in self.tested_log_dirs:
             logs = listdir(log_dir)
+            logs = filter_by_ending(logs, 'log')
             self.log_paths += [path.join(log_dir, log) for log in logs]
 
         # set up a dictionary to record which parser were tested

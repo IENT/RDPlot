@@ -13,6 +13,20 @@ TEST_DIR = path.dirname(path.abspath(__file__))
 SIMULATION_DATA_ITEM_CLASSES_PATH = path.normpath(path.join(TEST_DIR, '../SimulationDataItemClasses'))
 
 
+def filter_by_ending(paths, value):
+    """
+    Filter file paths, remove paths, file ending does not match
+    :param paths: list of file paths
+    :param value: file ending
+    :return: paths which have matching file ending
+    """
+    for a_path in paths:
+        if '.' in a_path:
+            dont_care, ending = a_path.rsplit('.', maxsplit=1)
+            if ending == value:
+                yield a_path
+
+
 class TestDatLogs(unittest.TestCase):
     def setUp(self):
         self._factory = SimulationDataItemFactory.from_path(
@@ -29,6 +43,7 @@ class TestDatLogs(unittest.TestCase):
         self.log_paths = []
         for log_dir in self.tested_log_dirs:
             logs = listdir(log_dir)
+            logs = filter_by_ending(logs, 'xml')
             self.log_paths += [path.join(log_dir, log) for log in logs]
 
         # set up a dictionary to record which parser were tested
@@ -39,6 +54,12 @@ class TestDatLogs(unittest.TestCase):
         del self.tested_parsers[EncoderLogs.AbstractEncLog]
         del self.tested_parsers[DatLogs.AbstractDatLog]
         del self.tested_parsers[DatLogs.DatLogBasedOnClassName]
+        # todo: add parsers for these
+        del self.tested_parsers[DatLogs.DatLogJEM70]
+        del self.tested_parsers[DatLogs.DatLogJEM70Geo]
+        del self.tested_parsers[DatLogs.DatLogJEM70GeoHOMC]
+        del self.tested_parsers[DatLogs.DatLogJEM70_360]
+
 
     def test_parsing_of_logs(self):
         self.logs_parsed = []
