@@ -26,7 +26,8 @@ before_script:
   
 script:
  - cd src
- - export RUNNING_AS_UNITTEST=True pytest --cov-report= --cov=rdplot
+ - export RUNNING_AS_UNITTEST=True
+ - pytest --cov-report= --cov=rdplot
 
 after_success:
     - coveralls

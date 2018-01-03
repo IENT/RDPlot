@@ -801,10 +801,10 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                     not_chosen_par.addItems(par_list)
                     not_chosen_par.setDragDropMode(QAbstractItemView.DragDrop)
                     not_chosen_par.setDefaultDropAction(QtCore.Qt.MoveAction)
-                    # we do not want to create the dialog when testing the code. since the dialog will never be closed
-                    # todo: code should not know about test. make dialog available from the outside, let test close it
-                    if 'RUNNING_AS_UNITTEST' not in environ:
-                        if len(diff_dict[sim_class]) > 1:
+                    if len(diff_dict[sim_class]) > 1:
+                        # we do not want to create the dialog when testing the code. since the dialog will never be closed
+                        # todo: code should not know about test. make dialog available from the outside, let test close it
+                        if 'RUNNING_AS_UNITTEST' not in environ:
                             main_layout = QVBoxLayout()
                             dialog = QDialog()
                             dialog.setWindowTitle('Choose Parameters')
