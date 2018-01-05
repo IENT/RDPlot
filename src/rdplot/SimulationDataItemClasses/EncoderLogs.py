@@ -590,4 +590,20 @@ class EncLogSHM(AbstractEncLog):
         return data
 
     def _parse_encoder_config(self):
-        pass
+        with open(self.path, 'r') as log_file:
+            log_text = log_file.read()  # reads the whole text file
+            lines = log_text.split('\n')
+            cleanlist = []
+            for one_line in lines:
+                if '=== Common configuration settings === ' in one_line:
+                    break
+                if re.match('QP\s+',one_line):
+                    clean_line = one_line.strip(' \n\t\r')
+                    clean_line = re.sub('\s+', '', clean_line)
+                    cleanlist.append(clean_line)
+            cleanlist = [item.split(':', maxsplit=1) for item in cleanlist]
+            parsed_config = {}
+            for key, val in cleanlist:
+                parsed_config.setdefault(key, []).append(val)
+            self.qp = [parsed_config['QP']]
+        return parsed_config
