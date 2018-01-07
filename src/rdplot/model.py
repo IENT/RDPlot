@@ -791,17 +791,15 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                 # the user can drag the parameters, he wants to analyse further into an other list
                 # the order of the parameters in the list determines the order of the parameter tree
                 if diff_dict[sim_class]:
-                    par_list = [item for item in diff_dict[sim_class] if item != 'QP']
-                    qp_item = QtWidgets.QListWidgetItem('QP')
                     chosen_par = QtWidgets.QListWidget()
-                    chosen_par.addItem(qp_item)
+                    chosen_par.addItems([item for item in diff_dict[sim_class] if item == 'QP'])
                     chosen_par.setDragDropMode(QAbstractItemView.DragDrop)
                     chosen_par.setDefaultDropAction(QtCore.Qt.MoveAction)
                     not_chosen_par = QtWidgets.QListWidget()
-                    not_chosen_par.addItems(par_list)
+                    not_chosen_par.addItems([item for item in diff_dict[sim_class] if item != 'QP'])
                     not_chosen_par.setDragDropMode(QAbstractItemView.DragDrop)
                     not_chosen_par.setDefaultDropAction(QtCore.Qt.MoveAction)
-                    if len(diff_dict[sim_class]) > 1:
+                    if not_chosen_par:
                         # we do not want to create the dialog when testing the code. since the dialog will never be closed
                         # todo: code should not know about test. make dialog available from the outside, let test close it
                         if 'RUNNING_AS_UNITTEST' not in environ:
