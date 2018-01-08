@@ -590,4 +590,29 @@ class EncLogSHM(AbstractEncLog):
         return data
 
     def _parse_encoder_config(self):
-        pass
+        with open(self.path, 'r') as log_file:
+            log_text = log_file.read()                 # reads the whole text file
+            lines = log_text.split('\n')
+            clean_list = []
+            for one_line in lines:
+                if '=== Common configuration settings === ' in one_line:
+                    break
+                if re.match('QP\s+',one_line):
+                    clean_line = one_line.strip(' \n\t\r')
+                    clean_line = re.sub('\s+', '', clean_line)
+                    clean_list.append(clean_line)
+            clean_list = [item.split(':', maxsplit=1) for item in clean_list]
+            parsed_config = {}
+            for key, val in clean_list:
+                # Later the differences between the configurations are calculated.
+                # The calculation can not handle lists. Therefore the list elements are joined.
+                # The first element describes the QP value connected to the first layer
+                # and the second QP value connected to the second layer
+                # TODO: connect QP values better to layers
+                if key in parsed_config:
+                    parsed_config.setdefault(key, []).append(val)
+                    parsed_config[key] = '+'.join(parsed_config[key])
+                else:
+                    parsed_config.setdefault(key, []).append(val)
+            self.qp = parsed_config['QP']
+        return parsed_config
