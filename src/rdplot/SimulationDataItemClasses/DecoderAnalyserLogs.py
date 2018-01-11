@@ -34,6 +34,8 @@ class AbstractDecAnalyserLog(AbstractSimulationDataItem):
         # Dictionaries holding the parsed values
         self.analyser_data = self._parse_analyser_data()
 
+        self.log_config = self._parse_config()
+
     def _parse_path(self, path):
         """ parses the identifiers for an encoder log out of the
         path of the logfile and the sequence name and qp given in
@@ -68,6 +70,13 @@ class AbstractDecAnalyserLog(AbstractSimulationDataItem):
     @property
     def tree_identifier_list(self):
         return [self.__class__.__name__, self.sequence, self.config, self.qp]
+
+    def _parse_config(self):
+        """Method which parses log file to get config (QP, other parameters).
+        Abstract, needs to be implemented by log parsers
+        :return:
+        """
+        pass
 
     @property
     def data(self):
@@ -185,3 +194,10 @@ class DecAnalyserLogHM(AbstractDecAnalyserLog):
                     continue
 
         return data
+
+    def _parse_config(self):
+        """Method which parses log file to get config (QP, other parameters).
+        Abstract, needs to be implemented by log parsers
+        :return:
+        """
+        pass

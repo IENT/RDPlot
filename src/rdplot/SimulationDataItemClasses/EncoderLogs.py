@@ -38,7 +38,7 @@ class AbstractEncLog(AbstractSimulationDataItem):
         self.temporal_data = self._parse_temporal_data()
         self.additional_params = []
 
-        self.encoder_config = self._parse_encoder_config()
+        self.log_config = self._parse_config()
 
     def _parse_path(self, path):
         """ parses the identifiers for an encoder log out of the
@@ -113,7 +113,7 @@ class AbstractEncLog(AbstractSimulationDataItem):
         if not hasattr(self, 'additional_params'):
             self.additional_params = []
         try:
-            l1 = list(zip(self.additional_params, [self.encoder_config[i] for i in self.additional_params]))
+            l1 = list(zip(self.additional_params, [self.log_config[i] for i in self.additional_params]))
             l1 = list(map(lambda x: '='.join(x), l1))
             return [self.__class__.__name__, self.sequence, self.config] + l1
         except:
@@ -121,12 +121,20 @@ class AbstractEncLog(AbstractSimulationDataItem):
             self.additional_params = ['QP']
             return [self.__class__.__name__, self.sequence, self.config]
 
+    @abstractmethod
+    def _parse_config(self):
+        """Method which parses log file to get config (QP, other parameters).
+        Abstract, needs to be implemented by encoder log parsers
+        :return:
+        """
+        pass
+
     @property
     def data(self):
         # This is for conformance with rd data written out by older versions of rdplot
         if not hasattr(self, 'additional_params'):
             self.additional_params = []
-        l1 = list(zip(self.additional_params, [self.encoder_config[i] for i in self.additional_params]))
+        l1 = list(zip(self.additional_params, [self.log_config[i] for i in self.additional_params]))
         l1 = list(map(lambda x: '='.join(x), l1))
         return [
             (
@@ -176,15 +184,6 @@ class AbstractEncLog(AbstractSimulationDataItem):
     def _parse_temporal_data(self):
         """
         Method which parses the temporal data of a simulation. I.e. rate over poc, quality over poc ...
-        :return:
-        """
-        pass
-
-    @abstractmethod
-    def _parse_encoder_config(self):
-        """
-        Method which parses log file to get config (QP, other parameters).
-        Abstract, needs to be implemented by encoder log parsers
         :return:
         """
         pass
@@ -274,7 +273,7 @@ class EncLogHM(AbstractEncLog):
         data['SUMMARY']['HM Minor Version'] = [(bitrate, int(hm_minor_version))]
         return data
 
-    def _parse_encoder_config(self):
+    def _parse_config(self):
         with open(self.path, 'r') as log_file:
             log_text = log_file.read()  # reads the whole text file
             lines = log_text.split('\n')
@@ -346,7 +345,7 @@ class EncLogHM360Lib(AbstractEncLog):
         is_finished = cls._enc_log_file_matches_re_pattern(path, 'Total\ Time')
         return matches_class and is_finished
 
-    def _parse_encoder_config(self):
+    def _parse_config(self):
         with open(self.path, 'r') as log_file:
             log_text = log_file.read()  # reads the whole text file
             lines = log_text.split('\n')
@@ -589,7 +588,7 @@ class EncLogSHM(AbstractEncLog):
             data[layerstring] = data2
         return data
 
-    def _parse_encoder_config(self):
+    def _parse_config(self):
         with open(self.path, 'r') as log_file:
             log_text = log_file.read()                 # reads the whole text file
             lines = log_text.split('\n')

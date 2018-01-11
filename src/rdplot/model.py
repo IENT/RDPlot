@@ -755,7 +755,7 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
 
         additional_param_found = []
 
-        all_enc_configs = {}
+        all_log_configs = {}
         diff_dict = {}
 
         # build up a diff dict in order let the software handle multiple different parameters
@@ -767,16 +767,16 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
         # logfile
         try:
             for sim_data_item in sim_data_items:
-                if sim_data_item.__class__ not in all_enc_configs:
-                    all_enc_configs[sim_data_item.__class__] = []
+                if sim_data_item.__class__ not in all_log_configs:
+                    all_log_configs[sim_data_item.__class__] = []
                     diff_dict[sim_data_item.__class__] = {}
-                all_enc_configs[sim_data_item.__class__].append(sim_data_item.encoder_config)
+                all_log_configs[sim_data_item.__class__].append(sim_data_item.log_config)
                 # print(sim_data_item.summary_data['encoder_config'])
             value_filter = ['.yuv', '.bin', '.hevc', '.jem']
             key_filter = []
-            for sim_class in all_enc_configs.keys():
-                for i in range(len(all_enc_configs[sim_class]) - 1):
-                    current_item, next_item = all_enc_configs[sim_class][i], all_enc_configs[sim_class][i + 1]
+            for sim_class in all_log_configs.keys():
+                for i in range(len(all_log_configs[sim_class]) - 1):
+                    current_item, next_item = all_log_configs[sim_class][i], all_log_configs[sim_class][i + 1]
                     for (key, value) in set(current_item.items()) ^ set(next_item.items()):
                         if all(y not in key for y in key_filter):
                             if all(x not in value for x in value_filter):
