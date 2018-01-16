@@ -19,6 +19,7 @@
 ##################################################################################################
 import re
 from os.path import normpath, basename, dirname
+from abc import abstractclassmethod
 
 from rdplot.SimulationDataItem import AbstractSimulationDataItem, SimulationDataItemError
 
@@ -71,6 +72,7 @@ class AbstractDecAnalyserLog(AbstractSimulationDataItem):
     def tree_identifier_list(self):
         return [self.__class__.__name__, self.sequence, self.config, self.qp]
 
+    @abstractclassmethod
     def _parse_config(self):
         """Method which parses log file to get config (QP, other parameters).
         Abstract, needs to be implemented by log parsers
