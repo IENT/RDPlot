@@ -202,4 +202,4 @@ class DecAnalyserLogHM(AbstractDecAnalyserLog):
         Abstract, needs to be implemented by log parsers
         :return:
         """
-        pass
+        return {}  # in case no configuration information has been parsed return an empty dict
