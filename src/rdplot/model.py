@@ -758,7 +758,7 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
         all_log_configs = {}
         diff_dict = {}
 
-        # build up a diff dict in order let the software handle multiple different parameters
+        # build up a diff dict in order let the software handle multiple configuration parameters
         # in one simulation directory
         # some of the diffs should not be interpreted as parameters
         # those are removed from the dict; for sure QP, RealFormat, InternalFormat, and Warning
@@ -771,6 +771,17 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                     all_log_configs[sim_data_item.__class__] = []
                     diff_dict[sim_data_item.__class__] = {}
                 all_log_configs[sim_data_item.__class__].append(sim_data_item.log_config)
+                # create list for all configuration parameters of the simulation_data_item
+                # this configuration parameters will be displayed in the VariableTreeModel
+                # If a qp parameter is available, we keep it as default in the List.
+                # If the qp parameter is the only element in diff_dict or
+                # if the user opens single files and not a directory,
+                # no dialog window will be opened where you could add/remove all configuration parameters
+                # that differ between the sim_data_items
+                # TODO: enable multiple configuration parameters for the case that a specific file is opened
+                chosen_par = QtWidgets.QListWidget()
+                if hasattr(sim_data_item, 'qp'):
+                    chosen_par.addItems(['QP'])
                 # print(sim_data_item.summary_data['encoder_config'])
             value_filter = ['.yuv', '.bin', '.hevc', '.jem']
             key_filter = []
@@ -791,8 +802,6 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                 # the user can drag the parameters, he wants to analyse further into an other list
                 # the order of the parameters in the list determines the order of the parameter tree
                 if diff_dict[sim_class]:
-                    chosen_par = QtWidgets.QListWidget()
-                    chosen_par.addItems([item for item in diff_dict[sim_class] if item == 'QP'])
                     chosen_par.setDragDropMode(QAbstractItemView.DragDrop)
                     chosen_par.setDefaultDropAction(QtCore.Qt.MoveAction)
                     not_chosen_par = QtWidgets.QListWidget()
@@ -824,7 +833,7 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                             dialog.exec()
                     for i in range(len(not_chosen_par)):
                         diff_dict[sim_class].pop(not_chosen_par.item(i).text(), None)
-                    additional_param_found.append(sim_class)
+                additional_param_found.append(sim_class)
 
         except AttributeError:
             # maybe do something useful here
