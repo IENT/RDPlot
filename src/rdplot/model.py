@@ -744,7 +744,7 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
         """
         self.update([sim_data_item])
 
-    def update(self, sim_data_items):
+    def update(self, sim_data_items, check_add_param = True):
         """Adds all elements in the iterable *sim_data_items* to the tree or
         replaces them if they are already present. Issues the *items_changed*
         signal, after all sim data items are added/replaced.
@@ -752,9 +752,7 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
         :param sim_data_items: Iterable collection of :class: `SimDataItem`s to be added
 
         """
-
         additional_param_found = []
-
         all_log_configs = {}
         diff_dict = {}
 
@@ -857,6 +855,7 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                     value.tree_identifier_list == sim_data_item.tree_identifier_list
                     and value.path != sim_data_item.path
                     and not has_additional_params
+                    and check_add_param
                 )
                 if condition:
                     raise AmbiguousSimDataItems((

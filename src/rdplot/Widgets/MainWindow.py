@@ -568,7 +568,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 f = open(path, 'r')
                 json_str = f.read()
                 sim_data_items = jsonpickle.decode(json_str)
-                self.simDataItemTreeModel.update(sim_data_items)
+                self.simDataItemTreeModel.update(sim_data_items,False)
                 f.close()
                 continue
 
