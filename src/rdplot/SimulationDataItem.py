@@ -265,6 +265,14 @@ class AbstractSimulationDataItem(metaclass=ABCMeta):
         """
         pass
 
+    @abstractmethod
+    def _parse_config(self):
+        """Method which parses log file to get config (QP, other parameters).
+        Abstract, needs to be implemented by log parsers
+        :return:
+        """
+        pass
+
     # Magic Methods
     # TODO remove if useful 'set' is implemented
     def __hash__(self):

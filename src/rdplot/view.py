@@ -302,7 +302,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
             msg.setWindowTitle("Warning")
             msg.show()
         try:
-            self.model().update(sim_data_items)
+            self.model().update(sim_data_items,False)
         except AmbiguousSimDataItems as inst:
             msg = QMessageBox(self)  # use self as parent here
             msg.setIcon(QMessageBox.Warning)
