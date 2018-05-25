@@ -17,65 +17,61 @@
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 ##################################################################################################
-from PyQt5 import QtWidgets
-from PyQt5.Qt import Qt, QApplication
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtGui import QKeySequence, QKeyEvent
-from PyQt5.QtCore import QObject,QItemSelectionModel, QItemSelection, QModelIndex, pyqtSignal, QThread
-from PyQt5.QtWidgets import QMessageBox, QMenu
-
-
-from collections import deque
-from os import path
-from os.path import join
-from os.path import isdir
-import jsonpickle
 import json
+from collections import deque
+from os.path import isdir, abspath, sep, dirname, basename, isfile, join
+
+import jsonpickle
+from PyQt5 import QtWidgets
+from PyQt5.Qt import QApplication
+from PyQt5.QtCore import *
+from PyQt5.QtCore import QObject, QItemSelectionModel, QItemSelection, QModelIndex, pyqtSignal, QThread
+from PyQt5.QtGui import *
+from PyQt5.QtGui import QKeySequence
+from PyQt5.QtWidgets import QMessageBox, QMenu
 
 from rdplot.SimulationDataItem import SimulationDataItemFactory, SimulationDataItemError
 from rdplot.model import AmbiguousSimDataItems
 
-
 # Path to the folder containing simulation data sub classes. The classes
 # are loaded by the simulation data item factory and used for parsing files
-here = path.abspath(path.dirname(__file__))
-SIMULATION_DATA_ITEM_CLASSES_PATH = here + path.sep + "SimulationDataItemClasses"
+here = abspath(dirname(__file__))
+SIMULATION_DATA_ITEM_CLASSES_PATH = here + sep + "SimulationDataItemClasses"
 
 
 class ParserWorkThread(QThread):
     newParsedData = pyqtSignal([list])
-    allParsed     = pyqtSignal()
+    allParsed = pyqtSignal()
 
-    def __init__(self, pathlist=None):
+    def __init__(self, path_list=None):
         QThread.__init__(self)
 
         self._factory = SimulationDataItemFactory.from_path(
             SIMULATION_DATA_ITEM_CLASSES_PATH
         )
 
-        if pathlist is None:
-            pathlist = []
-        self.pathlist = pathlist
+        if path_list is None:
+            path_list = []
+        self.path_list = path_list
 
     def __del__(self):
         self.wait()
 
-    def addPath(self,path):
-        self.pathlist.append(path)
+    def add_path(self, path):
+        self.path_list.append(path)
 
     def run(self):
-        for path in self.pathlist:
+        for path in self.path_list:
             try:
                 sim_data_items = self._factory.create_item_list_from_path(path)
-                print(("Parsed '{}' ").format(path))
+                print("Parsed '{}' ".format(path))
             except SimulationDataItemError:
                 self.newParsedData.emit([])
-                self.pathlist.clear()
+                self.path_list.clear()
                 return
 
             self.newParsedData.emit(sim_data_items)
-        self.pathlist.clear()
+        self.path_list.clear()
         self.allParsed.emit()
 
 
@@ -86,33 +82,33 @@ class ParserWorkNoThread(QObject):
     """
 
     newParsedData = pyqtSignal([list])
-    allParsed     = pyqtSignal()
+    allParsed = pyqtSignal()
 
-    def __init__(self, pathlist=None):
+    def __init__(self, path_list=None):
         QObject.__init__(self)
 
         self._factory = SimulationDataItemFactory.from_path(
             SIMULATION_DATA_ITEM_CLASSES_PATH
         )
 
-        if pathlist is None:
-            pathlist = []
-        self.pathlist = pathlist
+        if path_list is None:
+            path_list = []
+        self.path_list = path_list
 
-    def addPath(self,path):
-        self.pathlist.append(path)
+    def add_path(self, path):
+        self.path_list.append(path)
 
     def run(self):
-        for path in self.pathlist:
+        for path in self.path_list:
             try:
                 sim_data_items = self._factory.create_item_list_from_path(path)
             except SimulationDataItemError:
                 self.newParsedData.emit([])
-                self.pathlist.clear()
+                self.path_list.clear()
                 return
 
             self.newParsedData.emit(sim_data_items)
-        self.pathlist.clear()
+        self.path_list.clear()
         self.allParsed.emit()
 
     def start(self):
@@ -124,16 +120,16 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         super().__init__(*args, **kwargs)
         self.parserThread = ParserWorkThread()
         # helpful for debugging, when breakpoints don't work because of threading
-        #self.parserThread = ParserWorkNoThread()
+        # self.parserThread = ParserWorkNoThread()
         self.parserThread.newParsedData.connect(self._update_model)
         self.parserThread.allParsed.connect(self._hide_parse_message)
-        self.msg = QMessageBox(self) # use self as parent here
+        self.msg = QMessageBox(self)  # use self as parent here
         self.msg.setIcon(QMessageBox.Information)
         self.msg.setText("Parsing Directory...")
         self.msg.setWindowTitle("Info")
         # TODO: add context menu capabilities
-        #self.setContextMenuPolicy(Qt.CustomContextMenu)
-        #self.customContextMenuRequested.connect(self.openMenu)
+        # self.setContextMenuPolicy(Qt.CustomContextMenu)
+        # self.customContextMenuRequested.connect(self.openMenu)
 
     # drag'n'drop mechanism adapted
     # from question on stackoverflow at http://stackoverflow.com/q/22543644
@@ -149,23 +145,23 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
 
     def dropEvent(self, event):
         for url in event.mimeData().urls():
-            if url.isLocalFile() and path.isfile(url.path()):
+            if url.isLocalFile() and isfile(url.path()):
                 try:
                     # check what kind of file we have.
                     # process .rd with load_rd_data, .xml and .log with the parsers
-                    file_ending = path.basename(url.path()).rsplit('.', maxsplit=1)[1]
+                    file_ending = basename(url.path()).rsplit('.', maxsplit=1)[1]
                     if file_ending == 'rd':
                         self.load_rd_data(url.path())
                     elif file_ending == 'log' or file_ending == 'xml':
-                        self.parserThread.addPath(url.path())
+                        self.parserThread.add_path(url.path())
                         self.parserThread.start()
                 except json.decoder.JSONDecodeError:
                     return
-                except IndexError: # there was no file ending, i.e. not '.' in the name
+                except IndexError:  # there was no file ending, i.e. not '.' in the name
                     return
             else:
                 self.msg.show()
-                self.parserThread.addPath( url.path() )
+                self.parserThread.add_path(url.path())
                 self.parserThread.start()
 
     # end snippet
@@ -182,7 +178,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         super().keyPressEvent(q_key_event)
 
     # TODO: this is how context menus can be implemented    
-    def openMenu(self, position):
+    def open_menu(self, position):
         indexes = self.selectedIndexes()
         if len(indexes) > 0:
             level = 0
@@ -190,9 +186,9 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
             while index.parent().isValid():
                 index = index.parent()
                 level += 1
-        indexSelected = self.indexAt(position)
+        index_selected = self.indexAt(position)
         menu = QMenu()
-        menu.addAction(self.tr("Level: " + str(level) + ", Index: " + str(indexSelected)))
+        menu.addAction(self.tr("Level: " + str(level) + ", Index: " + str(index_selected)))
         menu.exec_(self.viewport().mapToGlobal(position))
 
     # end snippet
@@ -203,8 +199,8 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
             result = QtWidgets.QFileDialog.getOpenFileNames(
                 self,
                 "Open Sequence Encoder Log",
-                "/home/ient/Software/rd-plot-gui/examplLogs",
-                "All Logs (*.log *.xml *.rd);;Enocder Logs (*.log);;Dat Logs (*.xml);; RD Data (*.rd)")
+                "/home/ient/Software/rd-plot-gui/exampleLogs",
+                "All Logs (*.log *.xml *.rd);;Encoder Logs (*.log);;Dat Logs (*.xml);; RD Data (*.rd)")
 
             # magic: split returned list of files into lists of directories and file names
             directories, file_names = zip(*[file.rsplit('/', 1) for file in result[0]])
@@ -218,10 +214,11 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
             result = QtWidgets.QFileDialog.getExistingDirectory(
                 self,
                 "Open Directory",
-                "/home/ient/Software/rd-plot-gui/examplLogs")
-            if not result: raise TypeError
+                "/home/ient/Software/rd-plot-gui/exampleLogs")
+            if not result:
+                raise TypeError
             return result
-        except (IndexError):
+        except IndexError:
             return
 
     # open one or more files
@@ -239,10 +236,10 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
             if file_ending == 'rd':
                 self.load_rd_data(path)
             elif file_ending == 'log' or file_ending == 'xml':
-                self.parserThread.addPath(path)
+                self.parserThread.add_path(path)
         self.parserThread.start()
 
-    # adds all logfiles and sequences from a directory to the treeview
+    # adds all log files and sequences from a directory to the treeview
     def add_folder(self):
         try:
             path = self._get_folder()
@@ -251,10 +248,10 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
 
         # TODO this uses the parse_directory method, thus, does not automatically
         # parse 'log'.subfolder. Should this be the case?
-        #sim_data_items = list(SimulationDataItemFactory.parse_directory(path))
-        #self.model().update(sim_data_items)
+        # sim_data_items = list(SimulationDataItemFactory.parse_directory(path))
+        # self.model().update(sim_data_items)
         self.msg.show()
-        self.parserThread.addPath(path)
+        self.parserThread.add_path(path)
         self.parserThread.start()
 
     def add_folder_list(self):
@@ -262,27 +259,28 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
             result = QtWidgets.QFileDialog.getOpenFileNames(
                 self,
                 "Open Directory List",
-                "/home/ient/Software/rd-plot-gui/examplLogs",
+                "/home/ient/Software/rd-plot-gui/exampleLogs",
                 "Text Files (*.txt *.*)")
 
             with open(result[0][0]) as fp:
                 for line in fp:
-                    cleanpath = line.rstrip()
-                    if isdir(cleanpath):
-                        self.parserThread.addPath(cleanpath)
+                    clean_path = line.rstrip()
+                    if isdir(clean_path):
+                        self.parserThread.add_path(clean_path)
             self.msg.show()
             self.parserThread.start()
-                        
+
         except IndexError:
             return
 
-        # TODO this uses the parse_directory method, thus, does not automatically
-        # parse 'log'.subfolder. Should this be the case?
-        #sim_data_items = list(SimulationDataItemFactory.parse_directory(path))
-        #self.model().update(sim_data_items)
-        #self.msg.show()
-        #self.parserThread.addPath(path)
-        #self.parserThread.start()
+            # TODO this uses the parse_directory method, thus, does not automatically
+            # parse 'log'.subfolder. Should this be the case?
+            # sim_data_items = list(SimulationDataItemFactory.parse_directory(path))
+            # self.model().update(sim_data_items)
+            # self.msg.show()
+            # self.parserThread.addPath(path)
+            # self.parserThread.start()
+
     def _hide_parse_message(self):
         self.msg.hide()
 
@@ -294,7 +292,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         self._update_model(sim_data_items)
         f.close()
 
-    def _update_model(self,sim_data_items):
+    def _update_model(self, sim_data_items):
         if not sim_data_items:
             msg = QMessageBox(self)  # use self as parent here
             msg.setIcon(QMessageBox.Warning)
@@ -304,11 +302,11 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
             msg.setWindowTitle("Warning")
             msg.show()
         try:
-            self.model().update(sim_data_items)
+            self.model().update(sim_data_items,False)
         except AmbiguousSimDataItems as inst:
             msg = QMessageBox(self)  # use self as parent here
             msg.setIcon(QMessageBox.Warning)
-            msg.setText("I have found ambigous simualtion data items in your selected directory.\n"
+            msg.setText("I have found ambiguous simulation data items in your selected directory.\n"
                         "The reason for that is that you want to parse files from one directory "
                         "with different names but the same QP and sequence name.\n"
                         "From all the parsers I know at the moment I cannot decide what you want "
@@ -324,6 +322,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
 
 class PlottedFilesListView(QtWidgets.QListView):
     """Implements the view for plotted files"""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -384,7 +383,7 @@ class QRecursiveSelectionModel(QItemSelectionModel):
         # Add the index ranges to the `selection`
         for (q_index_1, q_index_2) in index_ranges:
             # TODO Problem could be, that select leads to duplicates in the
-            # selection. So far, no problem arised. `merge` is no alternative
+            # selection. So far, no problem arose. `merge` is no alternative
             # as it does not support all `commands`
             recursive_selection.select(q_index_1, q_index_2)
 
@@ -403,8 +402,7 @@ class QRecursiveSelectionModel(QItemSelectionModel):
         index_ranges = deque()
         while len(q_index_parent_queue) != 0:
             q_index_parent = q_index_parent_queue.pop()
-            # Get parent item from current `QModelIndex`
-            parent = q_index_parent.internalPointer()
+
             # Number of columns and rows of the current parent
             count_row = self.model().rowCount(q_index_parent)
             count_column = self.model().columnCount(q_index_parent)

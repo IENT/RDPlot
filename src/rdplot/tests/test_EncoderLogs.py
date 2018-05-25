@@ -13,6 +13,20 @@ TEST_DIR = path.dirname(path.abspath(__file__))
 SIMULATION_DATA_ITEM_CLASSES_PATH = path.normpath(path.join(TEST_DIR, '../SimulationDataItemClasses'))
 
 
+def filter_by_ending(paths, value):
+    """
+    Filter file paths, remove paths, file ending does not match
+    :param paths: list of file paths
+    :param value: file ending
+    :return: paths which have matching file ending
+    """
+    for a_path in paths:
+        if '.' in a_path:
+            dont_care, ending = a_path.rsplit('.', maxsplit=1)
+            if ending == value:
+                yield a_path
+
+
 class TestEncoderLogs(unittest.TestCase):
     def setUp(self):
         self._factory = SimulationDataItemFactory.from_path(
@@ -29,6 +43,7 @@ class TestEncoderLogs(unittest.TestCase):
         self.log_paths = []
         for log_dir in self.tested_log_dirs:
             logs = listdir(log_dir)
+            logs = filter_by_ending(logs, 'log')
             self.log_paths += [path.join(log_dir, log) for log in logs]
 
         # set up a dictionary to record which parser were tested
@@ -122,43 +137,32 @@ class TestEncoderLogs(unittest.TestCase):
                     # check structure of summary data dict
                     # any stream will have at least summary and intra pictures:
                     self.assertTrue('SUMMARY' in summary_data.keys())
-                    self.assertTrue('I' in summary_data.keys())
+                    self.assertTrue('I Slices' in summary_data.keys())
                     for picture_type_key, data in summary_data.items():
                         # check structure of  data dict for this picture type
+                        # will not check all elements, since this is configurable for 360Lib and cannot be known
                         if picture_type_key == 'SUMMARY':
-                            self.assertCountEqual(data.keys(),
-                                                  ['Frames', 'Total Time', 'Bitrate', 'Y-PSNR', 'U-PSNR', 'V-PSNR',
-                                                   'YUV-PSNR',
-                                                   'Y-WSPSNR', 'U-WSPSNR', 'V-WSPSNR',
-                                                   'Y-E2ESPSNR_NN', 'U-E2ESPSNR_NN', 'V-E2ESPSNR_NN',
-                                                   'Y-E2ESPSNR_I', 'U-E2ESPSNR_I', 'V-E2ESPSNR_I',
-                                                   'Y-E2ECPPPSNR', 'U-E2ECPPPSNR', 'V-E2ECPPPSNR', 'Y-E2EWSPSNR',
-                                                   'U-E2EWSPSNR', 'V-E2EWSPSNR',
-                                                   'Y-PSNR_DYN_VP0', 'U-PSNR_DYN_VP0', 'V-PSNR_DYN_VP0',
-                                                   'Y-PSNR_DYN_VP1', 'U-PSNR_DYN_VP1',
-                                                   'V-PSNR_DYN_VP1', 'Y-CFSPSNR_NN', 'U-CFSPSNR_NN',
-                                                   'V-CFSPSNR_NN', 'Y-CFSPSNR_I', 'U-CFSPSNR_I',
-                                                   'V-CFSPSNR_I', 'Y-CFCPPPSNR', 'U-CFCPPPSNR', 'V-CFCPPPSNR'])
+                            self.assertIn('Total Frames', data.keys())
+                            self.assertIn('Total Time', data.keys())
+                            self.assertIn('Bitrate', data.keys())
+                            self.assertIn('Y-PSNR', data.keys())
+                            self.assertIn('U-PSNR', data.keys())
+                            self.assertIn('V-PSNR', data.keys())
+                            self.assertIn('YUV-PSNR', data.keys())
                         else:
-                            self.assertCountEqual(data.keys(),
-                                                  ['Frames', 'Bitrate', 'Y-PSNR', 'U-PSNR', 'V-PSNR',
-                                                   'YUV-PSNR',
-                                                   'Y-WSPSNR', 'U-WSPSNR', 'V-WSPSNR',
-                                                   'Y-E2ESPSNR_NN', 'U-E2ESPSNR_NN', 'V-E2ESPSNR_NN',
-                                                   'Y-E2ESPSNR_I', 'U-E2ESPSNR_I', 'V-E2ESPSNR_I',
-                                                   'Y-E2ECPPPSNR', 'U-E2ECPPPSNR', 'V-E2ECPPPSNR', 'Y-E2EWSPSNR',
-                                                   'U-E2EWSPSNR', 'V-E2EWSPSNR',
-                                                   'Y-PSNR_DYN_VP0', 'U-PSNR_DYN_VP0', 'V-PSNR_DYN_VP0',
-                                                   'Y-PSNR_DYN_VP1', 'U-PSNR_DYN_VP1',
-                                                   'V-PSNR_DYN_VP1', 'Y-CFSPSNR_NN', 'U-CFSPSNR_NN',
-                                                   'V-CFSPSNR_NN', 'Y-CFSPSNR_I', 'U-CFSPSNR_I',
-                                                   'V-CFSPSNR_I', 'Y-CFCPPPSNR', 'U-CFCPPPSNR', 'V-CFCPPPSNR'])
+                            self.assertIn('Total Frames', data.keys())
+                            self.assertIn('Bitrate', data.keys())
+                            self.assertIn('Y-PSNR', data.keys())
+                            self.assertIn('U-PSNR', data.keys())
+                            self.assertIn('V-PSNR', data.keys())
+                            self.assertIn('YUV-PSNR', data.keys())
+
                 elif isinstance(parsed_instance, EncoderLogs.EncLogSHM):
                     temporal_data = parsed_instance.temporal_data
                     summary_data = parsed_instance.summary_data
                     sequence = parsed_instance.sequence
                     config = parsed_instance.config
-                    qps = parsed_instance.qp.split(' ')
+                    qps = parsed_instance.qp.split('+')
 
                     # run checks on the parsed data
                     # check variable types

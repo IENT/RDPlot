@@ -18,11 +18,11 @@
 #
 ##################################################################################################
 import xmltodict
+from abc import abstractmethod
 from xml.parsers.expat import ExpatError
 from os.path import normpath, basename, sep, dirname
 
-from rdplot.SimulationDataItem import (AbstractSimulationDataItem,
-                                SimulationDataItemError)
+from rdplot.SimulationDataItem import (AbstractSimulationDataItem, SimulationDataItemError)
 
 
 class AbstractDatLog(AbstractSimulationDataItem):
@@ -44,6 +44,8 @@ class AbstractDatLog(AbstractSimulationDataItem):
         self.summary_data = self._parse_summary_data()
         self.temporal_data = {}  # Dat logs have no temporal data
 
+        self.log_config = self._parse_config()
+
     def _parse_path(self, path):
         """ parses the identifiers for an encoder log out of the
         path of the logfile and the sequence name and qp given in
@@ -62,6 +64,14 @@ class AbstractDatLog(AbstractSimulationDataItem):
     @property
     def tree_identifier_list(self):
         return [self.__class__.__name__, self.sequence, self.config, self.qp]
+
+    @abstractmethod
+    def _parse_config(self):
+        """Method which parses log file to get config (QP, other parameters).
+        Abstract, needs to be implemented by log parsers
+        :return:
+        """
+        pass
 
     @property
     def data(self):
@@ -119,6 +129,13 @@ class DatLogBasedOnClassName(AbstractDatLog):
         except IndexError:
             raise
 
+    def _parse_config(self):
+        """Method which parses log file to get config (QP, other parameters).
+        Abstract, needs to be implemented by log parsers
+        :return:
+        """
+        return {}  # in case no configuration information has been parsed return an empty dict
+
     def _get_label(self, keys):
         """
         :param keys: Variable/Path for which to get the labels
@@ -143,6 +160,15 @@ class DatLogJEM501_360(DatLogBasedOnClassName):
     pass
 
 class DatLogJEM70_360(DatLogBasedOnClassName):
+    pass
+
+class DatLogJEM70(DatLogBasedOnClassName):
+    pass
+
+class DatLogJEM70Geo(DatLogBasedOnClassName):
+    pass
+
+class DatLogJEM70GeoHOMC(DatLogBasedOnClassName):
     pass
 
 class DatLogConversionPSNRLoss360(DatLogBasedOnClassName):
