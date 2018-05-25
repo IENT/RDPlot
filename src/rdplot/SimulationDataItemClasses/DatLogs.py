@@ -136,6 +136,8 @@ class DatLogBasedOnClassName(AbstractDatLog):
 class DatLogHEVC(DatLogBasedOnClassName):
     pass
 
+class DatLogVTM1_0(DatLogBasedOnClassName):
+    pass
 
 class DatLogJEM501_360(DatLogBasedOnClassName):
     pass
