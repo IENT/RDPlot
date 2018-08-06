@@ -59,6 +59,7 @@ class TestDatLogs(unittest.TestCase):
         del self.tested_parsers[DatLogs.DatLogJEM70Geo]
         del self.tested_parsers[DatLogs.DatLogJEM70GeoHOMC]
         del self.tested_parsers[DatLogs.DatLogJEM70_360]
+        del self.tested_parsers[DatLogs.DatLogVTM1_0]
 
 
     def test_parsing_of_logs(self):
