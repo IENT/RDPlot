@@ -71,7 +71,7 @@ def get_version():
     :return:
     """
 
-    r = git.repo.Repo('./')
+    r = git.repo.Repo('../')
     git_describe = r.git.describe()
     version = None
     split_describe = git_describe.split('-')
