@@ -9,6 +9,7 @@ from setuptools import setup, find_packages
 from codecs import open
 import platform
 import os
+import git 
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -70,11 +71,8 @@ def get_version():
     :return:
     """
 
-    if not 'git_describe' in os.environ:
-        raise Exception("Environment variable 'git_describe' does not exist!")
-
-    git_describe = os.environ['git_describe']
-
+    r = git.repo.Repo('./')
+    git_describe = r.git.describe()
     version = None
     split_describe = git_describe.split('-')
     if len(split_describe) == 1:
@@ -166,7 +164,7 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['cycler', 'matplotlib', 'numpy', 'py', 'pyparsing', 'pyqt5', 'pytest', 'python-dateutil', 'pytz',
+    install_requires=['cycler', 'matplotlib', 'numpy', 'py', 'pyparsing', 'pyqt5<5.11', 'pytest', 'python-dateutil', 'pytz',
                       'sip', 'six', 'scipy', 'tabulate', 'mpldatacursor',
                       'xmltodict', 'jsonpickle'],
 
