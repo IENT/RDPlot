@@ -14,7 +14,8 @@ confinement: classic
 apps:
   rdplot:
     command: desktop-launch rdplot
-    plugs: [home, network, x11, wayland, desktop, desktop-legacy, opengl, gsettings]        
+    desktop: src/rdplot/misc/rdplot.desktop
+    #plugs: [home, network, x11, wayland, desktop, desktop-legacy, opengl, gsettings]        
 
 parts:
   rdplot:
