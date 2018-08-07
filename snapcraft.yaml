@@ -9,7 +9,7 @@ description: |
   git repository at https://github.com/IENT/RDPlot.
 
 grade: devel
-confinement: devmode
+confinement: classic
 
 apps:
   rdplot:
@@ -23,6 +23,7 @@ parts:
     python-version: python3
     stage-packages:
       # this section is insprired by  https://github.com/gocarlos/krop/blob/master/snap/snapcraft.yaml
+      - python3-git
       - python3-pyqt5
       - python3-jsonpickle 
       - python3-tk
