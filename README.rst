@@ -12,11 +12,14 @@ Build status
   :target: https://ci.appveyor.com/project/JensAc/rdplot
 .. |TravisCI| image:: https://travis-ci.org/IENT/RDPlot.svg?branch=master
   :target: https://travis-ci.org/IENT/RDPlot 
-+------------+------------+
-|  AppVeyor  | Travis CI  |
-+============+============+
-| |Appveyor| | |TravisCI| |
-+------------+------------+
+.. |SnapCraft| image:: https://build.snapcraft.io/badge/IENT/RDPlot.svg
+  :target: https://build.snapcraft.io/user/IENT/RDPlot
+  
++------------+------------+-------------+
+|  AppVeyor  | Travis CI  | SnapCraft   |
++============+============+=============+
+| |Appveyor| | |TravisCI| | |SnapCraft| |
++------------+------------+-------------+
 
 Code Coverage
 =======================
