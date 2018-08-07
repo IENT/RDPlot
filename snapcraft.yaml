@@ -14,7 +14,7 @@ confinement: classic
 apps:
   rdplot:
     command: desktop-launch rdplot
-    desktop: usr/share/applications/rdplot.desktop
+    desktop: lib/python3.5/site-packages/rdplot/misc/rdplot.desktop 
     #plugs: [home, network, x11, wayland, desktop, desktop-legacy, opengl, gsettings]        
 
 parts:
