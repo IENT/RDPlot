@@ -9,13 +9,13 @@ description: |
   git repository at https://github.com/IENT/RDPlot.
 
 grade: devel
-confinement: classic
+confinement: strict
 
 apps:
   rdplot:
-    command: bin/desktop-launch ${SNAP}/bin/rdplot
+    command: desktop-launch ${SNAP}/bin/rdplot
     desktop: lib/python3.5/site-packages/rdplot/misc/rdplot.desktop 
-    #plugs: [home, network, x11, wayland, desktop, desktop-legacy, opengl, gsettings]        
+    plugs: [home, network, x11, wayland, desktop, desktop-legacy, opengl, gsettings]        
 
 parts:
   rdplot:
