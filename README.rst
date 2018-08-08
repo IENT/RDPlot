@@ -77,25 +77,25 @@ Make sure that you are using python 3 and pip is up to date.
 Sadly but true, we need a few dependencies.  
 You need to install them with::
 
-    sudo apt-get install python3-jsonpickle python3-tk  python3-pip  python3-setuptools
+    sudo apt-get install python3-jsonpickle python3-tk  python3-pip  python3-setuptools python3-git 
     
 and then::
 
-    python setup.py sdist
+    python3 setup.py sdist
 
 Now you can install rdplot, either as user or system wide.
 Install it system wide::
 
-    sudo pip3 install --no-binary rdplot dist/rdplot-1.0.0.tar.gz
+    sudo pip3 install --no-binary rdplot dist/rdplot-*.tar.gz
 
 As user. This will install the binary to ~/.local/bin/rdplot. Make sure it is 
 in your PATH. The desktop launcher also will work only if this is the case::
 
-   pip3 install --user --no-binary rdplot  dist/rdplot-1.0.0.tar.gz
+   pip3 install --user --no-binary rdplot  dist/rdplot-*.tar.gz
 
 If you already have the tool installed run::
 
-     sudo pip3 install --no-binary rdplot --upgrade dist/rdplot-1.0.0.tar.gz 
+     sudo pip3 install --no-binary rdplot --upgrade dist/rdplot-*.tar.gz 
      
      
 Now you should be able to run rdplot from the command line and have a
@@ -123,7 +123,8 @@ Make sure that you added your user to the docker group. If the container cannot 
 and try again. It should work.
 
 **Note:** Most probably the dockerized version is something for enthusiasts. 
-The image needs approx. 1.4 GB of disk-space. If you want to spend that, enjoy!
+It is not really tested and the image needs approx. 1.4 GB of disk-space. 
+If you want to spend that, enjoy!
 
 Mac OS X
 _________
@@ -175,6 +176,6 @@ Linux
 
 You can start rdplot from the command line with::
 
-    PYTHONPATH=~PATH_TO_RDPLOT/src/ python PATH_TO_RDPLOT/src/rdplot/__main__.py
+    PYTHONPATH=~PATH_TO_RDPLOT/src/ python3 PATH_TO_RDPLOT/src/rdplot/__main__.py
     
 If you want to start the tool out of an IDE like PyCharm, make sure that you have set the PYTHONPATH environment variable correctly.
