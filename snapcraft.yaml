@@ -8,14 +8,14 @@ description: |
   codecs. Moreover, writing own parsers is fairly simple. For this you should take a look at the
   git repository at https://github.com/IENT/RDPlot.
 
-grade: devel
+grade: stable
 confinement: strict
 
 apps:
   rdplot:
     command: desktop-launch ${SNAP}/bin/rdplot
     desktop: lib/python3.5/site-packages/rdplot/misc/rdplot.desktop 
-    plugs: [home, network, x11, wayland, desktop, desktop-legacy, opengl, gsettings]        
+    plugs: [home, removable-media, network, x11, wayland, desktop, desktop-legacy, opengl, gsettings] 
 
 parts:
   rdplot:
