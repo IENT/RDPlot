@@ -76,9 +76,15 @@ def get_version():
       git_describe = r.git.describe()
       f = open('version.txt','w')
       f.write(git_describe)
+      f.close()
+      # and do it one more for packaging if possible
+      f = open('src/rdplot/version.txt','w')
+      f.write(git_describe)
+      f.close()
     except (git.InvalidGitRepositoryError):
       f = open('version.txt','r')
       git_describe = f.readline()
+      f.close()
 
     version = None
     split_describe = git_describe.split('-')
@@ -185,7 +191,7 @@ setup(
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
     package_data={
-        'rdplot': ['src/rdplot/ui/*', 'src/rdplot/logo/*', 'src/rdplot/misc/*', 'src/rdplot/docs/about.html','version.txt'],
+        'rdplot': ['version.txt','src/rdplot/version.txt', 'src/rdplot/ui/*', 'src/rdplot/logo/*', 'src/rdplot/misc/*', 'src/rdplot/docs/about.html'],
     },
 
     # Although 'package_data' is the preferred approach, in some case you may

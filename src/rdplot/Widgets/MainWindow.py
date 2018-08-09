@@ -582,7 +582,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             html_path = path.abspath(here + '/docs/about.html')
             html_file = open(html_path, 'r', encoding='utf-8', errors='ignore')
             source_code = html_file.read()
-            app_version = '0.1.0'
+
+            try:
+                f = open(here + '/version.txt', 'r')
+                app_version = f.readline()
+            except:
+                app_version = 'could not detect version'
+
             source_code = source_code.replace("##VERSION##", app_version)
             source_code = source_code.replace("##here##", here)
             about_dialog = QtWidgets.QDialog(self)
