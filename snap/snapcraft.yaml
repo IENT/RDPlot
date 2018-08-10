@@ -1,6 +1,7 @@
 name: rdplot
 version: git
-icon: src/rdplot/logo/PLOT64.png
+type: app
+icon: snap/gui/PLOT64.png
 summary: The plotting tool for rate distortion curves in the context of video coding. 
 description: |
   RDPlot is a tool for plotting rate-distortion curves. The major feature consists in the parsing 
@@ -14,7 +15,6 @@ confinement: strict
 apps:
   rdplot:
     command: desktop-launch ${SNAP}/bin/rdplot
-    desktop: lib/python3.5/site-packages/rdplot/misc/rdplot.desktop 
     plugs: [home, removable-media, network, x11, wayland, desktop, desktop-legacy, opengl, gsettings] 
 
 parts:
