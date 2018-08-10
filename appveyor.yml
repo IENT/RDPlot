@@ -18,6 +18,7 @@ install:
   - cd ..
 
 build_script:
+  - git describe > .\src\rdplot\version.txt
   - cd src
   - python -m nsist installer.cfg
 
