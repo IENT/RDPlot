@@ -3,7 +3,7 @@ matplotlib
 numpy
 py
 pyparsing
-PyQt5
+PyQt5<5.11
 pytest
 python-dateutil
 pytz
