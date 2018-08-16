@@ -87,6 +87,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.save_bd_table
         )
 
+        self.actionExport_Figure_as_Tikzpicture.triggered.connect(
+            self.plotPreview.export_plot_tikz
+        )
+
         self.actionExport_TableWidget.triggered.connect(
             self.export_table_to_csv
         )

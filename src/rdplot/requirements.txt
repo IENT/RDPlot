@@ -14,3 +14,4 @@ tabulate
 mpldatacursor
 jsonpickle
 xmltodict
+matplotlib2tikz

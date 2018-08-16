@@ -18,7 +18,7 @@
 #
 ##################################################################################################
 from PyQt5.uic import loadUiType
-from PyQt5.QtWidgets import QDialog, QPushButton, QLabel, QMessageBox
+from PyQt5.QtWidgets import QMessageBox, QFileDialog
 
 import matplotlib
 matplotlib.use('Qt5Agg')
@@ -31,6 +31,8 @@ from matplotlib import cycler
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar)
+
+from matplotlib2tikz import save as tikz_save
 
 import numpy as np
 import math
@@ -169,6 +171,14 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             self.ax.yaxis.set_ticks(np.arange(start, end, 0.5))
 
         self.plotAreaWidget.canvas.draw()
+
+    def export_plot_tikz(self):
+        filename = QFileDialog.getSaveFileName(self, 'Save Plot as Tikzpicture', '.', '*tex')
+        fileextension = filename[1].split('*')[1]
+        filename = filename[0].split('.')[0]
+        filename = filename + '.' + fileextension
+        if not len(filename) == 0:
+            tikz_save(filename,self.plotAreaWidget.fig)
 
     # this function enables zoom with mousewheel
     # see also: http://stackoverflow.com/questions/11551049/matplotlib-plot-zooming-with-scroll-wheel
