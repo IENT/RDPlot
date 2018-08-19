@@ -39,11 +39,15 @@ def get_data_files_with_correct_location():
     data_files = []
 
     if 'Linux' in platform.system():
-        if os.geteuid() == 0 or 'FLATPAK_INSTALL' in os.environ:
+        if os.geteuid() == 0:
             # install as root or with sudo
             data_files = [('/usr/share/pixmaps/', ['src/rdplot/logo/PLOT64.png']),
                           ('/usr/share/applications/', ['src/rdplot/misc/rdplot.desktop'])]
-            
+        elif 'FLATPAK_INSTALL' in os.environ : 
+            # install relative to prefix root
+            # do nothing, will be handled by flatpak config
+            # data_files = [('/share/applications/', ['src/rdplot/misc/rdplot.desktop'])]   
+            pass         
         else:
             # install as user
             data_files = [
