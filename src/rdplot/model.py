@@ -874,7 +874,6 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
 
         :param sim_data_items: Iterable collection of :class: `SimDataItem`s to be removed
         """
-
         for sim_data_item in sim_data_items:
             # Get *item* of the tree corresponding to *sim_data_item*
             item = self.create_path(*sim_data_item.tree_identifier_list)
