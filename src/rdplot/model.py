@@ -730,6 +730,7 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.dialog = AttributesDialog()
 
     # Implement *add*, *update* and remove to add/remove sim data items to the
     # tree.
@@ -764,6 +765,10 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
         # if you want to simulate with your own parameters, make sure that they appear in the
         # logfile
         try:
+            self.dialog.chosen_par.clear()
+            self.dialog.not_chosen_par.clear()
+            self.dialog.reset = True
+            QP_added = False
             for sim_data_item in sim_data_items:
                 if sim_data_item.__class__ not in all_log_configs:
                     all_log_configs[sim_data_item.__class__] = []
@@ -777,9 +782,9 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                 # no dialog window will be opened where you could add/remove all configuration parameters
                 # that differ between the sim_data_items
                 # TODO: enable multiple configuration parameters for the case that a specific file is opened
-                chosen_par = QtWidgets.QListWidget()
-                if hasattr(sim_data_item, 'qp'):
-                    chosen_par.addItems(['QP'])
+                if hasattr(sim_data_item, 'qp') and not QP_added:
+                    self.dialog.chosen_par.addItems(['QP'])
+                    QP_added = True
                 # print(sim_data_item.summary_data['encoder_config'])
             value_filter = ['.yuv', '.bin', '.hevc', '.jem']
             key_filter = []
@@ -800,37 +805,11 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                 # the user can drag the parameters, he wants to analyse further into an other list
                 # the order of the parameters in the list determines the order of the parameter tree
                 if diff_dict[sim_class]:
-                    chosen_par.setDragDropMode(QAbstractItemView.DragDrop)
-                    chosen_par.setDefaultDropAction(QtCore.Qt.MoveAction)
-                    not_chosen_par = QtWidgets.QListWidget()
-                    not_chosen_par.addItems([item for item in diff_dict[sim_class] if item != 'QP'])
-                    not_chosen_par.setDragDropMode(QAbstractItemView.DragDrop)
-                    not_chosen_par.setDefaultDropAction(QtCore.Qt.MoveAction)
-                    if not_chosen_par:
-                        # we do not want to create the dialog when testing the code. since the dialog will never be closed
-                        # todo: code should not know about test. make dialog available from the outside, let test close it
-                        if 'RUNNING_AS_UNITTEST' not in environ:
-                            main_layout = QVBoxLayout()
-                            dialog = QDialog()
-                            dialog.setWindowTitle('Choose Parameters')
-                            dialog.setLayout(main_layout)
-                            msg = QtWidgets.QLabel()
-                            msg.setText('Additional Parameters have been found.\n'
-                                        'Move Parameters you want to consider further to the right list.\n')
-                            main_layout.addWidget(msg)
-                            list_layout = QHBoxLayout()
-                            main_layout.addLayout(list_layout)
-                            # TODO: all items dragged into chosen_par should appear above the qp_item
-                            list_layout.addWidget(not_chosen_par)
-                            list_layout.addWidget(chosen_par)
-                            not_chosen_par.show()
-                            chosen_par.show()
-                            ok_button = QPushButton('OK')
-                            main_layout.addWidget(ok_button)
-                            ok_button.clicked.connect(dialog.close)
-                            dialog.exec()
-                    for i in range(len(not_chosen_par)):
-                        diff_dict[sim_class].pop(not_chosen_par.item(i).text(), None)
+                    self.dialog.not_chosen_par.addItems([item for item in diff_dict[sim_class] if item != 'QP'])
+                    if self.dialog.not_chosen_par:
+                        self.dialog.exec_()
+                    for i in range(len(self.dialog.not_chosen_par)):
+                        diff_dict[sim_class].pop(self.dialog.not_chosen_par.item(i).text(), None)
                 additional_param_found.append(sim_class)
 
         except AttributeError:
@@ -842,7 +821,7 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
 
             has_additional_params = False
             if sim_data_item.__class__ in additional_param_found:
-                sim_data_item.additional_params = [chosen_par.item(i).text() for i in range(len(chosen_par))]
+                sim_data_item.additional_params = [self.dialog.chosen_par.item(i).text() for i in range(len(self.dialog.chosen_par))]
                 has_additional_params = True
 
             # Get *item* of the tree corresponding to *sim_data_item*
@@ -1169,3 +1148,40 @@ class BdTableModel(QAbstractTableModel):
             latex_template = LatexTemplate(template_file.read())
             new_latex_doc = latex_template.substitute(table_goeth_here=latex_table)
             output_file.write(new_latex_doc)
+
+
+class AttributesDialog(QDialog):
+
+    message_shown = pyqtSignal()
+
+    def __init__(self):
+        super().__init__()
+        self.reset = True
+        main_layout = QVBoxLayout()
+        self.setWindowTitle('Choose Parameters')
+        self.setLayout(main_layout)
+        msg = QtWidgets.QLabel()
+        msg.setText('Additional Parameters have been found.\n'
+                    'Move Parameters you want to consider further to the right list.\n')
+        main_layout.addWidget(msg)
+        list_layout = QHBoxLayout()
+        main_layout.addLayout(list_layout)
+        # TODO: all items dragged into chosen_par should appear above the qp_item
+        self.not_chosen_par = QtWidgets.QListWidget()
+        self.chosen_par = QtWidgets.QListWidget()
+        self.chosen_par.setDragDropMode(QAbstractItemView.DragDrop)
+        self.chosen_par.setDefaultDropAction(QtCore.Qt.MoveAction)
+        self.not_chosen_par.setDragDropMode(QAbstractItemView.DragDrop)
+        self.not_chosen_par.setDefaultDropAction(QtCore.Qt.MoveAction)
+        list_layout.addWidget(self.not_chosen_par)
+        list_layout.addWidget(self.chosen_par)
+        self.not_chosen_par.show()
+        self.chosen_par.show()
+        ok_button = QPushButton('OK')
+        main_layout.addWidget(ok_button)
+        ok_button.clicked.connect(self.close)
+
+    def paintEvent(self, event):
+        if self.reset:
+            self.message_shown.emit()
+            self.reset = False
