@@ -11,7 +11,7 @@ environment:
 
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-  - cmd: "%PIP% install cycler matplotlib py pyparsing PyQt5 pytest python-dateutil pytz sip six tabulate mpldatacursor jsonpickle xmltodict matplotlib2tikz pynsist pillow"
+  - cmd: "%PIP% install cycler matplotlib py pyparsing PyQt5 pytest python-dateutil pytz sip six tabulate mpldatacursor jsonpickle xmltodict matplotlib2tikz pynsist"
   - git clone https://github.com/JensAc/WinPythonModules.git
   - cd WinPythonModules
   - cmd: "%PIP% install numpy-1.13.1+mkl-cp36-cp36m-win32.whl scipy-0.19.1-cp36-cp36m-win32.whl"
