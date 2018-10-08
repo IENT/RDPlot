@@ -171,6 +171,9 @@ class DatLogJEM70Geo(DatLogBasedOnClassName):
 class DatLogJEM70GeoHOMC(DatLogBasedOnClassName):
     pass
 
+class TMVTMBMS1_0_SimulationDecodeIPPE(DatLogBasedOnClassName):
+    pass
+
 class DatLogConversionPSNRLoss360(DatLogBasedOnClassName):
 
     def _parse_path(self, path):
