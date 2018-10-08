@@ -42,6 +42,7 @@ SIMULATION_DATA_ITEM_CLASSES_PATH = here + sep + "SimulationDataItemClasses"
 class ParserWorkThread(QThread):
     newParsedData = pyqtSignal([list])
     allParsed = pyqtSignal()
+    parsingError = pyqtSignal()
 
     def __init__(self, path_list=None):
         QThread.__init__(self)
@@ -53,6 +54,8 @@ class ParserWorkThread(QThread):
         if path_list is None:
             path_list = []
         self.path_list = path_list
+
+        self._factory.parsingError.connect(self.relay_error)
 
     def __del__(self):
         self.wait()
@@ -73,6 +76,9 @@ class ParserWorkThread(QThread):
             self.newParsedData.emit(sim_data_items)
         self.path_list.clear()
         self.allParsed.emit()
+
+    def relay_error(self):
+        self.parsingError.emit()
 
 
 class ParserWorkNoThread(QObject):
@@ -130,6 +136,11 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         # TODO: add context menu capabilities
         # self.setContextMenuPolicy(Qt.CustomContextMenu)
         # self.customContextMenuRequested.connect(self.openMenu)
+        self.errorMsg = QMessageBox(self)
+        self.errorMsg.setText('The selected parser was unfortunately unable to correctly read in the files.')
+        self.errorMsg.setWindowTitle('Error!')
+        self.errorMsg.setIcon(QMessageBox.Warning)
+        self.parserThread.parsingError.connect(self.errorMsg.show)
 
     # drag'n'drop mechanism adapted
     # from question on stackoverflow at http://stackoverflow.com/q/22543644
@@ -294,6 +305,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
 
     def _update_model(self, sim_data_items):
         if not sim_data_items:
+            self._hide_parse_message()
             msg = QMessageBox(self)  # use self as parent here
             msg.setIcon(QMessageBox.Warning)
             msg.setText("I cannot find any simulation data item in your selected directory.\n"
@@ -304,6 +316,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         try:
             self.model().update(sim_data_items,False)
         except AmbiguousSimDataItems as inst:
+            self._hide_parse_message()
             msg = QMessageBox(self)  # use self as parent here
             msg.setIcon(QMessageBox.Warning)
             msg.setText("I have found ambiguous simulation data items in your selected directory.\n"

@@ -4,6 +4,8 @@ from rdplot.SimulationDataItem import AbstractSimulationDataItem
 from rdplot.SimulationDataItem import SimulationDataItemFactory
 # import SimulationDataItem
 from os import path, listdir
+from PyQt5 import QtWidgets
+import sys
 
 # path to test module (this file)
 TEST_DIR = path.dirname(path.abspath(__file__))
@@ -29,6 +31,7 @@ def filter_by_ending(paths, value):
 
 class TestEncoderLogs(unittest.TestCase):
     def setUp(self):
+        self.app = QtWidgets.QApplication(sys.argv)
         self._factory = SimulationDataItemFactory.from_path(
             SIMULATION_DATA_ITEM_CLASSES_PATH
         )
@@ -54,6 +57,9 @@ class TestEncoderLogs(unittest.TestCase):
         del self.tested_parsers[EncoderLogs.AbstractEncLog]
         del self.tested_parsers[DatLogs.AbstractDatLog]
         del self.tested_parsers[DatLogs.DatLogBasedOnClassName]
+
+    def tearDown(self):
+        self.app.exit()
 
     def test_parsing_of_logs(self):
         self.logs_parsed = []

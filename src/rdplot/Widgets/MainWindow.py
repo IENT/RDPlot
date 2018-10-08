@@ -1,11 +1,12 @@
 from os import path
 from os.path import sep, isfile, isdir
 import csv
+import cProfile, pstats
 
 import pkg_resources
 import jsonpickle
 from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtCore import QItemSelectionModel
+from PyQt5.QtCore import QItemSelectionModel, QItemSelection, QObject
 from PyQt5.uic import loadUiType
 
 
@@ -19,6 +20,19 @@ Ui_MainWindow, QMainWindow = loadUiType(Ui_name)
 
 here = pkg_resources.resource_filename('rdplot','')
 #here = path.abspath(path.dirname(__file__) + '/../')
+
+def do_cprofile(func):
+    def profiled_func(*args, **kwargs):
+        profile = cProfile.Profile()
+        try:
+            profile.enable()
+            result = func(*args, **kwargs)
+            profile.disable()
+            return result
+        finally:
+            stats = pstats.Stats(profile).sort_stats('cumtime')
+            stats.dump_stats('remove_items_new.profile')
+    return profiled_func
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, ):
@@ -180,7 +194,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # List call necessary to avoid runtime error because of elements changing
         # during iteration
         self._variable_tree_selection_model.selectionChanged.disconnect()
+        # disconnect slot to avoid multiple function triggers by selectionChanged signal
+        # not disconnecting slows program down significantly
+        self._selection_model.selectionChanged.disconnect(self.change_list)
         self.simDataItemTreeModel.remove(list(values))
+        self.change_list(QItemSelection(), QItemSelection())
+        self._selection_model.selectionChanged.connect(self.change_list)
         self._variable_tree_selection_model.selectionChanged.connect(self.update_plot)
 
     def change_list(self, q_selected, q_deselected):

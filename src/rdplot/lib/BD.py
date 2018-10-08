@@ -289,6 +289,7 @@ def bjontegaard(curve1, curve2, mode='dsnr', interpol='pol', seq='', d=list(), t
     if mode == 'dsnr':
         return bdsnr(rate1, psnr1, rate2, psnr2, interpol, seq, d, testmode)
     elif mode == 'drate':
+        # this branch will never be executed because of line 273
         if interpol == 'pchip4':
             rate1 = [i[0] for i in curve1]
             rate2 = [i[0] for i in curve2]

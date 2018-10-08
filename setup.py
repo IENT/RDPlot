@@ -181,8 +181,7 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=['cycler', 'matplotlib', 'numpy', 'py', 'pyparsing', 'pyqt5<5.11', 'pytest', 'python-dateutil', 'pytz',
-                      'sip', 'six', 'scipy', 'tabulate', 'mpldatacursor',
-                      'xmltodict', 'jsonpickle', 'matplotlib2tikz'],
+                      'sip', 'six', 'scipy', 'tabulate', 'mpldatacursor', 'xmltodict', 'jsonpickle', 'matplotlib2tikz', 'Pillow'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
