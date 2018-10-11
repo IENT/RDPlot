@@ -28,7 +28,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtCore import QObject, QItemSelectionModel, QItemSelection, QModelIndex, pyqtSignal, QThread
 from PyQt5.QtGui import *
 from PyQt5.QtGui import QKeySequence
-from PyQt5.QtWidgets import QMessageBox, QMenu
+from PyQt5.QtWidgets import QMessageBox, QMenu, QListView
 
 from rdplot.SimulationDataItem import SimulationDataItemFactory, SimulationDataItemError
 from rdplot.model import AmbiguousSimDataItems
@@ -442,3 +442,14 @@ class QRecursiveSelectionModel(QItemSelectionModel):
                         q_index_parent_queue.append(q_index)
 
         return list(index_ranges)
+
+
+class CurveView(QListView):
+    delete_key = pyqtSignal()
+
+    def __init__(self, parent = None):
+        super().__init__(parent)
+
+    def keyPressEvent(self, event):
+        if event.count() == 1 and event.key() == Qt.Key_Delete:
+            self.delete_key.emit()

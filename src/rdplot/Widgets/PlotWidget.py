@@ -106,6 +106,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         """
 
         if len(plot_data_collection) == 0:
+            self._clear_plot()
             return
 
         if len(plot_data_collection) > 10:
@@ -221,6 +222,11 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             self.plotAreaWidget.canvas.draw()  # force re-draw
         else:
             return
+
+    def _clear_plot(self):
+        self.ax.clear()
+        self.ax.grid(True)
+        self.plotAreaWidget.canvas.draw()
 
 
 class DataCursor(object):

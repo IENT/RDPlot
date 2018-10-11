@@ -194,6 +194,25 @@ padding: 4px;
       </widget>
      </widget>
     </item>
+    <item row="1" column="0">
+     <widget class="QPushButton" name="generateCurveButton">
+      <property name="toolTip">
+       <string notr="true" extracomment="Choose at least four points and plotsettings to generate curve">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Choose at least 4 points and the plotsettings, then generate new curve&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="statusTip">
+       <string extracomment="Choose at least four points and plotsettings to generate curve"/>
+      </property>
+      <property name="whatsThis">
+       <string extracomment="Choose at least four points and plotsettings to generate curve"/>
+      </property>
+      <property name="text">
+       <string>Generate curve</string>
+      </property>
+      <property name="toolTipDuration" stdset="0">
+       <number>0</number>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QDockWidget" name="plotsettings">
@@ -363,6 +382,24 @@ padding: 4px;
     </layout>
    </widget>
   </widget>
+  <widget class="QDockWidget" name="curveWidget">
+   <property name="allowedAreas">
+    <set>Qt::AllDockWidgetAreas</set>
+   </property>
+   <property name="windowTitle">
+    <string>Generated curves</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents">
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="CurveView" name="curveListView"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
   <action name="actionOpen_File">
    <property name="text">
     <string>&amp;Open File (RD-Data or Log)</string>
@@ -467,6 +504,11 @@ padding: 4px;
    <class>PlottedFilesListView</class>
    <extends>QListView</extends>
    <header>rdplot.view</header>
+  </customwidget>
+  <customwidget>
+   <class>CurveView</class>
+   <extends>QListView</extends>
+   <header>rdplot.view</header>   
   </customwidget>
  </customwidgets>
  <resources/>
