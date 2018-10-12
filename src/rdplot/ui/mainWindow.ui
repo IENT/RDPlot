@@ -283,7 +283,7 @@ padding: 4px;
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1253</width>
+     <width>1088</width>
      <height>25</height>
     </rect>
    </property>
@@ -291,7 +291,13 @@ padding: 4px;
     <property name="title">
      <string>Fi&amp;le</string>
     </property>
+    <widget class="QMenu" name="menuRecent_files">
+     <property name="title">
+      <string>Recent files</string>
+     </property>
+    </widget>
     <addaction name="actionOpen_File"/>
+    <addaction name="menuRecent_files"/>
     <addaction name="separator"/>
     <addaction name="actionOpen_Directory"/>
     <addaction name="actionOpen_Directory_List"/>
