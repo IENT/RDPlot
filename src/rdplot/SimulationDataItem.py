@@ -162,7 +162,7 @@ class PlotData:
     :type path: :class: `list` of :class: `str`
     """
 
-    def __init__(self, identifiers, values, path, label):
+    def __init__(self, identifiers=[], values=[], path=[], label=()):
         self.identifiers = identifiers
         self.values = values
         self.path = path

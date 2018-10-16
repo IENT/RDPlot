@@ -8,6 +8,7 @@ import jsonpickle
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import QItemSelectionModel, QItemSelection, QObject, QModelIndex, QSettings
 from PyQt5.uic import loadUiType
+from SimulationDataItem import PlotData
 
 
 from rdplot.SimulationDataItem import dict_tree_from_sim_data_items
@@ -148,7 +149,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.curveListView.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.generateCurveButton.clicked.connect(self.generate_new_curve)
         self.curveWidget.visibilityChanged.connect(self.curve_widget_visibility_changed)
-        self.curve_in_use = False
 
         self.settings = QSettings()
         self.get_recent_files()
@@ -370,18 +370,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     # updates the plot if the plot variable is changed
     def update_plot(self):
-        if self.sender() == self._variable_tree_selection_model:
+        # in case that we're plotting a user-generated curve, we will ignore the usual restrictions for
+        # bjontegaard-delta and calculate it regardless
+        self.ignore_restrictions = False
+        if self.sender() == self._variable_tree_selection_model or self.sender() == self.curveListSelectionModel:
             self.check_labels()
             plot_data_collection = self.get_plot_data_collection_from_selected_variables()
-            self.curve_in_use = False
-        elif self.sender() == self.curveListSelectionModel:
-            plot_data_collection = []
             for index in self.curveListView.selectedIndexes():
                 plot_data_collection.append(self.curveListModel[index.data()])
-            self.curve_in_use = True
+                self.ignore_restrictions = True
         else:
             plot_data_collection = []
-            self.curve_in_use = False
 
         self.plotPreview.change_plot(plot_data_collection)
         self.update_table(plot_data_collection)
@@ -389,7 +388,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # update the model for the bd table, note the anchor is always
         # the first config if new simDataItems are selected
         self.bdTableModel.update(plot_data_collection, self.combo_rate_psnr.currentText(),
-                                 self.combo_interp.currentText(), not(self.checkBox_bdplot.isChecked()))
+                                 self.combo_interp.currentText(), not(self.checkBox_bdplot.isChecked()),
+                                 self.ignore_restrictions)
 
     def get_table_header(self, plot_data_collection):
         tmp_legend = []
@@ -559,15 +559,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # update bd table, the index determines the anchor,
         # if it is non integer per default the first config is regarded as
         # anchor
+
         self.bdTableModel.update_table(self.combo_rate_psnr.currentText(),
-                                           self.combo_interp.currentText(), index, not(self.checkBox_bdplot.isChecked()))
+                                           self.combo_interp.currentText(), index,
+                                       not(self.checkBox_bdplot.isChecked()), self.ignore_restrictions)
     def update_bd_plot(self):
-        if not self.curve_in_use:
-            plot_data_collection = self.get_plot_data_collection_from_selected_variables()
-        else:
-            plot_data_collection = []
-            for index in self.curveListSelectionModel.selectedIndexed():
-                plot_data_collection.append(self.curveListModel[index.data()])
+        plot_data_collection = self.get_plot_data_collection_from_selected_variables()
+        for index in self.curveListSelectionModel.selectedIndexed():
+            plot_data_collection.append(self.curveListModel[index.data()])
         self.bdTableModel.update(plot_data_collection, self.combo_rate_psnr.currentText(),
                                  self.combo_interp.currentText(), not (self.checkBox_bdplot.isChecked()))
 
@@ -673,30 +672,35 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def generate_new_curve(self):
         plot_data_collection = self.get_plot_data_collection_from_selected_variables()
         if plot_data_collection:
-            plot_data = plot_data_collection[0]
-            for _plot_data in plot_data_collection[1:]:
-                plot_data.identifiers.extend(_plot_data.identifiers)
-                plot_data.values.extend(_plot_data.values)
-                plot_data.path.extend(_plot_data.path)
-                # todo label
-            if len(plot_data.values) < 4:
+            new_plot_values = []
+            for _plot_data in plot_data_collection:
+                new_plot_values.extend(_plot_data.values)
+            if len(new_plot_values) < 4:
                     QtWidgets.QMessageBox.warning(self, "Warning!", "You didn't select at least 4 points.")
             else:
                 curve_name, ok = QtWidgets.QInputDialog.getText(self, "New curve", "Please enter a name for the new curve.\n"
                                             "If you enter an already existing name,\nits data will be overwritten.")
-                self.add_curve(curve_name, plot_data)
+                curve_name = curve_name.strip()
+                if curve_name is not '':
+                    new_plot_data = PlotData([curve_name, curve_name], new_plot_values, plot_data_collection[0].path,
+                                             plot_data_collection[0].label)
+                    self.add_curve(curve_name, new_plot_data)
+                else:
+                    QtWidgets.QMessageBox.warning(self, "Warning!", "Please enter a valid name.")
+        else:
+            QtWidgets.QMessageBox.warning(self, "Warning!", "You didn't select at least 4 points.")
 
     def add_curve(self, name, data):
         if self.curveWidget.isHidden():
             self.curveWidget.show()
         data_tuple = (name, data)
         self.curveListModel.update_from_tuples((data_tuple,))
-        all_indexes = QItemSelection(self.curveListModel.index(0),
-                                     self.curveListModel.index(self.curveListModel.rowCount(QModelIndex())))
-        self.curveListSelectionModel.select(all_indexes, QItemSelectionModel.Clear)
-        self.curveListSelectionModel.select(self.curveListModel.index(self.curveListModel.rowCount(QModelIndex())-1),
-                                            QItemSelectionModel.Select)
-        self.curveListView.setFocus()
+        # all_indexes = QItemSelection(self.curveListModel.index(0),
+        #                             self.curveListModel.index(self.curveListModel.rowCount(QModelIndex())))
+        # self.curveListSelectionModel.select(all_indexes, QItemSelectionModel.Clear)
+        # self.curveListSelectionModel.select(self.curveListModel.index(self.curveListModel.rowCount(QModelIndex())-1),
+        #                                    QItemSelectionModel.Select)
+        # self.curveListView.setFocus()
 
     def remove_curves(self):
         # todo integrate bjontegaard for generated curves(should be fully functional already)

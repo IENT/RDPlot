@@ -964,7 +964,7 @@ class BdTableModel(QAbstractTableModel):
         if plt.get_fignums():
             plt.cla()
 
-    def update(self, plot_data_collection, bd_option, interp_option, bd_plot):
+    def update(self, plot_data_collection, bd_option, interp_option, bd_plot, ignore_restrictions):
         # reset the model in the first place and set data afterwards appropriately
         self.beginResetModel()
         self.reset_model()
@@ -991,25 +991,26 @@ class BdTableModel(QAbstractTableModel):
         seq_set = sorted(seq_set)
         config_set = sorted(config_set)
 
-        if len(seq_set) > 1:
-            plt.close()
-            bd_plot = True
-
-        # there is no need to calculate a bjontegaard delta, if only one configuration is loaded
-        if len(config_set) < 2:
-            plt.close()
-            return
-        elif len(config_set) > 5 and (not bd_plot):
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Information)
-            msg.setText("Your BD plot will contain more than 5 curves, do you really want to continue?")
-            msg.setWindowTitle("Info")
-            msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
-            result = msg.exec()
-
-            if result == QMessageBox.Cancel:
+        if not ignore_restrictions:
+            if len(seq_set) > 1:
                 plt.close()
                 bd_plot = True
+
+            # there is no need to calculate a bjontegaard delta, if only one configuration is loaded
+            if len(config_set) < 2:
+                plt.close()
+                return
+            elif len(config_set) > 5 and (not bd_plot):
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Information)
+                msg.setText("Your BD plot will contain more than 5 curves, do you really want to continue?")
+                msg.setWindowTitle("Info")
+                msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+                result = msg.exec()
+
+                if result == QMessageBox.Cancel:
+                    plt.close()
+                    bd_plot = True
 
         self._horizontal_headers = list(config_set)
         self._vertical_headers = list(seq_set)
@@ -1031,7 +1032,7 @@ class BdTableModel(QAbstractTableModel):
         self._data = np.zeros((len(seq_set) + 1, len(config_set)))
 
         if all(collection.label == ("kbps", "dB") for collection in plot_data_collection):
-            self.update_table(bd_option, interp_option, 0, bd_plot)
+            self.update_table(bd_option, interp_option, 0, bd_plot, ignore_restrictions)
         else:
             self.beginResetModel()
             self.reset_model()
@@ -1040,7 +1041,7 @@ class BdTableModel(QAbstractTableModel):
 
     # This function is called when the anchor, the interpolation method
     # or the output of the bjontegaard delta is changed
-    def update_table(self, bd_option, interp_option, anchor_index, bd_plot):
+    def update_table(self, bd_option, interp_option, anchor_index, bd_plot, ignore_restrictions):
         # if there are no rows and columns in the model,
         # nothing can be updated
         if bd_plot:
@@ -1081,49 +1082,64 @@ class BdTableModel(QAbstractTableModel):
                 continue
             col = 0
             for config in self._horizontal_headers:
-                # for the anchor vs anchor measurement the bd is zero,
-                # so just skip that case
+
+                    # for the anchor vs anchor measurement the bd is zero,
+                    # so just skip that case
                 if config == anchor:
                     col += 1
                     continue
-                # determine the identifiers of the current cell
-                identifiers_tmp = [seq, config]
+                if not ignore_restrictions:
+                    # determine the identifiers of the current cell
+                    identifiers_tmp = [seq, config]
 
-                # if the anchor configuration is not available for the current seq continue
-                if len([x for x in self._plot_data_collection if
-                        '+'.join(x.identifiers).__eq__('+'.join([identifiers_tmp[0], anchor]))]) == 0:
-                    self._data[row, col] = np.nan
+                    # if the anchor configuration is not available for the current seq continue
+                    if len([x for x in self._plot_data_collection if
+                            '+'.join(x.identifiers).__eq__('+'.join([identifiers_tmp[0], anchor]))]) == 0:
+                        self._data[row, col] = np.nan
+                        col += 1
+                        continue
+
+                    # get the rd values for curve c1 which is the anchor
+                    c1 = [x for x in self._plot_data_collection if
+                          '+'.join(x.identifiers).__eq__('+'.join([identifiers_tmp[0], anchor]))][0].values
+                    c1 = sorted(list(set(c1)))  # remove duplicates, this is just a workaround for the moment....
+
+                    # if the configuration is not available for the current seq continue
+                    if len([x for x in self._plot_data_collection if
+                            '+'.join(x.identifiers).__eq__('+'.join(identifiers_tmp))]) == 0:
+                        self._data[row, col] = np.nan
+                        col += 1
+                        continue
+
+                    # get the rd values for curve c2
+                    c2 = [x for x in self._plot_data_collection
+                          if '+'.join(x.identifiers).__eq__('+'.join(identifiers_tmp))][0].values
+                    c2 = sorted(list(set(c2)))
+
+                    # if a simulation does not contain at least 4 rate points,
+                    # we do not want to calculate the bd
+                    if len(c1) < 4 or len(c2) < 4:
+                        self._data[row, col] = np.nan
+                        col += 1
+                        continue
+
+                    # calculate the bd, actually this can be extended by some plots
+                    configs = [anchor, identifiers_tmp[1]]
+                    self._data[row, col] = bjontegaard(c1, c2, bd_option, interp_option, 'BD Plot ' + seq, configs, bd_plot)
                     col += 1
-                    continue
+                else:
+                    if seq == anchor:
+                        col += 1
+                        continue
 
-                # get the rd values for curve c1 which is the anchor
-                c1 = [x for x in self._plot_data_collection if
-                      '+'.join(x.identifiers).__eq__('+'.join([identifiers_tmp[0], anchor]))][0].values
-                c1 = sorted(list(set(c1)))  # remove duplicates, this is just a workaround for the moment....
-
-                # if the configuration is not available for the current seq continue
-                if len([x for x in self._plot_data_collection if
-                        '+'.join(x.identifiers).__eq__('+'.join(identifiers_tmp))]) == 0:
-                    self._data[row, col] = np.nan
+                    c1 = [x for x in self._plot_data_collection if x.identifiers == [anchor, anchor]][0].values
+                    c1 = sorted(list(set(c1)))
+                    c2 = [x for x in self._plot_data_collection if (x.identifiers == [config, config]
+                                                                    or x.identifiers == [seq, seq])][0].values
+                    c2 = sorted(list(set(c2)))
+                    self._data[row, col] = bjontegaard(c1, c2, bd_option, interp_option, 'BD Plot ' + seq,
+                                                       testmode=bd_plot)
                     col += 1
-                    continue
-
-                # get the rd values for curve c2
-                c2 = [x for x in self._plot_data_collection
-                      if '+'.join(x.identifiers).__eq__('+'.join(identifiers_tmp))][0].values
-                c2 = sorted(list(set(c2)))
-
-                # if a simulation does not contain at least 4 rate points,
-                # we do not want to calculate the bd
-                if len(c1) < 4 or len(c2) < 4:
-                    self._data[row, col] = np.nan
-                    col += 1
-                    continue
-
-                # calculate the bd, actually this can be extended by some plots
-                configs = [anchor, identifiers_tmp[1]]
-                self._data[row, col] = bjontegaard(c1, c2, bd_option, interp_option, 'BD Plot ' + seq, configs, bd_plot)
-                col += 1
             row += 1
 
         # calculate the AVG rate savings or delta psnr and round the output to something meaningful
