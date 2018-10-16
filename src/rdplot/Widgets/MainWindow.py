@@ -6,7 +6,7 @@ import cProfile, pstats
 import pkg_resources
 import jsonpickle
 from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtCore import QItemSelectionModel, QItemSelection, QObject, QModelIndex
+from PyQt5.QtCore import QItemSelectionModel, QItemSelection, QObject, QModelIndex, QSettings
 from PyQt5.uic import loadUiType
 
 
@@ -39,7 +39,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         super(MainWindow, self).__init__()
         self.setupUi(self)
         self.fig_dict = {}
-        self.open_settings()
 
         self.tabWidget.setCurrentIndex(0)
 
@@ -151,6 +150,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.curveWidget.visibilityChanged.connect(self.curve_widget_visibility_changed)
         self.curve_in_use = False
 
+        self.settings = QSettings()
         self.get_recent_files()
         self.simDataItemTreeView.itemsOpened.connect(self.add_recent_files)
 
@@ -710,22 +710,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.curveWidget.hide()
             self.update_plot()
 
-    def open_settings(self):
-        try:
-            with open('settings.txt', 'r') as file:
-                self.settings = jsonpickle.decode(file.read())
-        except FileNotFoundError:
-            self.settings = None
-        if self.settings is None:
-            self.settings = Settings()
-
-    def write_settings(self):
-        with open('settings.txt', 'w') as file:
-            file.write(jsonpickle.encode(self.settings))
-
     def get_recent_files(self):
-        if self.settings is not None:
-            for recent_file in self.settings.recent_files:
+        recent_files = self.settings.value('recentFiles')
+        if recent_files is not None:
+            for recent_file in recent_files:
                 if path.exists(recent_file):
                     action = self.menuRecent_files.addAction(recent_file)
                     action.triggered.connect(self.open_recent_file)
@@ -740,19 +728,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def add_recent_files(self, files):
         # files doesn't necessarily have to just be a list of files
         # it can also be a directory
+        recent_files = self.settings.value('recentFiles')
+        if recent_files is None:
+            recent_files = []
         for file in files:
-            print(file)
-            if file in self.settings.recent_files:
+            if file in recent_files:
                 # put our file on top of the list
-                self.settings.recent_files.remove(file)
-            self.settings.recent_files.insert(0, file)
-        while len(self.settings.recent_files) > 5:
-            del self.settings.recent_files[-1]
+                recent_files.remove(file)
+            recent_files.insert(0, file)
+        while len(recent_files) > 5:
+            del recent_files[-1]
+        self.settings.setValue('recentFiles', recent_files)
 
-    def closeEvent(self, event):
-        self.write_settings()
-
-
-class Settings:
-    def __init__(self):
-        self.recent_files = []
+        self.menuRecent_files.clear()
+        for recent_file in recent_files:
+            if path.exists(recent_file):
+                action = self.menuRecent_files.addAction(recent_file)
+                action.triggered.connect(self.open_recent_file)
