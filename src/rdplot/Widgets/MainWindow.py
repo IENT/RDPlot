@@ -8,10 +8,9 @@ import jsonpickle
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import QItemSelectionModel, QItemSelection, QObject, QModelIndex, QSettings
 from PyQt5.uic import loadUiType
-from SimulationDataItem import PlotData
 
 
-from rdplot.SimulationDataItem import dict_tree_from_sim_data_items
+from rdplot.SimulationDataItem import dict_tree_from_sim_data_items, PlotData
 from rdplot.Widgets.PlotWidget import PlotWidget
 from rdplot.model import SimDataItemTreeModel, OrderedDictModel, VariableTreeModel, BdTableModel
 from rdplot.view import QRecursiveSelectionModel
