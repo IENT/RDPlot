@@ -1076,19 +1076,19 @@ class BdTableModel(QAbstractTableModel):
         # of the table. Calculate one bd for each cell and store it in the
         # model. Emit in the very end the dataChanged signal
         row = 0
+        anchor_row = [x.identifiers[0] for x in self._plot_data_collection if x.identifiers[1] == anchor][0]
         for seq in self._vertical_headers:
             # the AVG seq is actually not a sequence, so just skip it
             if seq == 'AVG':
                 continue
             col = 0
             for config in self._horizontal_headers:
-
+                if not ignore_restrictions:
                     # for the anchor vs anchor measurement the bd is zero,
                     # so just skip that case
-                if config == anchor:
-                    col += 1
-                    continue
-                if not ignore_restrictions:
+                    if config == anchor:
+                        col += 1
+                        continue
                     # determine the identifiers of the current cell
                     identifiers_tmp = [seq, config]
 
@@ -1128,14 +1128,16 @@ class BdTableModel(QAbstractTableModel):
                     self._data[row, col] = bjontegaard(c1, c2, bd_option, interp_option, 'BD Plot ' + seq, configs, bd_plot)
                     col += 1
                 else:
-                    if seq == anchor:
+                    # selecting the correct curves gets more complicated when we include user-generated curves because
+                    # they don't conform to the naming convention
+                    # curves must then be selected by the anchor index and the anchor row
+                    if col != self._anchor_index or (seq == anchor_row and col == self._anchor_index):
                         col += 1
                         continue
 
-                    c1 = [x for x in self._plot_data_collection if x.identifiers == [anchor, anchor]][0].values
+                    c1 = self._plot_data_collection[self._anchor_index].values
                     c1 = sorted(list(set(c1)))
-                    c2 = [x for x in self._plot_data_collection if (x.identifiers == [config, config]
-                                                                    or x.identifiers == [seq, seq])][0].values
+                    c2 = self._plot_data_collection[row].values
                     c2 = sorted(list(set(c2)))
                     self._data[row, col] = bjontegaard(c1, c2, bd_option, interp_option, 'BD Plot ' + seq,
                                                        testmode=bd_plot)
