@@ -124,7 +124,7 @@ class ParserWorkNoThread(QObject):
 class SimDataItemTreeView(QtWidgets.QTreeView):
 
     deleteKey = pyqtSignal()
-    itemsOpened = pyqtSignal(list)
+    itemsOpened = pyqtSignal(list, bool)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -236,7 +236,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
 
     # open one or more files
     # will detect what kind of file (.rd, .log, .xml) and act accordingly
-    def add_file(self, path):
+    def add_file(self, path, reload=False):
         if not path:
             try:
                 directories, file_names = self._get_open_file_names()
@@ -252,11 +252,11 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
                 elif file_ending == 'log' or file_ending == 'xml':
                     self.parserThread.add_path(path)
             self.parserThread.start()
-            self.itemsOpened.emit(list(map(lambda x, y: x+'/'+y, directories, file_names)))
+            self.itemsOpened.emit(list(map(lambda x, y: x+'/'+y, directories, file_names)), reload)
         else:
             self.parserThread.add_path(path)
             self.parserThread.start()
-            self.itemsOpened.emit([path])
+            self.itemsOpened.emit([path], reload)
 
     # adds all log files and sequences from a directory to the treeview
     def add_folder(self, path=''):
@@ -273,7 +273,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         self.msg.show()
         self.parserThread.add_path(path)
         self.parserThread.start()
-        self.itemsOpened.emit([path])
+        self.itemsOpened.emit([path], False)
 
     def add_folder_list(self):
         try:
@@ -288,7 +288,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
                     clean_path = line.rstrip()
                     if isdir(clean_path):
                         self.parserThread.add_path(clean_path)
-                    self.itemsOpened.emit([clean_path])
+                    self.itemsOpened.emit([clean_path], False)
             self.msg.show()
             self.parserThread.start()
 

@@ -25,7 +25,8 @@ from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.Qt import Qt, QVariant, QModelIndex, QDialog, QHBoxLayout, QVBoxLayout, QAbstractItemView, QMessageBox
 
-from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel, QAbstractTableModel, pyqtSignal
+from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel, QAbstractTableModel, pyqtSignal, QObject
+from PyQt5.QtGui import QBrush
 
 import matplotlib.pyplot as plt
 from rdplot.SimulationDataItemClasses.EncoderLogs import AbstractEncLog
@@ -220,7 +221,8 @@ class OrderedDictModel(QAbstractListModel):
 # http://doc.qt.io/qt-5/qtwidgets-itemviews-simpletreemodel-example.html
 # and corresponding files under BSD licence.
 
-class OrderedDictTreeItem:
+
+class OrderedDictTreeItem(QObject):
     """Item of :class: `OrderedDictTreeModel`. The item imitates the
     behavior of a dictionary, thus, the children of an item can be accessed
     using slice notation and their identifiers, eg.:
@@ -252,6 +254,7 @@ class OrderedDictTreeItem:
 
     def __init__(self, identifier=None, parent=None, children=None,
                  values=None, compare_identifiers_function=None):
+        super().__init__()
         self._identifier = identifier
         self._parent = parent
 
@@ -450,22 +453,28 @@ class OrderedDictTreeModel(QAbstractItemModel):
         # thus, the argument is irrelevant
         return 1
 
-    def data(self, q_parent_index, q_role):
-        if q_parent_index.isValid() and q_role == Qt.DisplayRole:
-            siblings = q_parent_index.internalPointer().parent.children
-            if len(siblings) > 1:
-                sibling_identifiers = []
-                sibling_identifiers += [sibling.identifier.split(sep) for sibling in siblings]
-                unique_part = []
-                for c in sibling_identifiers:
-                    result = list(filter(lambda x: all(x in l for l in sibling_identifiers) == False, c))
-                    unique_part.append(" ".join(result))
+    def data(self, q_parent_index=QModelIndex(), q_role=Qt.DisplayRole):
+        if q_parent_index.isValid():
+            if q_role == Qt.DisplayRole:
+                siblings = q_parent_index.internalPointer().parent.children
+                if len(siblings) > 1:
+                    sibling_identifiers = []
+                    sibling_identifiers += [sibling.identifier.split(sep) for sibling in siblings]
+                    unique_part = []
+                    for c in sibling_identifiers:
+                        result = list(filter(lambda x: all(x in l for l in sibling_identifiers) == False, c))
+                        unique_part.append(" ".join(result))
 
-                return unique_part[q_parent_index.row()]
-            else:
-                path = str(q_parent_index.internalPointer())
-                return path
-
+                    return unique_part[q_parent_index.row()]
+                else:
+                    path = str(q_parent_index.internalPointer())
+                    return path
+            elif q_role == Qt.ForegroundRole:
+                if q_parent_index.internalPointer().property('needs_reload') == 'True':
+                    # color items in gray for visibility
+                    # final color still up for debate
+                    # todo set color in settings
+                    return QBrush(Qt.gray)
         return QVariant()
 
     # Non-Qt interface functions

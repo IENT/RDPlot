@@ -194,25 +194,6 @@ padding: 4px;
       </widget>
      </widget>
     </item>
-    <item row="1" column="0">
-     <widget class="QPushButton" name="generateCurveButton">
-      <property name="toolTip">
-       <string notr="true" extracomment="Choose at least four points and plotsettings to generate curve">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Choose at least 4 points and the plotsettings, then generate new curve&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-      </property>
-      <property name="statusTip">
-       <string extracomment="Choose at least four points and plotsettings to generate curve"/>
-      </property>
-      <property name="whatsThis">
-       <string extracomment="Choose at least four points and plotsettings to generate curve"/>
-      </property>
-      <property name="text">
-       <string>Generate curve</string>
-      </property>
-      <property name="toolTipDuration" stdset="0">
-       <number>0</number>
-      </property>
-     </widget>
-    </item>
    </layout>
   </widget>
   <widget class="QDockWidget" name="plotsettings">
@@ -322,7 +303,17 @@ padding: 4px;
     </property>
     <addaction name="action_About"/>
    </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionRemove_items"/>
+    <addaction name="actionReload_files"/>
+    <addaction name="separator"/>
+    <addaction name="actionGenerate_curve"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
    <addaction name="menuView"/>
    <addaction name="menuHelp"/>
   </widget>
@@ -497,6 +488,26 @@ padding: 4px;
   <action name="actionExport_Figure_as_Tikzpicture">
    <property name="text">
     <string>Export Figure as Tikzpicture</string>
+   </property>
+  </action>
+  <action name="actionPlaceholder">
+   <property name="text">
+    <string>Placeholder</string>
+   </property>
+  </action>
+  <action name="actionRemove_items">
+   <property name="text">
+    <string>Remove items</string>
+   </property>
+  </action>
+  <action name="actionReload_files">
+   <property name="text">
+    <string>Reload files</string>
+   </property>
+  </action>
+  <action name="actionGenerate_curve">
+   <property name="text">
+    <string>Generate curve</string>
    </property>
   </action>
  </widget>

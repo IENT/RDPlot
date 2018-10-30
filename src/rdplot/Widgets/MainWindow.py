@@ -1,18 +1,19 @@
 from os import path
 from os.path import sep, isfile, isdir
+from os import listdir
 import csv
 import cProfile, pstats
 
 import pkg_resources
 import jsonpickle
 from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtCore import QItemSelectionModel, QItemSelection, QObject, QModelIndex, QSettings
+from PyQt5.QtCore import QItemSelectionModel, QItemSelection, QObject, QModelIndex, QSettings, QFileSystemWatcher, QTimer
 from PyQt5.uic import loadUiType
 
 
 from rdplot.SimulationDataItem import dict_tree_from_sim_data_items, PlotData
 from rdplot.Widgets.PlotWidget import PlotWidget
-from rdplot.model import SimDataItemTreeModel, OrderedDictModel, VariableTreeModel, BdTableModel
+from rdplot.model import SimDataItemTreeModel, OrderedDictModel, VariableTreeModel, BdTableModel, OrderedDictTreeItem
 from rdplot.view import QRecursiveSelectionModel
 
 Ui_name = pkg_resources.resource_filename('rdplot', 'ui' + sep + 'mainWindow.ui')
@@ -146,12 +147,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.curveListSelectionModel = QItemSelectionModel(self.curveListModel)
         self.curveListView.setSelectionModel(self.curveListSelectionModel)
         self.curveListView.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
-        self.generateCurveButton.clicked.connect(self.generate_new_curve)
         self.curveWidget.visibilityChanged.connect(self.curve_widget_visibility_changed)
+
+        self.actionGenerate_curve.triggered.connect(self.generate_new_curve)
+        self.actionRemove_items.triggered.connect(self.remove)
+        self.actionReload_files.triggered.connect(self.reload_files)
 
         self.settings = QSettings()
         self.get_recent_files()
         self.simDataItemTreeView.itemsOpened.connect(self.add_recent_files)
+
+        self.watcher = QFileSystemWatcher(self)
+        self.watcher.fileChanged.connect(self.warning_file_change)
+        self.watcher.directoryChanged.connect(self.warning_file_change)
+        self.simDataItemTreeView.itemsOpened.connect(self.add_files_to_watcher)
+        self.show_file_changed_message = True
+        self.reset_timer = QTimer(self)
+        self.reset_timer.setSingleShot(True)
+        self.reset_timer.setInterval(15000)
+        self.reset_timer.timeout.connect(self._reset_file_changed_message)
 
     # sets Visibility for the Plotsettings Widget
     def set_plot_settings_visibility(self):
@@ -210,6 +224,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def remove(self):
         values = self.selectedSimulationDataItemListModel.values()
+
+        for value in values:
+            self.watcher.removePath(value.path)
         # List call necessary to avoid runtime error because of elements changing
         # during iteration
         self._variable_tree_selection_model.selectionChanged.disconnect()
@@ -728,23 +745,110 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             self.simDataItemTreeView.add_file(path_recent)
 
-    def add_recent_files(self, files):
+    def add_recent_files(self, files, reload):
         # files doesn't necessarily have to just be a list of files
         # it can also be a directory
-        recent_files = self.settings.value('recentFiles')
-        if recent_files is None:
-            recent_files = []
-        for file in files:
-            if file in recent_files:
-                # put our file on top of the list
-                recent_files.remove(file)
-            recent_files.insert(0, file)
-        while len(recent_files) > 5:
-            del recent_files[-1]
-        self.settings.setValue('recentFiles', recent_files)
+        if not reload:
+            recent_files = self.settings.value('recentFiles')
+            if recent_files is None:
+                recent_files = []
+            for file in files:
 
-        self.menuRecent_files.clear()
-        for recent_file in recent_files:
-            if path.exists(recent_file):
-                action = self.menuRecent_files.addAction(recent_file)
-                action.triggered.connect(self.open_recent_file)
+                if file in recent_files:
+                    # put our file on top of the list
+                    recent_files.remove(file)
+                recent_files.insert(0, file)
+            while len(recent_files) > 5:
+                del recent_files[-1]
+            self.settings.setValue('recentFiles', recent_files)
+
+            self.menuRecent_files.clear()
+            for recent_file in recent_files:
+                if path.exists(recent_file):
+                    action = self.menuRecent_files.addAction(recent_file)
+                    action.triggered.connect(self.open_recent_file)
+
+    def add_files_to_watcher(self, items, reload):
+        for item in items:
+            if path.isdir(item):
+                for file in [path.join(item, x) for x in listdir(item) if path.isfile(path.join(item, x))]:
+                    self.watcher.addPath(file)
+            else:
+                self.watcher.addPath(item)
+
+    def warning_file_change(self, path_item):
+        # inform user about the fact that one of the loaded files has been changed since the application has started
+        # timer is used to avoid spamming the user when multiple files are deleted in a row
+        # retrieve affected notes and parent nodes
+        # change their style in the tree view to indicate which files are affected
+        if self.show_file_changed_message:
+            QtWidgets.QMessageBox.warning(self, 'File change', 'One or more of your loaded files have been changed.\n'
+                                                               'You can choose to reload them.\n'
+                                                               'Hint: Changed files are greyed out in the sequences widget.')
+            self.show_file_changed_message = False
+            self.reset_timer.start()
+        else:
+            self.reset_timer.stop()
+            self.reset_timer.start()
+
+        affected_notes = []
+        for leaf in self.simDataItemTreeModel.root.leafs:
+            for value in leaf.values:
+                if value.path == path_item:
+                    affected_notes.append(leaf)
+        for node in affected_notes:
+            node_index = self.simDataItemTreeModel._get_index_from_item(node)
+            node.setProperty('needs_reload', 'True')
+            parent = self.simDataItemTreeModel.parent(node_index)
+            level = 0
+            while parent.isValid() and level < 2: #MAX_LEVEL
+                parent.internalPointer().setProperty('needs_reload', 'True')
+                parent = self.simDataItemTreeModel.parent(parent)
+                level += 1
+        self.simDataItemTreeView.style().polish(self.simDataItemTreeView)
+        self.simDataItemTreeView.update()
+
+    def _reset_file_changed_message(self):
+        self.show_file_changed_message = True
+
+    def reload_files(self):
+        # remove all selected files first
+        # reload available files
+        # could possibly limit this to only files that we know have been changed
+        def check_children(parent):
+            if len(parent.children) > 0:
+                for child in parent.children:
+                    if not check_children(child):
+                        return False
+                parent.setProperty('needs_reload', 'False')
+                return True
+            else:
+                if parent.property('needs_reload') == 'True':
+                    return False
+                return True
+
+        values = self.selectedSimulationDataItemListModel.values()
+        items_to_be_reloaded = []
+        for value in values:
+            if path.exists(value.path):
+                # reload file
+                items_to_be_reloaded.append(value)
+
+        self._variable_tree_selection_model.selectionChanged.disconnect()
+        self._selection_model.selectionChanged.disconnect(self.change_list)
+        self.simDataItemTreeModel.remove(values)
+
+        for item in items_to_be_reloaded:
+            self.simDataItemTreeView.add_file(item.path, reload=True)
+
+        self.change_list(QItemSelection(), QItemSelection())
+        self._selection_model.selectionChanged.connect(self.change_list)
+        self._variable_tree_selection_model.selectionChanged.connect(self.update_plot)
+
+        for node in self.simDataItemTreeModel.root.children:
+            # remove grey font color if all changed files have been reloaded
+            # have to check every single item because possible deletion of older nodes makes things very difficult
+            check_children(node)
+
+        self.simDataItemTreeView.style().polish(self.simDataItemTreeView)
+        self.simDataItemTreeView.update()
