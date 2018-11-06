@@ -167,6 +167,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.reset_timer.setInterval(15000)
         self.reset_timer.timeout.connect(self._reset_file_changed_message)
 
+        self.simDataItemTreeView.customContextMenuRequested.connect(self.show_context_menu)
     # sets Visibility for the Plotsettings Widget
     def set_plot_settings_visibility(self):
         self.plotsettings.visibilityChanged.disconnect(self.plot_settings_visibility_changed)
@@ -782,11 +783,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # retrieve affected notes and parent nodes
         # change their style in the tree view to indicate which files are affected
         if self.show_file_changed_message:
+            self.show_file_changed_message = False
+            self.reset_timer.start()
             QtWidgets.QMessageBox.warning(self, 'File change', 'One or more of your loaded files have been changed.\n'
                                                                'You can choose to reload them.\n'
                                                                'Hint: Changed files are greyed out in the sequences widget.')
-            self.show_file_changed_message = False
-            self.reset_timer.start()
         else:
             self.reset_timer.stop()
             self.reset_timer.start()
@@ -805,8 +806,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 parent.internalPointer().setProperty('needs_reload', 'True')
                 parent = self.simDataItemTreeModel.parent(parent)
                 level += 1
-        self.simDataItemTreeView.style().polish(self.simDataItemTreeView)
-        self.simDataItemTreeView.update()
 
     def _reset_file_changed_message(self):
         self.show_file_changed_message = True
@@ -828,6 +827,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 return True
 
         values = self.selectedSimulationDataItemListModel.values()
+        if len(values) == 0:
+            for index in self.simDataItemTreeModel.root.leafs:
+                for sim_data_item in index.values:
+                    values.append(sim_data_item)
         items_to_be_reloaded = []
         for value in values:
             if path.exists(value.path):
@@ -838,6 +841,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self._selection_model.selectionChanged.disconnect(self.change_list)
         self.simDataItemTreeModel.remove(values)
 
+        self.simDataItemTreeView.msg.show()
         for item in items_to_be_reloaded:
             self.simDataItemTreeView.add_file(item.path, reload=True)
 
@@ -850,5 +854,5 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # have to check every single item because possible deletion of older nodes makes things very difficult
             check_children(node)
 
-        self.simDataItemTreeView.style().polish(self.simDataItemTreeView)
-        self.simDataItemTreeView.update()
+    def show_context_menu(self, position):
+        self.menuEdit.exec(self.simDataItemTreeView.mapToGlobal(position))

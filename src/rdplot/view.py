@@ -145,6 +145,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         self.errorMsg.setWindowTitle('Error!')
         self.errorMsg.setIcon(QMessageBox.Warning)
         self.parserThread.parsingError.connect(self.errorMsg.show)
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
 
     # drag'n'drop mechanism adapted
     # from question on stackoverflow at http://stackoverflow.com/q/22543644
