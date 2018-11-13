@@ -169,9 +169,9 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
                     # process .rd with load_rd_data, .xml and .log with the parsers
                     file_ending = file_path.suffix
                     if file_ending == '.rd':
-                        self.load_rd_data(file_path)
+                        self.load_rd_data(str(file_path))
                     elif file_ending == '.log' or file_ending == '.xml':
-                        self.parserThread.add_path(file_path)
+                        self.parserThread.add_path(str(file_path))
                         self.parserThread.start()
                 except json.decoder.JSONDecodeError:
                     return
@@ -179,7 +179,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
                     return
             else:
                 self.msg.show()
-                self.parserThread.add_path(file_path)
+                self.parserThread.add_path(str(file_path))
                 self.parserThread.start()
 
     # end snippet
