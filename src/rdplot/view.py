@@ -461,7 +461,15 @@ class CurveView(QListView):
 
     def __init__(self, parent = None):
         super().__init__(parent)
+        # self.setContextMenuPolicy(Qt.CustomContextMenu)
+        # self.customContextMenuRequested.connect(self.show_context_menu)
+        # self.context_menu = QMenu(self)
+        # self.actionCalculateBD = self.context_menu.addAction('Calculate Bjontegaard-Delta')
 
     def keyPressEvent(self, event):
         if event.count() == 1 and event.key() == Qt.Key_Delete:
             self.delete_key.emit()
+
+    # def show_context_menu(self, position):
+    #    # unused at this point because bd is automatically calculated every time
+    #    self.context_menu.exec(self.mapToGlobal(position))

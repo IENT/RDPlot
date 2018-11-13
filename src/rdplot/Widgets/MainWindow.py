@@ -7,13 +7,14 @@ import cProfile, pstats
 import pkg_resources
 import jsonpickle
 from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtCore import QItemSelectionModel, QItemSelection, QObject, QModelIndex, QSettings, QFileSystemWatcher, QTimer
+from PyQt5.QtCore import QItemSelectionModel, QItemSelection, QSettings, QFileSystemWatcher, QTimer
 from PyQt5.uic import loadUiType
+from PyQt5.Qt import Qt
 
 
 from rdplot.SimulationDataItem import dict_tree_from_sim_data_items, PlotData
 from rdplot.Widgets.PlotWidget import PlotWidget
-from rdplot.model import SimDataItemTreeModel, OrderedDictModel, VariableTreeModel, BdTableModel, OrderedDictTreeItem
+from rdplot.model import SimDataItemTreeModel, OrderedDictModel, VariableTreeModel, BdTableModel, BdUserGeneratedCurvesTableModel
 from rdplot.view import QRecursiveSelectionModel
 
 Ui_name = pkg_resources.resource_filename('rdplot', 'ui' + sep + 'mainWindow.ui')
@@ -57,11 +58,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Create tree model to store sim data items and connect it to views
         self.simDataItemTreeModel = SimDataItemTreeModel()
         self.bdTableModel = BdTableModel()
+        self.bdUserGeneratedTableModel = BdUserGeneratedCurvesTableModel()
         self.simDataItemTreeView.setModel(self.simDataItemTreeModel)
         self.plotPreview.tableView.setModel(self.bdTableModel)
 
         # connect a double clicked section of the bd table to a change of the anchor
         self.plotPreview.tableView.horizontalHeader().sectionDoubleClicked.connect(self.update_bd_table)
+        self.plotPreview.tableView.verticalHeader().sectionDoubleClicked.connect(self.update_bd_user_generated_curves_table)
 
         # Set custom selection model, so that sub items are automatically
         # selected if parent is selected
@@ -167,7 +170,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.reset_timer.setInterval(15000)
         self.reset_timer.timeout.connect(self._reset_file_changed_message)
 
-        self.simDataItemTreeView.customContextMenuRequested.connect(self.show_context_menu)
+        self.simDataItemTreeView.customContextMenuRequested.connect(self.show_sequences_context_menu)
+        # self.curveListView.actionCalculateBD.triggered.connect(self.bd_user_generated_curves)
+
     # sets Visibility for the Plotsettings Widget
     def set_plot_settings_visibility(self):
         self.plotsettings.visibilityChanged.disconnect(self.plot_settings_visibility_changed)
@@ -387,26 +392,35 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     # updates the plot if the plot variable is changed
     def update_plot(self):
-        # in case that we're plotting a user-generated curve, we will ignore the usual restrictions for
-        # bjontegaard-delta and calculate it regardless
-        self.ignore_restrictions = False
+        # user-generated curves and curves loaded from files are not supposed to be mixed
+        user_generated_curves = False
         if self.sender() == self._variable_tree_selection_model or self.sender() == self.curveListSelectionModel:
             self.check_labels()
-            plot_data_collection = self.get_plot_data_collection_from_selected_variables()
+            data_collection = self.get_plot_data_collection_from_selected_variables()
+            data_collection_user_generated = []
             for index in self.curveListView.selectedIndexes():
-                plot_data_collection.append(self.curveListModel[index.data()])
-                self.ignore_restrictions = True
+                data_collection_user_generated.append(self.curveListModel[index.data()])
         else:
-            plot_data_collection = []
+            return
 
-        self.plotPreview.change_plot(plot_data_collection)
-        self.update_table(plot_data_collection)
+        plot_data_collection = data_collection + data_collection_user_generated
+        if len(data_collection_user_generated):
+            self.plotPreview.tableView.setModel(self.bdUserGeneratedTableModel)
+            self.plotPreview.change_plot(plot_data_collection, True)
+        else:
+            self.plotPreview.tableView.setModel(self.bdTableModel)
+            self.update_table(data_collection)
+            self.plotPreview.change_plot(plot_data_collection, False)
+        if len(data_collection) and len(data_collection_user_generated):
+            # don't mix user-generated and normal curves
+            self.plotPreview.tableView.hide()
+            self.plotPreview.label_warning.show()
+            return
 
-        # update the model for the bd table, note the anchor is always
-        # the first config if new simDataItems are selected
-        self.bdTableModel.update(plot_data_collection, self.combo_rate_psnr.currentText(),
-                                 self.combo_interp.currentText(), not(self.checkBox_bdplot.isChecked()),
-                                 self.ignore_restrictions)
+        self.plotPreview.tableView.show()
+        self.plotPreview.label_warning.hide()
+        self.plotPreview.tableView.model().update(plot_data_collection, self.combo_rate_psnr.currentText(),
+                                     self.combo_interp.currentText(), not(self.checkBox_bdplot.isChecked()))
 
     def get_table_header(self, plot_data_collection):
         tmp_legend = []
@@ -579,13 +593,26 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.bdTableModel.update_table(self.combo_rate_psnr.currentText(),
                                            self.combo_interp.currentText(), index,
-                                       not(self.checkBox_bdplot.isChecked()), self.ignore_restrictions)
+                                       not(self.checkBox_bdplot.isChecked()))
+
+    def update_bd_user_generated_curves_table(self, index):
+        clicked_text = self.bdUserGeneratedTableModel.headerData(index, Qt.Vertical, Qt.DisplayRole)
+        self.bdUserGeneratedTableModel.update(None, self.combo_rate_psnr.currentText(),
+                                           self.combo_interp.currentText(), not(self.checkBox_bdplot.isChecked()),
+                                              clicked_text)
+
     def update_bd_plot(self):
-        plot_data_collection = self.get_plot_data_collection_from_selected_variables()
-        for index in self.curveListSelectionModel.selectedIndexed():
-            plot_data_collection.append(self.curveListModel[index.data()])
-        self.bdTableModel.update(plot_data_collection, self.combo_rate_psnr.currentText(),
+        data_collection = self.get_plot_data_collection_from_selected_variables()
+        data_collection_user_generated = []
+        for index in self.curveListSelectionModel.selectedIndexes():
+            data_collection_user_generated.append(self.curveListModel[index.data()])
+
+        if len(data_collection):
+            self.bdTableModel.update(data_collection, self.combo_rate_psnr.currentText(),
                                  self.combo_interp.currentText(), not (self.checkBox_bdplot.isChecked()))
+        elif len(data_collection_user_generated):
+            self.bdTableModel.update(data_collection_user_generated, self.combo_rate_psnr.currentText(),
+                                     self.combo_interp.currentText(), not (self.checkBox_bdplot.isChecked()))
 
     def export_table_to_csv(self):
         # remember that the decimal mark is '.'
@@ -699,7 +726,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                                             "If you enter an already existing name,\nits data will be overwritten.")
                 curve_name = curve_name.strip()
                 if curve_name is not '':
-                    new_plot_data = PlotData([curve_name, curve_name], new_plot_values, plot_data_collection[0].path,
+                    new_plot_data = PlotData([curve_name], new_plot_values, [],
                                              plot_data_collection[0].label)
                     self.add_curve(curve_name, new_plot_data)
                 else:
@@ -854,5 +881,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # have to check every single item because possible deletion of older nodes makes things very difficult
             check_children(node)
 
-    def show_context_menu(self, position):
+    def show_sequences_context_menu(self, position):
         self.menuEdit.exec(self.simDataItemTreeView.mapToGlobal(position))
+
+    # def bd_user_generated_curves(self):
+    #    pass

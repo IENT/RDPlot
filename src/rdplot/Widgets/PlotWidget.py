@@ -78,6 +78,8 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.toolbar.pan()
         self.verticalLayout_3.addWidget(self.toolbar)
 
+        self.label_warning.hide()
+
     def create_legend(self, plot_data_collection):
         tmp_legend = []
         for plot_data in plot_data_collection:
@@ -97,7 +99,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         return legend
 
     # refreshes the figure according to new changes done
-    def change_plot(self, plot_data_collection):
+    def change_plot(self, plot_data_collection, user_generated_curves=False):
         """Plot all data from the *plot_data_collection*
 
         :param plot_data_collection: A iterable collection of :clas: `PlotData`
@@ -130,20 +132,27 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
         # Now lets create a legend only containing informative
         # content (no duplicates)
-        tmp_legend = []
-        for plot_data in plot_data_collection:
-            tmp = []
-            for identifiers in plot_data.identifiers:
-                tmp += identifiers.split(sep)
-            tmp2 = tmp + plot_data.path
-            tmp_legend.append(tmp2)
+        if not user_generated_curves:
+            tmp_legend = []
+            for plot_data in plot_data_collection:
+                tmp = []
+                for identifiers in plot_data.identifiers:
+                    tmp += identifiers.split(sep)
+                tmp2 = tmp + plot_data.path
+                tmp_legend.append(tmp2)
 
-        legend = []
-        for c in tmp_legend:
-            result = list(filter(lambda x: all(x in l for l in tmp_legend) == False, c))
-            legend.append(" ".join(result))
-        if len(tmp_legend) == 1:
-            legend = ['']
+            legend = []
+            for c in tmp_legend:
+                result = list(filter(lambda x: all(x in l for l in tmp_legend) == False, c))
+                legend.append(" ".join(result))
+            if len(tmp_legend) == 1:
+                legend = ['']
+        else:
+            # when user-generated curves are involved the legend tends to break the layout and makes the plot impossible
+            # to read. therefore only the first identifier is being shown in the legend
+            legend = []
+            for plot_data in plot_data_collection:
+                legend.append(plot_data.identifiers[0])
 
         # plot all the lines which are missing yet
         plot_count = 0
