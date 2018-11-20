@@ -1256,10 +1256,14 @@ class BdUserGeneratedCurvesTableModel(BdTableModel):
         c1 = sorted(list(set(anchor_curve.values)))
         index = 0
         table_index = 0
+        curve_names = [self._horizontal_headers]
+        for curve_name in self._vertical_headers:
+            if curve_name != 'AVG':
+                curve_names.append(curve_name)
         for curve in self._plot_data_collection:
             if index != self._anchor_index:
                 c2 = sorted(list(set(curve.values)))
-                self._data[table_index, 0] = bjontegaard(c1, c2, bd_option, interp_option, 'BD Plot', list(), bd_plot)
+                self._data[table_index, 0] = bjontegaard(c1, c2, bd_option, interp_option, 'BD Plot', curve_names, bd_plot)
                 table_index += 1
             index += 1
 

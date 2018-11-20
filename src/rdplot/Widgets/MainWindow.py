@@ -163,7 +163,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.watcher = QFileSystemWatcher(self)
         self.watcher.fileChanged.connect(self.warning_file_change)
         self.watcher.directoryChanged.connect(self.warning_file_change)
-        self.simDataItemTreeView.itemsOpened.connect(self.add_files_to_watcher)
+        self.simDataItemTreeView.parserThread.newParsedData.connect(self.add_files_to_watcher)
         self.show_file_changed_message = True
         self.reset_timer = QTimer(self)
         self.reset_timer.setSingleShot(True)
@@ -796,13 +796,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     action = self.menuRecent_files.addAction(recent_file)
                     action.triggered.connect(self.open_recent_file)
 
-    def add_files_to_watcher(self, items, reload):
+    def add_files_to_watcher(self, items):
         for item in items:
-            if path.isdir(item):
-                for file in [path.join(item, x) for x in listdir(item) if path.isfile(path.join(item, x))]:
-                    self.watcher.addPath(file)
-            else:
-                self.watcher.addPath(item)
+                if isfile(item.path):
+                    self.watcher.addPath(item.path)
 
     def warning_file_change(self, path_item):
         # inform user about the fact that one of the loaded files has been changed since the application has started

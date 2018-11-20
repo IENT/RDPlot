@@ -406,20 +406,20 @@ class SimulationDataItemFactory(QObject):
         # checking for parsers automatically would be a lot easier at this point
         # but user would not be able to manually select a format
         if not cls_list and isfile(file_path):
-            if not self.class_selection_dialog.get_remember_decision():
+            if not self.class_selection_dialog.remember_decision:
                 self.class_selection_dialog.set_items(list(map(lambda x: re.sub('<|>|\'', '', str(x)).split('.')[-1],
                                                                list_classes)))
                 result = self.class_selection_dialog.exec_(file_path)
                 if result == QDialog.Accepted:
                     try:
-                        cls_list.append(list_classes[self.class_selection_dialog.get_selected_class()](file_path))
+                        cls_list.append(list_classes[self.class_selection_dialog.selected_class](file_path))
                     except:
                         self.parsingError.emit()
-                elif result == QDialog.Rejected and self.class_selection_dialog.get_remember_decision():
+                elif result == QDialog.Rejected and self.class_selection_dialog.remember_decision:
                     raise RuntimeError()
             else:
                 try:
-                    cls_list.append(list_classes[self.class_selection_dialog.get_selected_class()](file_path))
+                    cls_list.append(list_classes[self.class_selection_dialog.selected_class](file_path))
                 except:
                     self.parsingError.emit()
         return cls_list
@@ -503,7 +503,8 @@ class ClassSelectionDialog(QDialog):
         self._button1.clicked.connect(self.accept)
         self._button2.clicked.connect(self.reject)
 
-    def get_selected_class(self):
+    @property
+    def selected_class(self):
         return self._combo_box.currentIndex()
 
     def exec_(self, file_name):
@@ -515,7 +516,8 @@ class ClassSelectionDialog(QDialog):
         self._combo_box.clear()
         self._combo_box.addItems(items)
 
-    def get_remember_decision(self):
+    @property
+    def remember_decision(self):
         return self._check_box.isChecked()
 
     def reset(self):
