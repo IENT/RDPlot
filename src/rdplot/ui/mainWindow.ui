@@ -264,7 +264,7 @@ padding: 4px;
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1253</width>
+     <width>1088</width>
      <height>25</height>
     </rect>
    </property>
@@ -272,7 +272,13 @@ padding: 4px;
     <property name="title">
      <string>Fi&amp;le</string>
     </property>
+    <widget class="QMenu" name="menuRecent_files">
+     <property name="title">
+      <string>Recent files</string>
+     </property>
+    </widget>
     <addaction name="actionOpen_File"/>
+    <addaction name="menuRecent_files"/>
     <addaction name="separator"/>
     <addaction name="actionOpen_Directory"/>
     <addaction name="actionOpen_Directory_List"/>
@@ -297,7 +303,17 @@ padding: 4px;
     </property>
     <addaction name="action_About"/>
    </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionRemove_items"/>
+    <addaction name="actionReload_files"/>
+    <addaction name="separator"/>
+    <addaction name="actionGenerate_curve"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
    <addaction name="menuView"/>
    <addaction name="menuHelp"/>
   </widget>
@@ -359,6 +375,24 @@ padding: 4px;
         <enum>QAbstractItemView::ExtendedSelection</enum>
        </property>
       </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="curveWidget">
+   <property name="allowedAreas">
+    <set>Qt::AllDockWidgetAreas</set>
+   </property>
+   <property name="windowTitle">
+    <string>Generated curves</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents">
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="CurveView" name="curveListView"/>
      </item>
     </layout>
    </widget>
@@ -456,6 +490,26 @@ padding: 4px;
     <string>Export Figure as Tikzpicture</string>
    </property>
   </action>
+  <action name="actionPlaceholder">
+   <property name="text">
+    <string>Placeholder</string>
+   </property>
+  </action>
+  <action name="actionRemove_items">
+   <property name="text">
+    <string>Remove items</string>
+   </property>
+  </action>
+  <action name="actionReload_files">
+   <property name="text">
+    <string>Reload files</string>
+   </property>
+  </action>
+  <action name="actionGenerate_curve">
+   <property name="text">
+    <string>Generate curve</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -467,6 +521,11 @@ padding: 4px;
    <class>PlottedFilesListView</class>
    <extends>QListView</extends>
    <header>rdplot.view</header>
+  </customwidget>
+  <customwidget>
+   <class>CurveView</class>
+   <extends>QListView</extends>
+   <header>rdplot.view</header>   
   </customwidget>
  </customwidgets>
  <resources/>

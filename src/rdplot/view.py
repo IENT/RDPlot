@@ -28,7 +28,8 @@ from PyQt5.QtCore import *
 from PyQt5.QtCore import QObject, QItemSelectionModel, QItemSelection, QModelIndex, pyqtSignal, QThread
 from PyQt5.QtGui import *
 from PyQt5.QtGui import QKeySequence
-from PyQt5.QtWidgets import QMessageBox, QMenu
+from PyQt5.QtWidgets import QMessageBox, QMenu, QListView
+from pathlib import Path
 
 from rdplot.SimulationDataItem import SimulationDataItemFactory, SimulationDataItemError
 from rdplot.model import AmbiguousSimDataItems
@@ -122,6 +123,10 @@ class ParserWorkNoThread(QObject):
 
 
 class SimDataItemTreeView(QtWidgets.QTreeView):
+
+    deleteKey = pyqtSignal()
+    itemsOpened = pyqtSignal(list, bool)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.parserThread = ParserWorkThread()
@@ -141,6 +146,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         self.errorMsg.setWindowTitle('Error!')
         self.errorMsg.setIcon(QMessageBox.Warning)
         self.parserThread.parsingError.connect(self.errorMsg.show)
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
 
     # drag'n'drop mechanism adapted
     # from question on stackoverflow at http://stackoverflow.com/q/22543644
@@ -156,15 +162,16 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
 
     def dropEvent(self, event):
         for url in event.mimeData().urls():
+            file_path = Path(url.path())
             if url.isLocalFile() and isfile(url.path()):
                 try:
                     # check what kind of file we have.
                     # process .rd with load_rd_data, .xml and .log with the parsers
-                    file_ending = basename(url.path()).rsplit('.', maxsplit=1)[1]
-                    if file_ending == 'rd':
-                        self.load_rd_data(url.path())
-                    elif file_ending == 'log' or file_ending == 'xml':
-                        self.parserThread.add_path(url.path())
+                    file_ending = file_path.suffix
+                    if file_ending == '.rd':
+                        self.load_rd_data(str(file_path))
+                    elif file_ending == '.log' or file_ending == '.xml':
+                        self.parserThread.add_path(str(file_path))
                         self.parserThread.start()
                 except json.decoder.JSONDecodeError:
                     return
@@ -172,7 +179,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
                     return
             else:
                 self.msg.show()
-                self.parserThread.add_path(url.path())
+                self.parserThread.add_path(str(file_path))
                 self.parserThread.start()
 
     # end snippet
@@ -180,8 +187,6 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
     # keypress fix adapted
     # from answer on stackoverflow at http://stackoverflow.com/a/27477021
     # from user http://stackoverflow.com/users/984421/ekhumoro
-
-    deleteKey = pyqtSignal()
 
     def keyPressEvent(self, q_key_event):
         if q_key_event.count() == 1 and q_key_event.key() == Qt.Key_Delete:
@@ -234,28 +239,35 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
 
     # open one or more files
     # will detect what kind of file (.rd, .log, .xml) and act accordingly
-    def add_file(self):
-        try:
-            directories, file_names = self._get_open_file_names()
-        except TypeError:
-            return
-        for directory, file_name in zip(directories, file_names):
-            # check what kind of file we have.
-            # process .rd with load_rd_data, .xml and .log with the parsers
-            path = join(directory, file_name)
-            file_ending = file_name.rsplit('.', maxsplit=1)[1]
-            if file_ending == 'rd':
-                self.load_rd_data(path)
-            elif file_ending == 'log' or file_ending == 'xml':
-                self.parserThread.add_path(path)
-        self.parserThread.start()
+    def add_file(self, path, reload=False):
+        if not path:
+            try:
+                directories, file_names = self._get_open_file_names()
+            except TypeError:
+                return
+            for directory, file_name in zip(directories, file_names):
+                # check what kind of file we have.
+                # process .rd with load_rd_data, .xml and .log with the parsers
+                path = join(directory, file_name)
+                file_ending = file_name.rsplit('.', maxsplit=1)[1]
+                if file_ending == 'rd':
+                    self.load_rd_data(path)
+                elif file_ending == 'log' or file_ending == 'xml':
+                    self.parserThread.add_path(path)
+            self.parserThread.start()
+            self.itemsOpened.emit(list(map(lambda x, y: x+'/'+y, directories, file_names)), reload)
+        else:
+            self.parserThread.add_path(path)
+            self.parserThread.start()
+            self.itemsOpened.emit([path], reload)
 
     # adds all log files and sequences from a directory to the treeview
-    def add_folder(self):
-        try:
-            path = self._get_folder()
-        except TypeError:
-            return
+    def add_folder(self, path=''):
+        if not path:
+            try:
+                path = self._get_folder()
+            except TypeError:
+                return
 
         # TODO this uses the parse_directory method, thus, does not automatically
         # parse 'log'.subfolder. Should this be the case?
@@ -264,6 +276,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         self.msg.show()
         self.parserThread.add_path(path)
         self.parserThread.start()
+        self.itemsOpened.emit([path], False)
 
     def add_folder_list(self):
         try:
@@ -278,6 +291,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
                     clean_path = line.rstrip()
                     if isdir(clean_path):
                         self.parserThread.add_path(clean_path)
+                    self.itemsOpened.emit([clean_path], False)
             self.msg.show()
             self.parserThread.start()
 
@@ -442,3 +456,22 @@ class QRecursiveSelectionModel(QItemSelectionModel):
                         q_index_parent_queue.append(q_index)
 
         return list(index_ranges)
+
+
+class CurveView(QListView):
+    delete_key = pyqtSignal()
+
+    def __init__(self, parent = None):
+        super().__init__(parent)
+        # self.setContextMenuPolicy(Qt.CustomContextMenu)
+        # self.customContextMenuRequested.connect(self.show_context_menu)
+        # self.context_menu = QMenu(self)
+        # self.actionCalculateBD = self.context_menu.addAction('Calculate Bjontegaard-Delta')
+
+    def keyPressEvent(self, event):
+        if event.count() == 1 and event.key() == Qt.Key_Delete:
+            self.delete_key.emit()
+
+    # def show_context_menu(self, position):
+    #    # unused at this point because bd is automatically calculated every time
+    #    self.context_menu.exec(self.mapToGlobal(position))

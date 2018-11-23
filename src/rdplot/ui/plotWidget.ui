@@ -100,6 +100,27 @@
         </widget>
        </item>
        <item>
+        <widget class="QLabel" name="label_warning">
+         <property name="font">
+          <font>
+           <pointsize>9</pointsize>
+           <weight>50</weight>
+           <italic>false</italic>
+           <bold>false</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Values could not be computed!
+Verify that your data is correct
+and that you are not trying to mix normal curves with user-generated ones.
+Bjontegaard Delta for user-generated curves can only be computed separately.</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QTableView" name="tableView">
          <property name="frameShape">
           <enum>QFrame::Box</enum>
