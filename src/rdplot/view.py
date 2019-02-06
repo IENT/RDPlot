@@ -90,6 +90,7 @@ class ParserWorkNoThread(QObject):
 
     newParsedData = pyqtSignal([list])
     allParsed = pyqtSignal()
+    parsingError = pyqtSignal()
 
     def __init__(self, path_list=None):
         QObject.__init__(self)
@@ -102,6 +103,11 @@ class ParserWorkNoThread(QObject):
             path_list = []
         self.path_list = path_list
 
+        self._factory.parsingError.connect(self.relay_error)
+
+    def __del__(self):
+        self.wait()
+
     def add_path(self, path):
         self.path_list.append(path)
 
@@ -109,6 +115,7 @@ class ParserWorkNoThread(QObject):
         for path in self.path_list:
             try:
                 sim_data_items = self._factory.create_item_list_from_path(path)
+                print("Parsed '{}' ".format(path))
             except SimulationDataItemError:
                 self.newParsedData.emit([])
                 self.path_list.clear()
@@ -117,6 +124,9 @@ class ParserWorkNoThread(QObject):
             self.newParsedData.emit(sim_data_items)
         self.path_list.clear()
         self.allParsed.emit()
+
+    def relay_error(self):
+        self.parsingError.emit()
 
     def start(self):
         self.run()
