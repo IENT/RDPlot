@@ -20,7 +20,7 @@
 import re
 from abc import abstractmethod
 from collections import defaultdict
-from os.path import normpath, basename, dirname, splitext
+from os.path import normpath, basename, dirname, splitext, split
 
 from rdplot.SimulationDataItem import (AbstractSimulationDataItem)
 
@@ -615,3 +615,136 @@ class EncLogSHM(AbstractEncLog):
                     parsed_config.setdefault(key, []).append(val)
             self.qp = parsed_config['QP']
         return parsed_config
+
+
+class EncLogVTM360Lib(AbstractEncLog):
+    # Order value, used to determine order in which parser are tried.
+    parse_order = 22
+
+    @classmethod
+    def can_parse_file(cls, path):
+        matches_vtm_bms = cls._enc_log_file_matches_re_pattern(path, r'^VVCSoftware')    
+        matches_360 = cls._enc_log_file_matches_re_pattern(path, r'Y-E2ESPSNR')
+        is_finished = cls._enc_log_file_matches_re_pattern(path, 'Total\ Time')
+        return matches_vtm_bms and is_finished and matches_360
+
+    def _parse_path(self, path):
+        """ parses the identifiers for an encoder log out of the
+        path of the logfile and the sequence name and qp given in
+         the logfile"""
+        # set config to path of sim data item
+        config = dirname(normpath(path))
+        # get sequence name and qp from file name
+        (_, filename) = split(path)
+
+        name_and_rest  = re.split(r'_\d+x\d+_', filename)
+        sequence = name_and_rest[0]
+        
+        m = re.match(r'QP(\d\d)_', name_and_rest[1])
+        self.qp = m.group(1)
+
+        return sequence, config
+
+    def _parse_config(self):
+        with open(self.path, 'r') as log_file:
+            log_text = log_file.read()  # reads the whole text file
+            lines = log_text.split('\n')
+            cleanlist = []
+            # some of the configs should not be interpreted as parameters
+            # those are removed from the cleanlist
+            param_not_considered = ['RealFormat', 'Warning', 'InternalFormat', 'Byteswrittentofile', 'Frameindex',
+                                    'TotalTime', 'VVCSoftware']
+            for one_line in lines:
+                if one_line:
+                    if '-----360 video parameters----' in one_line:
+                        break
+                    if 'Non-environment-variable-controlled' in one_line:
+                        break
+                    if one_line.count(':') == 1:
+                        clean_line = one_line.strip(' \n\t\r')
+                        clean_line = re.sub('\s+', '', clean_line)
+                        if not any(re.search(param, clean_line) for param in param_not_considered):
+                            cleanlist.append(clean_line)
+                    elif one_line.count(':') > 1:
+                        if re.search('\w+ \s+ \w+ \s+ \w+ \s+ :\s+ \( \w+ : \d+ , \s+ \w+ : \d+ \)', one_line, re.X):
+                            clean_line = re.findall('\w+ \s+ \w+ \s+ \w+ \s+ :\s+ \( \w+ : \d+ , \s+ \w+ : \d+ \)',
+                                                    one_line, re.X)
+                        else:
+                            clean_line = re.findall('\w+ : \d+ | \w+ : \s+ \w+ = \d+', one_line, re.X)
+                        for clean_item in clean_line:
+                            if not any(re.search(param, clean_item) for param in param_not_considered):
+                                cleanlist.append(clean_item)
+
+        parsed_config = dict(item.split(':', maxsplit=1) for item in cleanlist)
+
+        # parse 360 rotation parameter
+        m = re.search('Rotation in 1/100 degrees:\s+\(yaw:(\d+)\s+pitch:(\d+)\s+roll:(\d+)\)', log_text)
+        if m:
+            yaw = m.group(1)
+            pitch = m.group(2)
+            roll = m.group(3)
+            parsed_config['SVideoRotation'] = 'Y%sP%sR%s' % (yaw, pitch, roll)
+
+        # add qp from file name to config
+        parsed_config['QP'] = self.qp
+
+        return parsed_config
+
+    def _parse_summary_data(self):
+
+        with open(self.path, 'r') as log_file:
+            log_text = log_file.read()
+            total_time = re.findall(r""" ^\s*Total\s+Time.\s+(\d+.\d+)
+                            """, log_text, re.M + re.X)
+
+            # get 360 Lib version                        
+            version360Lib = re.findall(r'-----360Lib\ software\ version\ \[(\d.\d)\]-----', log_text)
+            if not version360Lib:
+                version360Lib = 0
+
+            # dictionary for the parsed data
+            data = {}
+
+            # get the summaries as pair of summary type and summary text, splitting at summary type and capturing it
+            summaries_texts_and_types = re.split('Total Frames',
+                                                log_text)
+            del summaries_texts_and_types[0]  # remove the log text up to the first summary item
+
+            summaries_texts_and_types = summaries_texts_and_types[0]
+            summaries_texts_and_types = 'Total Frames' + summaries_texts_and_types
+            summary_text = summaries_texts_and_types.strip().splitlines()
+
+
+
+
+
+            # for summary_type, summary_text in zip(summaries_texts_and_types[0::2], summaries_texts_and_types[1::2]):
+            # summary_text = summary_text.strip().splitlines()  # first line is header, second line are the values
+
+            # parsing header
+            first_header_item, remaining_items = re.split('\|', summary_text[0])  # since first item has a space
+            remaining_items = re.split('\s+', remaining_items.strip())
+            header = [first_header_item] + remaining_items
+
+            # parsing values
+            values = re.split('\s+', summary_text[1].strip())
+            del values[1]  # remove the letter below the | in the header (a, b, p or i)
+
+            if header[1] != 'Bitrate':
+                raise Exception('Could not parse bitrate.')
+            rate = values[1]
+            
+            summary_type = 'SUMMARY'
+            data[summary_type] = {}
+            for name, value in zip(header, values):
+                name = name.strip()
+                summary_item = {name: [(float(rate), float(value))]}
+
+                data[summary_type].update(summary_item)
+
+            if summary_type == 'SUMMARY':
+                data['SUMMARY']['Total Time'] = [(float(rate), float(total_time[0]))]
+                data['SUMMARY']['360Lib Version'] = [(float(rate), float(version360Lib[0]))]
+
+            return data
+
