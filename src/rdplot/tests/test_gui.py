@@ -31,14 +31,16 @@ class TestMain(unittest.TestCase):
     """Start the GUI, once load all example simulation directories and rd data, then exit."""
     def setUp(self):
         """Create the GUI"""
+        print('Executing Main Test')
         self.app = QtWidgets.QApplication(sys.argv)
         self.main_window = MainWindow()
+        # catch invoked message boxes for additional parameters and make random selection
+        self.main_window.simDataItemTreeModel.dialog.message_shown.connect(self.random_attributes_selection)
         self.main_window.show()
         QTest.qWaitForWindowExposed(self.main_window)
 
     def test_process_cmd_line_args(self):
         # load all found logs and rd-data
-
         # try all log directories.
         sim_dirs_root = path.join(TEST_DIR, 'test_logs/exampleSimLogDirs/')
         sim_dirs = listdir(sim_dirs_root)
@@ -59,9 +61,19 @@ class TestMain(unittest.TestCase):
         rd_data_root = path.join(TEST_DIR, 'test_logs/exampleDatLogDirs/')
         rd_data_files = listdir(rd_data_root)
         rd_data_files = [path.join(rd_data_root, file) for file in rd_data_files]
+
         for rd_data_file in rd_data_files:
             with wait_signal(self.main_window.simDataItemTreeView.parserThread.allParsed, timeout=10000):
                 self.main_window.process_cmd_line_args(['dummyAppName', rd_data_file])
+
+    def random_attributes_selection(self):
+        for i in range(random.randint(0, len(self.main_window.simDataItemTreeModel.dialog.not_chosen_par)-1)):
+            rnd_nmbr = random.randint(0, len(self.main_window.simDataItemTreeModel.dialog.not_chosen_par)-1)
+            rnd_item = self.main_window.simDataItemTreeModel.dialog.not_chosen_par.item(rnd_nmbr)
+            if not self.main_window.simDataItemTreeModel.dialog.chosen_par.findItems(rnd_item.text(), QtCore.Qt.MatchExactly):
+                self.main_window.simDataItemTreeModel.dialog.chosen_par.addItems([rnd_item.text()])
+                self.main_window.simDataItemTreeModel.dialog.not_chosen_par.takeItem(rnd_nmbr)
+        self.main_window.simDataItemTreeModel.dialog.accept()
 
     def tearDown(self):
         #EXIT
@@ -77,8 +89,11 @@ class FuzzTestGUI(unittest.TestCase):
     """
     def setUp(self):
         """Create the GUI"""
+        print('Executing Fuzz Test')
         self.app = QtWidgets.QApplication(sys.argv)
         self.main_window = MainWindow()
+        # catch invoked message boxes for additional parameters and make random selection
+        self.main_window.simDataItemTreeModel.dialog.message_shown.connect(self.random_attributes_selection)
         self.main_window.show()
         QTest.qWaitForWindowExposed(self.main_window)
 
@@ -110,6 +125,15 @@ class FuzzTestGUI(unittest.TestCase):
 
         # now fuzz the gui
         # todo
+
+    def random_attributes_selection(self):
+        for i in range(random.randint(0, len(self.main_window.simDataItemTreeModel.dialog.not_chosen_par)-1)):
+            rnd_nmbr = random.randint(0, len(self.main_window.simDataItemTreeModel.dialog.not_chosen_par)-1)
+            rnd_item = self.main_window.simDataItemTreeModel.dialog.not_chosen_par.item(rnd_nmbr)
+            if not self.main_window.simDataItemTreeModel.dialog.chosen_par.findItems(rnd_item.text(), QtCore.Qt.MatchExactly):
+                self.main_window.simDataItemTreeModel.dialog.chosen_par.addItems([rnd_item.text()])
+                self.main_window.simDataItemTreeModel.dialog.not_chosen_par.takeItem(rnd_nmbr)
+        self.main_window.simDataItemTreeModel.dialog.accept()
 
     def tearDown(self):
         #EXIT

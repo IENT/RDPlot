@@ -1,17 +1,20 @@
 from os import path
 from os.path import sep, isfile, isdir
+from os import listdir
 import csv
+import cProfile, pstats
 
 import pkg_resources
 import jsonpickle
 from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtCore import QItemSelectionModel
+from PyQt5.QtCore import QItemSelectionModel, QItemSelection, QSettings, QFileSystemWatcher, QTimer
 from PyQt5.uic import loadUiType
+from PyQt5.Qt import Qt
 
 
-from rdplot.SimulationDataItem import dict_tree_from_sim_data_items
+from rdplot.SimulationDataItem import dict_tree_from_sim_data_items, PlotData
 from rdplot.Widgets.PlotWidget import PlotWidget
-from rdplot.model import SimDataItemTreeModel, OrderedDictModel, VariableTreeModel, BdTableModel
+from rdplot.model import SimDataItemTreeModel, OrderedDictModel, VariableTreeModel, BdTableModel, BdUserGeneratedCurvesTableModel
 from rdplot.view import QRecursiveSelectionModel
 
 Ui_name = pkg_resources.resource_filename('rdplot', 'ui' + sep + 'mainWindow.ui')
@@ -19,6 +22,19 @@ Ui_MainWindow, QMainWindow = loadUiType(Ui_name)
 
 here = pkg_resources.resource_filename('rdplot','')
 #here = path.abspath(path.dirname(__file__) + '/../')
+
+def do_cprofile(func):
+    def profiled_func(*args, **kwargs):
+        profile = cProfile.Profile()
+        try:
+            profile.enable()
+            result = func(*args, **kwargs)
+            profile.disable()
+            return result
+        finally:
+            stats = pstats.Stats(profile).sort_stats('cumtime')
+            stats.dump_stats('remove_items_new.profile')
+    return profiled_func
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, ):
@@ -42,11 +58,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Create tree model to store sim data items and connect it to views
         self.simDataItemTreeModel = SimDataItemTreeModel()
         self.bdTableModel = BdTableModel()
+        self.bdUserGeneratedTableModel = BdUserGeneratedCurvesTableModel()
         self.simDataItemTreeView.setModel(self.simDataItemTreeModel)
         self.plotPreview.tableView.setModel(self.bdTableModel)
 
         # connect a double clicked section of the bd table to a change of the anchor
         self.plotPreview.tableView.horizontalHeader().sectionDoubleClicked.connect(self.update_bd_table)
+        self.plotPreview.tableView.verticalHeader().sectionDoubleClicked.connect(self.update_bd_user_generated_curves_table)
 
         # Set custom selection model, so that sub items are automatically
         # selected if parent is selected
@@ -126,6 +144,35 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # set up bd plot checkbox
         self.checkBox_bdplot.stateChanged.connect(self.update_bd_plot)
 
+        self.curveWidget.hide()
+        self.curveListModel = OrderedDictModel()
+        self.curveListView.setModel(self.curveListModel)
+        self.curveListSelectionModel = QItemSelectionModel(self.curveListModel)
+        self.curveListView.setSelectionModel(self.curveListSelectionModel)
+        self.curveListView.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.curveWidget.visibilityChanged.connect(self.curve_widget_visibility_changed)
+
+        self.actionGenerate_curve.triggered.connect(self.generate_new_curve)
+        self.actionRemove_items.triggered.connect(self.remove)
+        self.actionReload_files.triggered.connect(self.reload_files)
+
+        self.settings = QSettings()
+        self.get_recent_files()
+        self.simDataItemTreeView.itemsOpened.connect(self.add_recent_files)
+
+        self.watcher = QFileSystemWatcher(self)
+        self.watcher.fileChanged.connect(self.warning_file_change)
+        self.watcher.directoryChanged.connect(self.warning_file_change)
+        self.simDataItemTreeView.parserThread.newParsedData.connect(self.add_files_to_watcher)
+        self.show_file_changed_message = True
+        self.reset_timer = QTimer(self)
+        self.reset_timer.setSingleShot(True)
+        self.reset_timer.setInterval(15000)
+        self.reset_timer.timeout.connect(self._reset_file_changed_message)
+
+        self.simDataItemTreeView.customContextMenuRequested.connect(self.show_sequences_context_menu)
+        # self.curveListView.actionCalculateBD.triggered.connect(self.bd_user_generated_curves)
+
     # sets Visibility for the Plotsettings Widget
     def set_plot_settings_visibility(self):
         self.plotsettings.visibilityChanged.disconnect(self.plot_settings_visibility_changed)
@@ -142,7 +189,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             self.actionHide_PlotSettings.setChecked(False)
         self._variable_tree_selection_model.selectionChanged.connect(self.update_plot)
-
+        self.curveListSelectionModel.selectionChanged.connect(self.update_plot)
         self.simDataItemTreeView.deleteKey.connect(self.remove)
 
     # sets Visibility for the Sequence Widget
@@ -175,13 +222,29 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             self.actionHide_Status.setChecked(False)
 
+    def curve_widget_visibility_changed(self):
+        if self.curveWidget.isHidden():
+            self.curveListView.delete_key.disconnect()
+        else:
+            self.curveListView.delete_key.connect(self.remove_curves)
+
     def remove(self):
         values = self.selectedSimulationDataItemListModel.values()
+
+        for value in values:
+            self.watcher.removePath(value.path)
         # List call necessary to avoid runtime error because of elements changing
         # during iteration
         self._variable_tree_selection_model.selectionChanged.disconnect()
+        # disconnect slot to avoid multiple function triggers by selectionChanged signal
+        # not disconnecting slows program down significantly
+        self._selection_model.selectionChanged.disconnect(self.change_list)
         self.simDataItemTreeModel.remove(list(values))
+        self.change_list(QItemSelection(), QItemSelection())
+        self._selection_model.selectionChanged.connect(self.change_list)
         self._variable_tree_selection_model.selectionChanged.connect(self.update_plot)
+        if len(self.selectedSimulationDataItemListModel.values()) == 0:
+            self.update_plot()
 
     def change_list(self, q_selected, q_deselected):
         """Extend superclass behavior by automatically adding the values of
@@ -329,16 +392,35 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     # updates the plot if the plot variable is changed
     def update_plot(self):
-        self.check_labels()
-        plot_data_collection = self.get_plot_data_collection_from_selected_variables()
+        # user-generated curves and curves loaded from files are not supposed to be mixed
+        user_generated_curves = False
+        if self.sender() == self._variable_tree_selection_model or self.sender() == self.curveListSelectionModel:
+            self.check_labels()
+            data_collection = self.get_plot_data_collection_from_selected_variables()
+            data_collection_user_generated = []
+            for index in self.curveListView.selectedIndexes():
+                data_collection_user_generated.append(self.curveListModel[index.data()])
+        else:
+            return
 
-        self.plotPreview.change_plot(plot_data_collection)
-        self.update_table(plot_data_collection)
+        plot_data_collection = data_collection + data_collection_user_generated
+        if len(data_collection_user_generated):
+            self.plotPreview.tableView.setModel(self.bdUserGeneratedTableModel)
+            self.plotPreview.change_plot(plot_data_collection, True)
+        else:
+            self.plotPreview.tableView.setModel(self.bdTableModel)
+            self.update_table(data_collection)
+            self.plotPreview.change_plot(plot_data_collection, False)
+        if len(data_collection) and len(data_collection_user_generated):
+            # don't mix user-generated and normal curves
+            self.plotPreview.tableView.hide()
+            self.plotPreview.label_warning.show()
+            return
 
-        # update the model for the bd table, note the anchor is always
-        # the first config if new simDataItems are selected
-        self.bdTableModel.update(plot_data_collection, self.combo_rate_psnr.currentText(),
-                                 self.combo_interp.currentText(), not(self.checkBox_bdplot.isChecked()))
+        self.plotPreview.tableView.show()
+        self.plotPreview.label_warning.hide()
+        self.plotPreview.tableView.model().update(plot_data_collection, self.combo_rate_psnr.currentText(),
+                                     self.combo_interp.currentText(), not(self.checkBox_bdplot.isChecked()))
 
     def get_table_header(self, plot_data_collection):
         tmp_legend = []
@@ -508,12 +590,29 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # update bd table, the index determines the anchor,
         # if it is non integer per default the first config is regarded as
         # anchor
+
         self.bdTableModel.update_table(self.combo_rate_psnr.currentText(),
-                                           self.combo_interp.currentText(), index, not(self.checkBox_bdplot.isChecked()))
+                                           self.combo_interp.currentText(), index,
+                                       not(self.checkBox_bdplot.isChecked()))
+
+    def update_bd_user_generated_curves_table(self, index):
+        clicked_text = self.bdUserGeneratedTableModel.headerData(index, Qt.Vertical, Qt.DisplayRole)
+        self.bdUserGeneratedTableModel.update(None, self.combo_rate_psnr.currentText(),
+                                           self.combo_interp.currentText(), not(self.checkBox_bdplot.isChecked()),
+                                              clicked_text)
+
     def update_bd_plot(self):
-        plot_data_collection = self.get_plot_data_collection_from_selected_variables()
-        self.bdTableModel.update(plot_data_collection, self.combo_rate_psnr.currentText(),
+        data_collection = self.get_plot_data_collection_from_selected_variables()
+        data_collection_user_generated = []
+        for index in self.curveListSelectionModel.selectedIndexes():
+            data_collection_user_generated.append(self.curveListModel[index.data()])
+
+        if len(data_collection):
+            self.bdTableModel.update(data_collection, self.combo_rate_psnr.currentText(),
                                  self.combo_interp.currentText(), not (self.checkBox_bdplot.isChecked()))
+        elif len(data_collection_user_generated):
+            self.bdTableModel.update(data_collection_user_generated, self.combo_rate_psnr.currentText(),
+                                     self.combo_interp.currentText(), not (self.checkBox_bdplot.isChecked()))
 
     def export_table_to_csv(self):
         # remember that the decimal mark is '.'
@@ -613,3 +712,174 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             html_error.setText("Error opening about or help")
             html_error.setInformativeText("The html file from the resource could not be loaded.")
             html_error.exec_()
+
+    def generate_new_curve(self):
+        plot_data_collection = self.get_plot_data_collection_from_selected_variables()
+        if plot_data_collection:
+            new_plot_values = []
+            for _plot_data in plot_data_collection:
+                new_plot_values.extend(_plot_data.values)
+            if len(new_plot_values) < 4:
+                    QtWidgets.QMessageBox.warning(self, "Warning!", "You didn't select at least 4 points.")
+            else:
+                curve_name, ok = QtWidgets.QInputDialog.getText(self, "New curve", "Please enter a name for the new curve.\n"
+                                            "If you enter an already existing name,\nits data will be overwritten.")
+                curve_name = curve_name.strip()
+                if curve_name is not '':
+                    new_plot_data = PlotData([curve_name], new_plot_values, [],
+                                             plot_data_collection[0].label)
+                    self.add_curve(curve_name, new_plot_data)
+                else:
+                    QtWidgets.QMessageBox.warning(self, "Warning!", "Please enter a valid name.")
+        else:
+            QtWidgets.QMessageBox.warning(self, "Warning!", "You didn't select at least 4 points.")
+
+    def add_curve(self, name, data):
+        if self.curveWidget.isHidden():
+            self.curveWidget.show()
+        data_tuple = (name, data)
+        self.curveListModel.update_from_tuples((data_tuple,))
+        # all_indexes = QItemSelection(self.curveListModel.index(0),
+        #                             self.curveListModel.index(self.curveListModel.rowCount(QModelIndex())))
+        # self.curveListSelectionModel.select(all_indexes, QItemSelectionModel.Clear)
+        # self.curveListSelectionModel.select(self.curveListModel.index(self.curveListModel.rowCount(QModelIndex())-1),
+        #                                    QItemSelectionModel.Select)
+        # self.curveListView.setFocus()
+
+    def remove_curves(self):
+        # todo integrate bjontegaard for generated curves(should be fully functional already)
+        curves_to_remove = []
+        for index in self.curveListSelectionModel.selectedIndexes():
+            curves_to_remove.append(index.data())
+        self.curveListModel.remove_keys(curves_to_remove)
+        if len(self.curveListModel) > 0:
+            self.curveListSelectionModel.select(self.curveListModel.index(0), QItemSelectionModel.Select)
+        else:
+            self.curveWidget.hide()
+            self.update_plot()
+
+    def get_recent_files(self):
+        recent_files = self.settings.value('recentFiles')
+        if recent_files is not None:
+            for recent_file in recent_files:
+                if path.exists(recent_file):
+                    action = self.menuRecent_files.addAction(recent_file)
+                    action.triggered.connect(self.open_recent_file)
+
+    def open_recent_file(self):
+        path_recent = self.sender().text()
+        if path.isdir(path_recent):
+            self.simDataItemTreeView.add_folder(path_recent)
+        else:
+            self.simDataItemTreeView.add_file(path_recent)
+
+    def add_recent_files(self, files, reload):
+        # files doesn't necessarily have to just be a list of files
+        # it can also be a directory
+        if not reload:
+            recent_files = self.settings.value('recentFiles')
+            if recent_files is None:
+                recent_files = []
+            for file in files:
+
+                if file in recent_files:
+                    # put our file on top of the list
+                    recent_files.remove(file)
+                recent_files.insert(0, file)
+            while len(recent_files) > 5:
+                del recent_files[-1]
+            self.settings.setValue('recentFiles', recent_files)
+
+            self.menuRecent_files.clear()
+            for recent_file in recent_files:
+                if path.exists(recent_file):
+                    action = self.menuRecent_files.addAction(recent_file)
+                    action.triggered.connect(self.open_recent_file)
+
+    def add_files_to_watcher(self, items):
+        for item in items:
+                if isfile(item.path):
+                    self.watcher.addPath(item.path)
+
+    def warning_file_change(self, path_item):
+        # inform user about the fact that one of the loaded files has been changed since the application has started
+        # timer is used to avoid spamming the user when multiple files are deleted in a row
+        # retrieve affected notes and parent nodes
+        # change their style in the tree view to indicate which files are affected
+        if self.show_file_changed_message:
+            self.show_file_changed_message = False
+            self.reset_timer.start()
+            QtWidgets.QMessageBox.warning(self, 'File change', 'One or more of your loaded files have been changed.\n'
+                                                               'You can choose to reload them.\n'
+                                                               'Hint: Changed files are greyed out in the sequences widget.')
+        else:
+            self.reset_timer.stop()
+            self.reset_timer.start()
+
+        affected_notes = []
+        for leaf in self.simDataItemTreeModel.root.leafs:
+            for value in leaf.values:
+                if value.path == path_item:
+                    affected_notes.append(leaf)
+        for node in affected_notes:
+            node_index = self.simDataItemTreeModel._get_index_from_item(node)
+            node.setProperty('needs_reload', 'True')
+            parent = self.simDataItemTreeModel.parent(node_index)
+            level = 0
+            while parent.isValid() and level < 2: #MAX_LEVEL
+                parent.internalPointer().setProperty('needs_reload', 'True')
+                parent = self.simDataItemTreeModel.parent(parent)
+                level += 1
+
+    def _reset_file_changed_message(self):
+        self.show_file_changed_message = True
+
+    def reload_files(self):
+        # remove all selected files first
+        # reload available files
+        # could possibly limit this to only files that we know have been changed
+        def check_children(parent):
+            if len(parent.children) > 0:
+                for child in parent.children:
+                    if not check_children(child):
+                        return False
+                parent.setProperty('needs_reload', 'False')
+                return True
+            else:
+                if parent.property('needs_reload') == 'True':
+                    return False
+                return True
+
+        values = self.selectedSimulationDataItemListModel.values()
+        if len(values) == 0:
+            for index in self.simDataItemTreeModel.root.leafs:
+                for sim_data_item in index.values:
+                    values.append(sim_data_item)
+        items_to_be_reloaded = []
+        for value in values:
+            if path.exists(value.path):
+                # reload file
+                items_to_be_reloaded.append(value)
+
+        self._variable_tree_selection_model.selectionChanged.disconnect()
+        self._selection_model.selectionChanged.disconnect(self.change_list)
+        self.simDataItemTreeModel.remove(values)
+
+        self.simDataItemTreeView.msg.show()
+        for item in items_to_be_reloaded:
+            self.simDataItemTreeView.add_file(item.path, reload=True)
+
+        self.change_list(QItemSelection(), QItemSelection())
+        self._selection_model.selectionChanged.connect(self.change_list)
+        self._variable_tree_selection_model.selectionChanged.connect(self.update_plot)
+
+        for node in self.simDataItemTreeModel.root.children:
+            # remove grey font color if all changed files have been reloaded
+            # have to check every single item because possible deletion of older nodes makes things very difficult
+            check_children(node)
+
+    def show_sequences_context_menu(self, position):
+        self.menuEdit.exec(self.simDataItemTreeView.mapToGlobal(position))
+
+    # def bd_user_generated_curves(self):
+    #    pass

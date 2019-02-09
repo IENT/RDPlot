@@ -25,7 +25,8 @@ from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.Qt import Qt, QVariant, QModelIndex, QDialog, QHBoxLayout, QVBoxLayout, QAbstractItemView, QMessageBox
 
-from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel, QAbstractTableModel, pyqtSignal
+from PyQt5.QtCore import QAbstractListModel, QAbstractItemModel, QAbstractTableModel, pyqtSignal, QObject
+from PyQt5.QtGui import QBrush
 
 import matplotlib.pyplot as plt
 from rdplot.SimulationDataItemClasses.EncoderLogs import AbstractEncLog
@@ -220,7 +221,8 @@ class OrderedDictModel(QAbstractListModel):
 # http://doc.qt.io/qt-5/qtwidgets-itemviews-simpletreemodel-example.html
 # and corresponding files under BSD licence.
 
-class OrderedDictTreeItem:
+
+class OrderedDictTreeItem(QObject):
     """Item of :class: `OrderedDictTreeModel`. The item imitates the
     behavior of a dictionary, thus, the children of an item can be accessed
     using slice notation and their identifiers, eg.:
@@ -252,6 +254,7 @@ class OrderedDictTreeItem:
 
     def __init__(self, identifier=None, parent=None, children=None,
                  values=None, compare_identifiers_function=None):
+        super().__init__()
         self._identifier = identifier
         self._parent = parent
 
@@ -450,22 +453,28 @@ class OrderedDictTreeModel(QAbstractItemModel):
         # thus, the argument is irrelevant
         return 1
 
-    def data(self, q_parent_index, q_role):
-        if q_parent_index.isValid() and q_role == Qt.DisplayRole:
-            siblings = q_parent_index.internalPointer().parent.children
-            if len(siblings) > 1:
-                sibling_identifiers = []
-                sibling_identifiers += [sibling.identifier.split(sep) for sibling in siblings]
-                unique_part = []
-                for c in sibling_identifiers:
-                    result = list(filter(lambda x: all(x in l for l in sibling_identifiers) == False, c))
-                    unique_part.append(" ".join(result))
+    def data(self, q_parent_index=QModelIndex(), q_role=Qt.DisplayRole):
+        if q_parent_index.isValid():
+            if q_role == Qt.DisplayRole:
+                siblings = q_parent_index.internalPointer().parent.children
+                if len(siblings) > 1:
+                    sibling_identifiers = []
+                    sibling_identifiers += [sibling.identifier.split(sep) for sibling in siblings]
+                    unique_part = []
+                    for c in sibling_identifiers:
+                        result = list(filter(lambda x: all(x in l for l in sibling_identifiers) == False, c))
+                        unique_part.append(" ".join(result))
 
-                return unique_part[q_parent_index.row()]
-            else:
-                path = str(q_parent_index.internalPointer())
-                return path
-
+                    return unique_part[q_parent_index.row()]
+                else:
+                    path = str(q_parent_index.internalPointer())
+                    return path
+            elif q_role == Qt.ForegroundRole:
+                if q_parent_index.internalPointer().property('needs_reload') == 'True':
+                    # color items in gray for visibility
+                    # final color still up for debate
+                    # todo set color in settings
+                    return QBrush(Qt.gray)
         return QVariant()
 
     # Non-Qt interface functions
@@ -730,6 +739,7 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.dialog = AttributesDialog()
 
     # Implement *add*, *update* and remove to add/remove sim data items to the
     # tree.
@@ -764,6 +774,10 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
         # if you want to simulate with your own parameters, make sure that they appear in the
         # logfile
         try:
+            self.dialog.chosen_par.clear()
+            self.dialog.not_chosen_par.clear()
+            self.dialog.reset = True
+            QP_added = False
             for sim_data_item in sim_data_items:
                 if sim_data_item.__class__ not in all_log_configs:
                     all_log_configs[sim_data_item.__class__] = []
@@ -777,9 +791,9 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                 # no dialog window will be opened where you could add/remove all configuration parameters
                 # that differ between the sim_data_items
                 # TODO: enable multiple configuration parameters for the case that a specific file is opened
-                chosen_par = QtWidgets.QListWidget()
-                if hasattr(sim_data_item, 'qp'):
-                    chosen_par.addItems(['QP'])
+                if hasattr(sim_data_item, 'qp') and not QP_added:
+                    self.dialog.chosen_par.addItems(['QP'])
+                    QP_added = True
                 # print(sim_data_item.summary_data['encoder_config'])
             value_filter = ['.yuv', '.bin', '.hevc', '.jem']
             key_filter = []
@@ -800,37 +814,11 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                 # the user can drag the parameters, he wants to analyse further into an other list
                 # the order of the parameters in the list determines the order of the parameter tree
                 if diff_dict[sim_class]:
-                    chosen_par.setDragDropMode(QAbstractItemView.DragDrop)
-                    chosen_par.setDefaultDropAction(QtCore.Qt.MoveAction)
-                    not_chosen_par = QtWidgets.QListWidget()
-                    not_chosen_par.addItems([item for item in diff_dict[sim_class] if item != 'QP'])
-                    not_chosen_par.setDragDropMode(QAbstractItemView.DragDrop)
-                    not_chosen_par.setDefaultDropAction(QtCore.Qt.MoveAction)
-                    if not_chosen_par:
-                        # we do not want to create the dialog when testing the code. since the dialog will never be closed
-                        # todo: code should not know about test. make dialog available from the outside, let test close it
-                        if 'RUNNING_AS_UNITTEST' not in environ:
-                            main_layout = QVBoxLayout()
-                            dialog = QDialog()
-                            dialog.setWindowTitle('Choose Parameters')
-                            dialog.setLayout(main_layout)
-                            msg = QtWidgets.QLabel()
-                            msg.setText('Additional Parameters have been found.\n'
-                                        'Move Parameters you want to consider further to the right list.\n')
-                            main_layout.addWidget(msg)
-                            list_layout = QHBoxLayout()
-                            main_layout.addLayout(list_layout)
-                            # TODO: all items dragged into chosen_par should appear above the qp_item
-                            list_layout.addWidget(not_chosen_par)
-                            list_layout.addWidget(chosen_par)
-                            not_chosen_par.show()
-                            chosen_par.show()
-                            ok_button = QPushButton('OK')
-                            main_layout.addWidget(ok_button)
-                            ok_button.clicked.connect(dialog.close)
-                            dialog.exec()
-                    for i in range(len(not_chosen_par)):
-                        diff_dict[sim_class].pop(not_chosen_par.item(i).text(), None)
+                    self.dialog.not_chosen_par.addItems([item for item in diff_dict[sim_class] if item != 'QP'])
+                    if self.dialog.not_chosen_par:
+                        self.dialog.exec_()
+                    for i in range(len(self.dialog.not_chosen_par)):
+                        diff_dict[sim_class].pop(self.dialog.not_chosen_par.item(i).text(), None)
                 additional_param_found.append(sim_class)
 
         except AttributeError:
@@ -842,7 +830,7 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
 
             has_additional_params = False
             if sim_data_item.__class__ in additional_param_found:
-                sim_data_item.additional_params = [chosen_par.item(i).text() for i in range(len(chosen_par))]
+                sim_data_item.additional_params = [self.dialog.chosen_par.item(i).text() for i in range(len(self.dialog.chosen_par))]
                 has_additional_params = True
 
             # Get *item* of the tree corresponding to *sim_data_item*
@@ -874,7 +862,6 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
 
         :param sim_data_items: Iterable collection of :class: `SimDataItem`s to be removed
         """
-
         for sim_data_item in sim_data_items:
             # Get *item* of the tree corresponding to *sim_data_item*
             item = self.create_path(*sim_data_item.tree_identifier_list)
@@ -1097,6 +1084,7 @@ class BdTableModel(QAbstractTableModel):
         # of the table. Calculate one bd for each cell and store it in the
         # model. Emit in the very end the dataChanged signal
         row = 0
+        anchor_row = [x.identifiers[0] for x in self._plot_data_collection if x.identifiers[1] == anchor][0]
         for seq in self._vertical_headers:
             # the AVG seq is actually not a sequence, so just skip it
             if seq == 'AVG':
@@ -1170,3 +1158,154 @@ class BdTableModel(QAbstractTableModel):
             latex_template = LatexTemplate(template_file.read())
             new_latex_doc = latex_template.substitute(table_goeth_here=latex_table)
             output_file.write(new_latex_doc)
+
+
+class BdUserGeneratedCurvesTableModel(BdTableModel):
+    def __init__(self):
+        super().__init__()
+
+    def data(self, q_index, role):
+        if q_index.isValid() and role == Qt.DisplayRole:
+            value = self._data[q_index.row(), q_index.column()]
+            return QVariant(str(value))
+        elif q_index.isValid() and role == Qt.ToolTipRole:
+            return 'By double-clicking this item\'s header to the left, you can make it the anchor for the calculation'
+        return QVariant()
+
+    def headerData(self, col, orientation, role):
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            return QVariant(self._horizontal_headers)
+        elif orientation == Qt.Vertical and role == Qt.DisplayRole:
+            return QVariant(self._vertical_headers[col])
+        return QVariant()
+
+    def update(self, plot_data_collection, bd_option, interp_option, bd_plot, anchor_text=''):
+        # reset the model in the first place and set data afterwards appropriately
+        self.beginResetModel()
+        self.reset_model()
+        self.endResetModel()
+
+        if plot_data_collection is None:
+            plot_data_collection = self._plot_data_collection
+
+        # change our anchor to the one that was double-clicked
+        # in case of 'AVG' our anchor remains unchanged
+        if anchor_text == '':
+            self._anchor_index = 0
+        else:
+            index = 0
+            for curve in plot_data_collection:
+                if curve.identifiers[0] == anchor_text:
+                    self._anchor_index = index
+                index += 1
+
+        # there is no need to calculate a bd for just one curve
+        if len(plot_data_collection) < 2:
+            plt.close()
+            return
+
+        elif len(plot_data_collection) > 5 and (not bd_plot):
+             msg = QMessageBox()
+             msg.setIcon(QMessageBox.Information)
+             msg.setText("Your BD plot will contain more than 5 curves, do you really want to continue?")
+             msg.setWindowTitle("Info")
+             msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+             result = msg.exec()
+
+             if result == QMessageBox.Cancel:
+                 plt.close()
+                 bd_plot = True
+
+        self._horizontal_headers = plot_data_collection[self._anchor_index].identifiers[0]
+        index = 0
+        for curve in plot_data_collection:
+            if index != self._anchor_index:
+                self._vertical_headers.append(curve.identifiers[0])
+            index += 1
+        self._vertical_headers.append('AVG')
+
+        # insert as many columns as we need for the selected data
+        self.beginInsertColumns(QModelIndex(), 0, 0)
+        self.insertColumns(0, 1, QModelIndex())
+        self.endInsertColumns()
+
+        # insert as many rows as we need for the selected data
+        # and add one row for the average
+        self.beginInsertRows(QModelIndex(), 0, len(self._vertical_headers) - 1)
+        self.insertRows(0, len(self._vertical_headers), QModelIndex())
+        self.endInsertRows()
+
+        self._plot_data_collection = plot_data_collection
+
+        self._data = np.zeros((len(self._vertical_headers), 1))
+        if all(collection.label == ("kbps", "dB") for collection in plot_data_collection):
+            self.update_table(bd_option, interp_option, bd_plot)
+        else:
+            self.beginResetModel()
+            self.reset_model()
+            self.endResetModel()
+            plt.close()
+
+    def update_table(self, bd_option, interp_option, bd_plot):
+        # if there are no rows and columns in the model,
+        # nothing can be updated
+        if self.rowCount(self) == 0 and self.columnCount(self) == 0:
+            return
+
+        anchor_curve = self._plot_data_collection[self._anchor_index]
+        c1 = sorted(list(set(anchor_curve.values)))
+        index = 0
+        table_index = 0
+        curve_names = [self._horizontal_headers]
+        for curve_name in self._vertical_headers:
+            if curve_name != 'AVG':
+                curve_names.append(curve_name)
+        for curve in self._plot_data_collection:
+            if index != self._anchor_index:
+                c2 = sorted(list(set(curve.values)))
+                self._data[table_index, 0] = bjontegaard(c1, c2, bd_option, interp_option, 'BD Plot', curve_names, bd_plot)
+                table_index += 1
+            index += 1
+
+        # calculate the AVG rate savings or delta psnr and round the output to something meaningful
+        self._data[table_index, 0] = np.mean(np.array(self._data[:-1, 0]), axis=0)
+        self._data = np.around(self._data, decimals=2)
+
+        self.dataChanged.emit(self.index(0, 0), self.index(len(self._vertical_headers) - 1, 0))
+
+
+class AttributesDialog(QDialog):
+
+    message_shown = pyqtSignal()
+
+    def __init__(self):
+        super().__init__()
+        self.reset = True
+        main_layout = QVBoxLayout()
+        self.setWindowTitle('Choose Parameters')
+        self.setLayout(main_layout)
+        msg = QtWidgets.QLabel()
+        msg.setText('Additional Parameters have been found.\n'
+                    'Move Parameters you want to consider further to the right list.\n')
+        main_layout.addWidget(msg)
+        list_layout = QHBoxLayout()
+        main_layout.addLayout(list_layout)
+        # TODO: all items dragged into chosen_par should appear above the qp_item
+        self.not_chosen_par = QtWidgets.QListWidget()
+        self.chosen_par = QtWidgets.QListWidget()
+        self.chosen_par.setDragDropMode(QAbstractItemView.DragDrop)
+        self.chosen_par.setDefaultDropAction(QtCore.Qt.MoveAction)
+        self.not_chosen_par.setDragDropMode(QAbstractItemView.DragDrop)
+        self.not_chosen_par.setDefaultDropAction(QtCore.Qt.MoveAction)
+        list_layout.addWidget(self.not_chosen_par)
+        list_layout.addWidget(self.chosen_par)
+        self.not_chosen_par.show()
+        self.chosen_par.show()
+        ok_button = QPushButton('OK')
+        main_layout.addWidget(ok_button)
+        ok_button.clicked.connect(self.close)
+
+    def paintEvent(self, event):
+        if self.reset:
+            self.message_shown.emit()
+            self.reset = False

@@ -180,9 +180,12 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['cycler', 'matplotlib', 'numpy', 'py', 'pyparsing', 'pytest', 'python-dateutil', 'pytz',
-                      'six', 'scipy', 'tabulate', 'mpldatacursor',
-                      'xmltodict', 'jsonpickle', 'matplotlib2tikz'],
+    install_requires=['cycler', 'matplotlib', 'numpy', 
+                      'py', 'pyparsing', 'pyqt5', 'pytest',
+                      'python-dateutil', 'pytz', 'six', 
+                      'scipy', 'tabulate', 'mpldatacursor',
+                      'xmltodict', 'jsonpickle', 
+                      'matplotlib2tikz', 'Pillow'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,

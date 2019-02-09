@@ -24,6 +24,9 @@ from collections import deque
 from copy import copy
 from os import listdir
 from os.path import join, abspath, isfile, isdir
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QComboBox, QPushButton, QLabel, QCheckBox, QGroupBox, QMessageBox, QApplication
+import re
 
 
 #
@@ -159,7 +162,7 @@ class PlotData:
     :type path: :class: `list` of :class: `str`
     """
 
-    def __init__(self, identifiers, values, path, label):
+    def __init__(self, identifiers=[], values=[], path=[], label=()):
         self.identifiers = identifiers
         self.values = values
         self.path = path
@@ -294,7 +297,7 @@ class AbstractSimulationDataItem(metaclass=ABCMeta):
             return bool(re.search(pattern, text, re.M + re.X))
 
 
-class SimulationDataItemFactory:
+class SimulationDataItemFactory(QObject):
     """This class is a factory for all sub classes of the :class:
     `AbstractSimulationDataItem` class.
 
@@ -311,10 +314,12 @@ class SimulationDataItemFactory:
     first matching class will be used to create the item. Thus, more general
     items should be tried at last.
     """
-
+    parsingError = pyqtSignal()
     # Constructors
     def __init__(self, classes=None):
+        super().__init__()
         self._classes = set()
+        self.class_selection_dialog = None
 
         if classes is not None:
             for cls in classes:
@@ -348,6 +353,7 @@ class SimulationDataItemFactory:
 
             # Add all sub classes of AbstractSimulationDataItem from the module
             # to the factory
+            class_list = []
             for module_item in imported_module.__dict__.values():
                 if is_class(module_item):
                     try:
@@ -361,7 +367,7 @@ class SimulationDataItemFactory:
                         pass
 
         # end snippet
-
+        simulation_data_item_factory.class_selection_dialog = ClassSelectionDialog()
         return simulation_data_item_factory
 
     # Interface to Set of Classes
@@ -391,10 +397,31 @@ class SimulationDataItemFactory:
         # the file
         cls_list = []
         # try parser, in the order given by their parse_order attribute. use the first one that can parse the file
-        for cls in reversed(sorted(self._classes, key=lambda parser_class: parser_class.parse_order)):
+        list_classes = list(reversed(sorted(self._classes, key=lambda parser_class: parser_class.parse_order)))
+        list_classes = list(filter(lambda x: True if str(x).find('Abstract') == -1 else False, list_classes))
+        for cls in list_classes:
             if cls.can_parse_file(file_path):
                 cls_list.append(cls(file_path))
                 break
+        # checking for parsers automatically would be a lot easier at this point
+        # but user would not be able to manually select a format
+        if not cls_list and isfile(file_path):
+            if not self.class_selection_dialog.remember_decision:
+                self.class_selection_dialog.set_items(list(map(lambda x: re.sub('<|>|\'', '', str(x)).split('.')[-1],
+                                                               list_classes)))
+                result = self.class_selection_dialog.exec_(file_path)
+                if result == QDialog.Accepted:
+                    try:
+                        cls_list.append(list_classes[self.class_selection_dialog.selected_class](file_path))
+                    except:
+                        self.parsingError.emit()
+                elif result == QDialog.Rejected and self.class_selection_dialog.remember_decision:
+                    raise RuntimeError()
+            else:
+                try:
+                    cls_list.append(list_classes[self.class_selection_dialog.selected_class](file_path))
+                except:
+                    self.parsingError.emit()
         return cls_list
 
     def create_item_list_from_directory(self, directory_path):
@@ -412,6 +439,8 @@ class SimulationDataItemFactory:
             try:
                 item_list.extend(self.create_item_from_file(path))
                 print("Parsed '{}' ".format(path))
+            except RuntimeError:
+                break
             except SimulationDataItemError as error:
                 pass
                 # We definitely cannot accept thousands of exceptions on the command line
@@ -419,7 +448,6 @@ class SimulationDataItemFactory:
                 #    "Could not create simulation data item from file '{}'"
                 #    " due to {}"
                 # ).format(path, error))
-
         return item_list
 
     def create_item_list_from_path(self, path):
@@ -432,6 +460,7 @@ class SimulationDataItemFactory:
 
         :rtype: :class: `list` of simulation data items
         """
+        self.class_selection_dialog.reset()
 
         if isfile(path):
             return self.create_item_from_file(path)
@@ -452,3 +481,44 @@ class SimulationDataItemFactory:
 
     def __repr__(self):
         return str("SimulationDataItemFactory with loaded classes: ".format(str(self)))
+
+
+class ClassSelectionDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle('Error!')
+        self.setLayout(QVBoxLayout())
+        self._text_label = QLabel()
+        self.layout().addWidget(self._text_label)
+        self._combo_box = QComboBox()
+        self.layout().addWidget(self._combo_box)
+        self._check_box = QCheckBox('Remember my decision for future errors')
+        self.layout().addWidget(self._check_box)
+        self._group_box = QGroupBox()
+        self._group_box.setLayout(QHBoxLayout())
+        self._button1, self._button2 = QPushButton('Accept'), QPushButton('Cancel')
+        self._group_box.layout().addWidget(self._button1)
+        self._group_box.layout().addWidget(self._button2)
+        self.layout().addWidget(self._group_box)
+        self._button1.clicked.connect(self.accept)
+        self._button2.clicked.connect(self.reject)
+
+    @property
+    def selected_class(self):
+        return self._combo_box.currentIndex()
+
+    def exec_(self, file_name):
+        self._text_label.setText(('Problem with file: {}\nNo matching parsers were found.\nPlease select one of the existing ones or '
+                                       'implement a new parser.').format(file_name.split('/')[-1]))
+        return super().exec_()
+
+    def set_items(self, items):
+        self._combo_box.clear()
+        self._combo_box.addItems(items)
+
+    @property
+    def remember_decision(self):
+        return self._check_box.isChecked()
+
+    def reset(self):
+        self._check_box.setChecked(False)
