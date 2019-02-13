@@ -73,21 +73,25 @@ def get_version():
         v1.0.0-158-g6c5be28 -> v1.0.158
     :return:
     """
-
-    try:
-      r = git.repo.Repo(here)
-      git_describe = r.git.describe()
-      f = open('version.txt','w')
-      f.write(git_describe)
-      f.close()
-      # and do it one more for packaging if possible
-      f = open('src/rdplot/version.txt','w')
-      f.write(git_describe)
-      f.close()
-    except (git.InvalidGitRepositoryError):
-      f = open('version.txt','r')
-      git_describe = f.readline()
-      f.close()
+    if 'FLATPAK_INSTALL' in os.environ:
+        f = open('version.txt','r')
+        git_describe = f.readline()
+        f.close()        
+    else: 
+        try:
+            r = git.repo.Repo(here)
+            git_describe = r.git.describe()
+            f = open('version.txt','w')
+            f.write(git_describe)
+            f.close()
+            # and do it one more for packaging if possible
+            f = open('src/rdplot/version.txt','w')
+            f.write(git_describe)
+            f.close()
+        except (git.InvalidGitRepositoryError):
+            f = open('version.txt','r')
+            git_describe = f.readline()
+            f.close()
 
     version = None
     split_describe = git_describe.split('-')
