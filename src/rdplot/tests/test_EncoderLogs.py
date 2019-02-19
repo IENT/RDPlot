@@ -57,6 +57,7 @@ class TestEncoderLogs(unittest.TestCase):
         del self.tested_parsers[EncoderLogs.AbstractEncLog]
         del self.tested_parsers[DatLogs.AbstractDatLog]
         del self.tested_parsers[DatLogs.DatLogBasedOnClassName]
+        del self.tested_parsers[EncoderLogs.EncLogVTM360Lib]
 
     def tearDown(self):
         self.app.exit()
