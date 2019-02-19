@@ -204,10 +204,8 @@ class EncLogHM(AbstractEncLog):
         return matches_class and is_finished
 
     def _parse_summary_data(self):
-        print(self.path)
         with open(self.path, 'r') as log_file:
             log_text = log_file.read()  # reads the whole text file
-            print(log_text)
 
             hm_match = re.search(r'HM software: Encoder Version \[([a-zA-Z-]+)?([0-9]+)\.([0-9]+)', log_text)
             hm_major_version = hm_match.group(2)
