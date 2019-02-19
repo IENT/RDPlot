@@ -118,6 +118,22 @@ def get_version():
 
     return version
 
+def get_install_requires():
+    if 'FLATPAK_INSTALL' in os.environ:
+        install_requires=['cycler', 'matplotlib', 'numpy', 
+                      'py', 'pyparsing', 'pyqt5', 'pytest',
+                      'python-dateutil', 'pytz', 'six', 
+                      'scipy', 'tabulate', 'mpldatacursor',
+                      'xmltodict', 'jsonpickle', 
+                      'matplotlib2tikz', 'Pillow'],
+    else: # requires pyqt < 5.12, due to a bug in early 5.12.x versions
+        install_requires=['cycler', 'matplotlib', 'numpy', 
+                      'py', 'pyparsing', 'pyqt5<5.11', 'pytest',
+                      'python-dateutil', 'pytz', 'six', 
+                      'scipy', 'tabulate', 'mpldatacursor',
+                      'xmltodict', 'jsonpickle', 
+                      'matplotlib2tikz', 'Pillow'],
+    return install_requires
 
 setup(
     app=APP,
@@ -184,12 +200,8 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['cycler', 'matplotlib', 'numpy', 
-                      'py', 'pyparsing', 'pyqt5', 'pytest',
-                      'python-dateutil', 'pytz', 'six', 
-                      'scipy', 'tabulate', 'mpldatacursor',
-                      'xmltodict', 'jsonpickle', 
-                      'matplotlib2tikz', 'Pillow'],
+    
+    install_requires=get_install_requires(),
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
