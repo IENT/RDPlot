@@ -73,21 +73,25 @@ def get_version():
         v1.0.0-158-g6c5be28 -> v1.0.158
     :return:
     """
-
-    try:
-      r = git.repo.Repo(here)
-      git_describe = r.git.describe()
-      f = open('version.txt','w')
-      f.write(git_describe)
-      f.close()
-      # and do it one more for packaging if possible
-      f = open('src/rdplot/version.txt','w')
-      f.write(git_describe)
-      f.close()
-    except (git.InvalidGitRepositoryError):
-      f = open('version.txt','r')
-      git_describe = f.readline()
-      f.close()
+    if 'FLATPAK_INSTALL' in os.environ:
+        f = open('version.txt','r')
+        git_describe = f.readline()
+        f.close()        
+    else: 
+        try:
+            r = git.repo.Repo(here)
+            git_describe = r.git.describe()
+            f = open('version.txt','w')
+            f.write(git_describe)
+            f.close()
+            # and do it one more for packaging if possible
+            f = open('src/rdplot/version.txt','w')
+            f.write(git_describe)
+            f.close()
+        except (git.InvalidGitRepositoryError):
+            f = open('version.txt','r')
+            git_describe = f.readline()
+            f.close()
 
     version = None
     split_describe = git_describe.split('-')
@@ -114,6 +118,22 @@ def get_version():
 
     return version
 
+def get_install_requires():
+    if 'FLATPAK_INSTALL' in os.environ:
+        install_requires=['cycler', 'matplotlib', 'numpy', 
+                      'py', 'pyparsing', 'pyqt5', 'pytest',
+                      'python-dateutil', 'pytz', 'six', 
+                      'scipy', 'tabulate', 'mpldatacursor',
+                      'xmltodict', 'jsonpickle', 
+                      'matplotlib2tikz', 'Pillow'],
+    else: # requires pyqt < 5.12, due to a bug in early 5.12.x versions
+        install_requires=['cycler', 'matplotlib', 'numpy', 
+                      'py', 'pyparsing', 'pyqt5<5.11', 'pytest',
+                      'python-dateutil', 'pytz', 'six', 
+                      'scipy', 'tabulate', 'mpldatacursor',
+                      'xmltodict', 'jsonpickle', 
+                      'matplotlib2tikz', 'Pillow'],
+    return install_requires
 
 setup(
     app=APP,
@@ -180,8 +200,8 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['cycler', 'matplotlib', 'numpy', 'py', 'pyparsing', 'pyqt5<5.11', 'pytest', 'python-dateutil', 'pytz',
-                      'sip', 'six', 'scipy', 'tabulate', 'mpldatacursor', 'xmltodict', 'jsonpickle', 'matplotlib2tikz', 'Pillow'],
+    
+    install_requires=get_install_requires(),
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
