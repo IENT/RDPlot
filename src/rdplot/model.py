@@ -1038,8 +1038,8 @@ class BdTableModel(QAbstractTableModel):
         self._plot_data_collection = plot_data_collection
 
         self._data = np.zeros((len(seq_set) + 1, len(config_set)))
-
-        if all(collection.label == ("kbps", "dB") for collection in plot_data_collection):
+        allowed_units = [("kbps","dB"),("kbps","s"),("kbps","VMAFScore")]
+        if all(collection.label in allowed_units for collection in plot_data_collection):
             self.update_table(bd_option, interp_option, 0, bd_plot)
         else:
             self.beginResetModel()

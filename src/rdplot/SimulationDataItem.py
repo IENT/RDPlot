@@ -25,7 +25,7 @@ from copy import copy
 from os import listdir
 from os.path import join, abspath, isfile, isdir
 from PyQt5.QtCore import *
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QComboBox, QPushButton, QLabel, QCheckBox, QGroupBox, QMessageBox, QApplication
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QComboBox, QPushButton, QDialogButtonBox, QLabel, QCheckBox, QGroupBox, QMessageBox, QApplication
 import re
 
 
@@ -409,7 +409,7 @@ class SimulationDataItemFactory(QObject):
             if not self.class_selection_dialog.remember_decision:
                 self.class_selection_dialog.set_items(list(map(lambda x: re.sub('<|>|\'', '', str(x)).split('.')[-1],
                                                                list_classes)))
-                result = self.class_selection_dialog.exec_(file_path)
+                result = self.class_selection_dialog.askUser(file_path)
                 if result == QDialog.Accepted:
                     try:
                         cls_list.append(list_classes[self.class_selection_dialog.selected_class](file_path))
@@ -434,6 +434,7 @@ class SimulationDataItemFactory(QObject):
         """
 
         item_list = []
+        self.class_selection_dialog.reset()
         for file_name in listdir(directory_path):
             path = join(directory_path, file_name)
             try:
@@ -483,42 +484,51 @@ class SimulationDataItemFactory(QObject):
         return str("SimulationDataItemFactory with loaded classes: ".format(str(self)))
 
 
-class ClassSelectionDialog(QDialog):
+class ClassSelectionDialog():
     def __init__(self):
-        super().__init__()
-        self.setWindowTitle('Error!')
-        self.setLayout(QVBoxLayout())
-        self._text_label = QLabel()
-        self.layout().addWidget(self._text_label)
-        self._combo_box = QComboBox()
-        self.layout().addWidget(self._combo_box)
-        self._check_box = QCheckBox('Remember my decision for future errors')
-        self.layout().addWidget(self._check_box)
-        self._group_box = QGroupBox()
-        self._group_box.setLayout(QHBoxLayout())
-        self._button1, self._button2 = QPushButton('Accept'), QPushButton('Cancel')
-        self._group_box.layout().addWidget(self._button1)
-        self._group_box.layout().addWidget(self._button2)
-        self.layout().addWidget(self._group_box)
-        self._button1.clicked.connect(self.accept)
-        self._button2.clicked.connect(self.reject)
+        self.checked = False
+        self.items = list()
+        self.selected = -1
+
+    def createDialog(self, textlabel, items, checked):
+        dialog = QDialog()
+        dialog.setWindowTitle('Select file parser')
+        dialog.setLayout(QVBoxLayout())
+        text_label = QLabel(textlabel)
+        dialog.layout().addWidget(text_label)
+        combo_box = QComboBox()
+        combo_box.addItems(items)
+        dialog.layout().addWidget(combo_box)
+        check_box = QCheckBox('Remember my decision for future errors')
+        check_box.setCheckState(checked)
+        dialog.layout().addWidget(check_box)
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, dialog)
+        dialog.layout().addWidget(buttons)
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        val =  dialog.exec_()
+        if val == QDialog.Accepted:
+            self.checked = check_box.isChecked()
+            self.selected = combo_box.currentIndex()
+            return QDialog.Accepted
+        else:
+            return QDialog.Rejected
 
     @property
     def selected_class(self):
-        return self._combo_box.currentIndex()
+        return self.selected
 
-    def exec_(self, file_name):
-        self._text_label.setText(('Problem with file: {}\nNo matching parsers were found.\nPlease select one of the existing ones or '
-                                       'implement a new parser.').format(file_name.split('/')[-1]))
-        return super().exec_()
+    def askUser(self, file_name):
+        textlabel = ('Problem with file: {}\nNo matching parsers were found.\nPlease select one of the existing ones or '
+                                      'implement a new parser.').format(file_name.split('/')[-1])
+        return self.createDialog(textlabel, self.items, self.checked)
 
     def set_items(self, items):
-        self._combo_box.clear()
-        self._combo_box.addItems(items)
+        self.items = items
 
     @property
     def remember_decision(self):
-        return self._check_box.isChecked()
+        return self.checked
 
     def reset(self):
-        self._check_box.setChecked(False)
+        self.checked = False

@@ -20,7 +20,7 @@
 import json
 from collections import deque
 from os.path import isdir, abspath, sep, dirname, basename, isfile, join
-
+from pathlib import Path, PureWindowsPath
 import jsonpickle
 from PyQt5 import QtWidgets
 from PyQt5.Qt import QApplication
@@ -81,6 +81,9 @@ class ParserWorkThread(QThread):
     def relay_error(self):
         self.parsingError.emit()
 
+    def showMsgBox(self):
+        return False
+
 
 class ParserWorkNoThread(QObject):
     """
@@ -131,6 +134,9 @@ class ParserWorkNoThread(QObject):
     def start(self):
         self.run()
 
+    def showMsgBox(self):
+        return False
+
 
 class SimDataItemTreeView(QtWidgets.QTreeView):
 
@@ -139,9 +145,9 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.parserThread = ParserWorkThread()
+        #self.parserThread = ParserWorkThread()
         # helpful for debugging, when breakpoints don't work because of threading
-        # self.parserThread = ParserWorkNoThread()
+        self.parserThread = ParserWorkNoThread()
         self.parserThread.newParsedData.connect(self._update_model)
         self.parserThread.allParsed.connect(self._hide_parse_message)
         self.msg = QMessageBox(self)  # use self as parent here
@@ -172,7 +178,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
 
     def dropEvent(self, event):
         for url in event.mimeData().urls():
-            file_path = Path(url.path())
+            file_path = url.toLocalFile()
             if url.isLocalFile() and isfile(url.path()):
                 try:
                     # check what kind of file we have.
@@ -188,8 +194,9 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
                 except IndexError:  # there was no file ending, i.e. not '.' in the name
                     return
             else:
-                self.msg.show()
-                self.parserThread.add_path(str(file_path))
+                if self.parserThread.showMsgBox():
+                    self.msg.show()
+                self.parserThread.add_path(file_path)
                 self.parserThread.start()
 
     # end snippet
@@ -283,7 +290,8 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
         # parse 'log'.subfolder. Should this be the case?
         # sim_data_items = list(SimulationDataItemFactory.parse_directory(path))
         # self.model().update(sim_data_items)
-        self.msg.show()
+        if self.parserThread.showMsgBox():
+            self.msg.show()
         self.parserThread.add_path(path)
         self.parserThread.start()
         self.itemsOpened.emit([path], False)
@@ -302,7 +310,9 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
                     if isdir(clean_path):
                         self.parserThread.add_path(clean_path)
                     self.itemsOpened.emit([clean_path], False)
-            self.msg.show()
+
+            if self.parserThread.showMsgBox():
+                self.msg.show()
             self.parserThread.start()
 
         except IndexError:
