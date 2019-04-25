@@ -617,9 +617,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def export_table_to_csv(self):
         # remember that the decimal mark is '.'
         if self.tableWidget.rowCount() > 0:
-            path = QtWidgets.QFileDialog.getSaveFileName(self, 'Save Table View as', '.', '*.csv')
-            path = path[0] + path[1][1:]
-            if len(path) > 0:
+            path, extension = QtWidgets.QFileDialog.getSaveFileName(self, 'Save Table View as', '.', 'CSV (*.csv)')
+            if path != '':      
+                if '.csv' not in path:
+                    path += '.csv'  
                 with open(str(path), 'w', newline='') as stream:
                     writer = csv.writer(stream)
                     for row in range(self.tableWidget.rowCount()):
@@ -636,9 +637,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def save_bd_table(self):
         if self.bdTableModel.rowCount(self) == 0:
             return
-        filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save Table as', '.', 'tex')
-        filename = '.'.join(filename)
-        if not len(filename) == 0:
+        filename, extension = QtWidgets.QFileDialog.getSaveFileName(self, 'Save Table as', '.', 'Latex (*.tex)')
+        if filename != '':      
+            if '.tex' not in filename:
+                filename += '.tex'  
             self.bdTableModel.export_to_latex(filename)
 
     def on_combo_box(self):
@@ -654,10 +656,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         "Please make a selection and try again.")
             msg.setWindowTitle("Info")
             msg.show()
-            return
-        filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save RD data as', '.', '*.rd')
-        filename = filename[0] + filename[1][1:]
-        if not len(filename) == 0:
+            return        
+        filename, extension = QtWidgets.QFileDialog.getSaveFileName(self, 'Save RD data as', '.', 'RDPlot (*.rd)')
+        if filename != '':      
+            if '.rd' not in filename:
+                filename += '.rd'  
             f = open(filename, 'w')
             f.write(jsonpickle.encode(self.get_selected_simulation_data_items()))
             f.close()

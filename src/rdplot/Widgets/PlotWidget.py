@@ -183,11 +183,10 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.plotAreaWidget.canvas.draw()
 
     def export_plot_tikz(self):
-        filename = QFileDialog.getSaveFileName(self, 'Save Plot as Tikzpicture', '.', '*tex')
-        fileextension = filename[1].split('*')[1]
-        filename = filename[0].split('.')[0]
-        filename = filename + '.' + fileextension
-        if not len(filename) == 0:
+        filename, extension = QFileDialog.getSaveFileName(self, 'Save Plot as Tikzpicture', '.', 'Latex (*.tex)')
+        if filename != '':      
+            if '.tex' not in filename:
+                filename += '.tex'          
             tikz_save(filename,self.plotAreaWidget.fig)
 
     # this function enables zoom with mousewheel
