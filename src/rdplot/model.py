@@ -1073,7 +1073,10 @@ class BdTableModel(QAbstractTableModel):
         self._data = np.zeros((len(self._vertical_headers), len(self._horizontal_headers)))
 
         # if we have passed the index of the column for the anchor select that one as anchor
-        anchor = self._horizontal_headers[self._anchor_index]
+        try:
+            anchor = self._horizontal_headers[self._anchor_index]
+        except:
+            anchor_index = 0
         if isinstance(anchor_index, int) and anchor_index != -1:
             if (self._anchor_index != anchor_index) and not bd_plot:
                 plt.clf()
