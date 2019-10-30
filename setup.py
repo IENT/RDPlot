@@ -125,14 +125,14 @@ def get_install_requires():
                       'python-dateutil', 'pytz', 'six', 
                       'scipy', 'tabulate', 'mpldatacursor',
                       'xmltodict', 'jsonpickle', 
-                      'matplotlib2tikz', 'Pillow'],
+                      'tikzplotlib', 'Pillow'],
     else: # requires pyqt < 5.12, due to a bug in early 5.12.x versions
         install_requires=['cycler', 'matplotlib', 'numpy', 
                       'py', 'pyparsing', 'pyqt5<5.11', 'pytest',
                       'python-dateutil', 'pytz', 'six', 
                       'scipy', 'tabulate', 'mpldatacursor',
                       'xmltodict', 'jsonpickle', 
-                      'matplotlib2tikz', 'Pillow'],
+                      'tikzplotlib', 'Pillow'],
     return install_requires
 
 setup(
