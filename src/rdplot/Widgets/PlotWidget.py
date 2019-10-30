@@ -32,7 +32,7 @@ from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar)
 
-from matplotlib2tikz import save as tikz_save
+from tikzplotlib import save as tikz_save
 
 import numpy as np
 import math
