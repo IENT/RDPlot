@@ -16,6 +16,10 @@ apps:
   rdplot:
     command: desktop-launch ${SNAP}/bin/rdplot
     plugs: [home, removable-media, network, x11, wayland, desktop, desktop-legacy, opengl, gsettings] 
+    
+architectures:
+  - build-on: amd64
+    run-on: amd64
 
 parts:
   rdplot:
