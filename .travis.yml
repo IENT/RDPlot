@@ -1,12 +1,14 @@
 # After changing this file, check it on:
 #   http://lint.travis-ci.org/
 language: python
-sudo: required
-dist: trusty
+os: linux
+dist: bionic
 
 python:
   - 3.5
   - 3.6
+  - 3.7
+  - 3.8
 
 before_install:
   - pip3 install jsonpickle  setuptools
