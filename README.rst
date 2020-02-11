@@ -26,9 +26,11 @@ Code Coverage
 .. image:: https://coveralls.io/repos/github/IENT/RDPlot/badge.svg?branch=master
   :target: https://coveralls.io/github/IENT/RDPlot
 
-
 Installation
 ========================
+
+.. contents::
+   :local:
 
 In the following sections different installation strategies are outlined:
 
@@ -59,7 +61,6 @@ If you feel comfortable with that::
 Note, that connecting removable-media is not necessary, if you do not wish to acess files 
 under /media.
 
-
 Building from Source 
 ____________________
 
@@ -70,17 +71,37 @@ First of all there is a conflict between the python3-matplotlib package for
 Ubuntu and matplotlib installed from pip. 
 
 RDPlot will only work with matplotlib
-directly installed from pip and python3-matplotlib not installed on the system.
+directly installed from pip and python3-matplotlib not installed via the system packet manager (e.g. apt).
+If you need system packages that conflict with the packages required for RDPlot, you can use a python virtual environment (see below).
+The general recommendation for installing python packages is to use pip.
 
-Make sure that you are using python 3 and pip is up to date.
+Make sure that you are using python 3 and pip is up to date::
+
+    python3 -V
+    pip3 -V
+    sudo pip3 install --upgrade pip
+    
+Note: python2 has been retired_ in 2020. python3 might also be called simply python on your system.
+
+.. _retired: https://www.python.org/doc/sunset-python-2/
+    
+If missing, install python3::
+
+    sudo apt-get install python3
+    
+If missing, install pip3::
+
+    sudo sh -c "curl https://bootstrap.pypa.io/get-pip.py | python3"
 
 Sadly but true, we need a few dependencies.  
-You need to install them with::
+You need to install them with either your system packet manager, **or** pip::
 
-    sudo apt-get install python3-jsonpickle python3-tk  python3-pip  python3-setuptools python3-git 
+    sudo apt-get install python3-jsonpickle python3-setuptools python3-git # <- apt OR
+    sudo pip3 install gitpython                                            # <- pip
     
-and then::
+Now we can download the source and build our rdplot package::
 
+    git clone --depth 1 https://github.com/IENT/RDPlot && cd RDPlot # alternativly download and unpack current stable from  https://github.com/IENT/RDPlot/releases
     python3 setup.py sdist
 
 Now you can install rdplot, either as user or system wide.
@@ -91,11 +112,11 @@ Install it system wide::
 As user. This will install the binary to ~/.local/bin/rdplot. Make sure it is 
 in your PATH. The desktop launcher also will work only if this is the case::
 
-   pip3 install --user --no-binary rdplot  dist/rdplot-*.tar.gz
+    pip3 install --user --no-binary rdplot  dist/rdplot-*.tar.gz
 
 If you already have the tool installed run::
 
-     sudo pip3 install --no-binary rdplot --upgrade dist/rdplot-*.tar.gz 
+    sudo pip3 install --no-binary rdplot --upgrade dist/rdplot-*.tar.gz 
      
      
 Now you should be able to run rdplot from the command line and have a
@@ -104,13 +125,57 @@ launcher in your favourite desktop enviroment.
 If you do not want to build the distribution but a simple install run::
     
     sudo python setup.py install
+
+Virtual Environment
+___________________
+If you need system packages that conflict with the packages required for RDPlot, you can use a python virtual environment (see below).
+
+When you are inside a virtual environment, python ignores all system packages and instead uses a dedicated environment, allowing you to install packages with pip that would otherwise conflict with system packages and/or different versions. The pitfall is that you need to activate the environment each time you want to use the program.
+
+You can find more info on virtual environments at https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/.
+
+venv is included in python since version 3.3. If your python version is older consider upgrading, or install venv using::
+
+    sudo pip install virtualenv
+    
+Download RDPlot. Make sure you do this at a place where it can stay::
+
+    git clone --depth 1 https://github.com/IENT/RDPlot
+    cd RDPlot
+    
+Create a virtualenv named "env" inside the RDPlot directory::
+
+    python3 -m venv env
+    
+Activate the venv and install dependencies::
+    
+    source env/bin/activate
+    pip3 install --upgrade pip gitpython
+    
+Build and install RDPlot::
+
+    python3 setup.py sdist
+    pip3 install --no-binary rdplot --upgrade dist/rdplot-*.tar.gz
+    
+Leave the environment::
+
+    deactivate
+    
+Remember to activate the environment every time you want to run RDPlot::
+
+    cd RDPlot
+    source env/bin/activate
+    rdplot
+    deactivate
+
+To uninstall, simply delete the RDPlot directory.
     
 Windows
-__________
-As mentioned above you can find an installer on the release page. Download, install, done. 
+-------
+As mentioned above you can find an installer on the release page. Download, install, done.
 
 Docker
-________
+------
 If you prefer to run RDPlot in a Docker container, no problem::
     
     docker build rd-plot-gui/
@@ -127,8 +192,7 @@ It is not really tested and the image needs approx. 1.4 GB of disk-space.
 If you want to spend that, enjoy!
 
 Mac OS X
-_________
-
+-----
 **Note:** things are not tested for Mac. You may have to fiddle a little bit.
 Please contribute, if you have ideas for improvements.
 
@@ -166,7 +230,6 @@ Navigate to the local copy of the repository (now most probably in your Applicat
 Done!
 
 Unistall is also simple: Just delete the local copy of the repositories and all aliases.
-    
 
 Running from repository without installation
 =============================================
