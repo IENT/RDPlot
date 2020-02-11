@@ -9,6 +9,9 @@ python:
   - 3.6
   - 3.7
   - 3.8
+  
+services:
+  - xvfb
 
 before_install:
   - pip3 install jsonpickle  setuptools
@@ -22,7 +25,6 @@ install:
 
 before_script:
   - "export DISPLAY=:99.0"
-  - "sh -e /etc/init.d/xvfb start"
   - sleep 3 # give xvfb some time to start
   
 script:
