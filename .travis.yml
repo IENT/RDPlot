@@ -16,7 +16,7 @@ services:
 before_install:
   - pip3 install --upgrade pip
   - pip3 install jsonpickle  setuptools
-  - pip3 install pytest 'pytest-cov==2.6.0'
+  - pip3 install 'pytest==3.10.1' 'pytest-cov==2.6.0'
   - pip3 install coveralls
   - pip3 install gitpython
   - python3 setup.py sdist
