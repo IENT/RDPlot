@@ -76,8 +76,15 @@ class AbstractEncLog(AbstractSimulationDataItem):
         labels['Summary']['P'] = labels['Summary']['P Slices'] = labels['Summary']['P']['layer 0'] = \
             labels['Summary']['P']['layer 1'] = labels['Summary']['P']['layer 1 + 2'] = defaultdict(
             lambda: ('kbps', 'dB'))
-        labels['Summary']['SUMMARY'] = labels['Summary']['SUMMARY']['layer 0'] = labels['Summary']['SUMMARY'][
-            'layer 1'] = labels['Summary']['SUMMARY']['layer 1 + 2'] = defaultdict(lambda: ('kbps', 'dB'))
+        labels['Summary']['SUMMARY'] = \
+            labels['Summary']['SUMMARY']['layer 0'] = \
+            labels['Summary']['SUMMARY']['layer 1'] = \
+            labels['Summary']['SUMMARY']['layer 1 + 2'] = \
+            labels['Summary']['PSNR1'] = \
+            labels['Summary']['PSNR2'] = \
+            labels['Summary']['PSNR3'] = \
+            labels['Summary']['PSNR4'] = \
+            defaultdict(lambda: ('kbps', 'dB'))
 
         labels['Summary']['B']['Bitrate'] = labels['Summary']['I']['Bitrate'] = labels['Summary']['P']['Bitrate'] = \
             labels['Summary']['SUMMARY']['Bitrate'] = ('kbps', 'bits')
@@ -748,3 +755,223 @@ class EncLogVTM360Lib(AbstractEncLog):
 
             return data
 
+
+class EncLogVTM(AbstractEncLog):
+    # Order value, used to determine order in which parser are tried.
+    parse_order = 23
+
+    @classmethod
+    def can_parse_file(cls, path):
+        matches_vtm_bms = cls._enc_log_file_matches_re_pattern(
+            path, r'^VVCSoftware')
+        is_finished = cls._enc_log_file_matches_re_pattern(
+            path, r'Total\ Time')
+        return matches_vtm_bms and is_finished
+
+    def _parse_path(self, path):
+        """ parses the identifiers for an encoder log out of the
+        path of the logfile and the sequence name and qp given in
+         the logfile"""
+        # set config to path of sim data item
+        config = dirname(normpath(path))
+        # get sequence name and qp from file name
+        (_, filename) = split(path)
+
+        name_and_rest = re.split(r'_\d+x\d+_', filename)
+        sequence = name_and_rest[0]
+
+        m = re.match(r'QP(\d\d)_', name_and_rest[1])
+        self.qp = m.group(1)
+
+        return sequence, config
+
+    def _parse_config(self):
+
+        parsed_config = {}
+
+        # add qp from file name to config
+        parsed_config['QP'] = self.qp
+
+        return parsed_config
+
+    def _parse_summary_data(self):
+
+        with open(self.path, 'r') as log_file:
+            log_text = log_file.read()
+
+            # dictionary for the parsed data
+            data = {}
+
+            # get the summaries as pair of summary type and summary text,
+            # splitting at summary type and capturing it
+            summaries_texts_and_types = re.split('Total Frames', log_text)
+            del summaries_texts_and_types[
+                0]  # remove the log text up to the first summary item
+
+            summaries_texts_and_types = summaries_texts_and_types[0]
+            summaries_texts_and_types = 'Total Frames' + summaries_texts_and_types
+            summary_text = summaries_texts_and_types.strip().splitlines()
+
+            # parsing header
+            first_header_item, remaining_items = re.split(
+                '\|', summary_text[0])  # since first item has a space
+            remaining_items = re.split('\s+', remaining_items.strip())
+            header = [first_header_item] + remaining_items
+
+            # parsing values
+            values = re.split('\s+', summary_text[1].strip())
+            del values[
+                1]  # remove the letter below the | in the header (a, b, p or i)
+
+            if header[1] != 'Bitrate':
+                raise Exception('Could not parse bitrate.')
+            rate = values[1]
+
+            summary_type = 'SUMMARY'
+            data[summary_type] = {}
+            for name, value in zip(header, values):
+                name = name.strip()
+                summary_item = {name: [(float(rate), float(value))]}
+
+                data[summary_type].update(summary_item)
+
+            return data
+
+    def _parse_temporal_data(self):
+        return {}
+
+
+class EncLogVTMRPR(AbstractEncLog):
+    # Order value, used to determine order in which parser are tried.
+    parse_order = 25
+
+    @classmethod
+    def can_parse_file(cls, path):
+        matches_vtm_bms = cls._enc_log_file_matches_re_pattern(
+            path, r'^VVCSoftware')
+        matches_rpr = cls._enc_log_file_matches_re_pattern(path, r'PSNR1')
+        is_finished = cls._enc_log_file_matches_re_pattern(
+            path, r'Total\ Time')
+        return matches_vtm_bms and is_finished and matches_rpr
+
+    def _parse_path(self, path):
+        """ parses the identifiers for an encoder log out of the
+        path of the logfile and the sequence name and qp given in
+         the logfile"""
+        # set config to path of sim data item
+        config = dirname(normpath(path))
+        # get sequence name and qp from file name
+        (_, filename) = split(path)
+
+        name_and_rest = re.split(r'_\d+x\d+_', filename)
+        sequence = name_and_rest[0]
+
+        m = re.match(r'QP(\d\d)_', name_and_rest[1])
+        self.qp = m.group(1)
+
+        return sequence, config
+
+    def _parse_config(self):
+
+        parsed_config = {}
+
+        # add qp from file name to config
+        parsed_config['QP'] = self.qp
+
+        return parsed_config
+
+    def _parse_summary_data(self):
+
+        with open(self.path, 'r') as log_file:
+            log_text = log_file.read()
+
+            # dictionary for the parsed data
+            data = {}
+
+            # get the summaries as pair of summary type and summary text,
+            # splitting at summary type and capturing it
+            summaries_texts_and_types = re.split('Total Frames', log_text)
+            del summaries_texts_and_types[
+                0]  # remove the log text up to the first summary item
+
+            summaries_texts_and_types = summaries_texts_and_types[0]
+            summaries_texts_and_types = 'Total Frames' + summaries_texts_and_types
+            summary_text = summaries_texts_and_types.strip().splitlines()
+
+            # parsing header
+            first_header_item, remaining_items = re.split(
+                '\|', summary_text[0])  # since first item has a space
+            remaining_items = re.split('\s+', remaining_items.strip())
+            header = [first_header_item] + remaining_items
+
+            # parsing values
+            values = re.split('\s+', summary_text[1].strip())
+            del values[
+                1]  # remove the letter below the | in the header (a, b, p or i)
+
+            if header[1] != 'Bitrate':
+                raise Exception('Could not parse bitrate.')
+            rate = values[1]
+
+            summary_type = 'SUMMARY'
+            data[summary_type] = {}
+            for name, value in zip(header, values):
+                name = name.strip()
+                summary_item = {name: [(float(rate), float(value))]}
+
+                data[summary_type].update(summary_item)
+
+            # parse values for PSNR1 and PSNR2
+            header = re.split('\s+', summary_text[3].strip())
+            values = re.split('\s+', summary_text[4].strip())
+
+            summary_type = header.pop(0)
+            data[summary_type] = {}
+            for name, value in zip(header, values):
+                name = name.strip()
+                summary_item = {name: [(float(rate), float(value))]}
+
+                data[summary_type].update(summary_item)
+
+            # parse values for PSNR1
+            header = re.split('\s+', summary_text[5].strip())
+            values = re.split('\s+', summary_text[6].strip())
+
+            summary_type = header.pop(0)
+            data[summary_type] = {}
+            for name, value in zip(header, values):
+                name = name.strip()
+                summary_item = {name: [(float(rate), float(value))]}
+
+                data[summary_type].update(summary_item)
+
+            # parse values and calculate PSNR-3,
+            # this is the PSNR off all frames including downsampled frames in their
+            # reference picture list
+            bits_ypsnr = re.findall(
+                r"(\d+) bits \[Y (\d+\.\d+) dB.*\(0.50x, 0.50x\).*", log_text)
+            bits = list(map(list, zip(*bits_ypsnr)))[0]
+            bits = list(map(float, bits))
+            bits = sum(bits) / bits.__len__()  # calculate bits per frame
+            y_psnr = list(map(list, zip(*bits_ypsnr)))[1]
+            y_psnr = list(map(float, y_psnr))
+            y_psnr = sum(y_psnr) / y_psnr.__len__()  # calculate average y-psnr
+            data['PSNR3'] = {'Y-PSNR': [(bits, y_psnr)]}
+
+            # parse values and calculate PSNR-4,
+            # this is the PSNR at upsampling points only
+            bits_ypsnr = re.findall(
+                r"(\d+) bits \[Y (\d+\.\d+) dB.*\[L0 \d+(?:\(0.50x, 0.50x\)|\(AddRef\)).*", log_text)
+            bits = list(map(list, zip(*bits_ypsnr)))[0]
+            bits = list(map(float, bits))
+            print(bits.__len__())
+            bits = sum(bits) / bits.__len__()  # calculate bits per frame
+            y_psnr = list(map(list, zip(*bits_ypsnr)))[1]
+            y_psnr = list(map(float, y_psnr))
+            y_psnr = sum(y_psnr) / y_psnr.__len__()  # calculate average y-psnr
+            data['PSNR4'] = {'Y-PSNR': [(bits, y_psnr)]}
+
+            return data
+
+    def _parse_temporal_data(self):
+        return {}
