@@ -192,7 +192,7 @@ It is not really tested and the image needs approx. 1.4 GB of disk-space.
 If you want to spend that, enjoy!
 
 Mac OS X
------
+--------
 **Note:** things are not tested for Mac. You may have to fiddle a little bit.
 Please contribute, if you have ideas for improvements.
 
