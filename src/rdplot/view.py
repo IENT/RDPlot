@@ -178,7 +178,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
 
     def dropEvent(self, event):
         for url in event.mimeData().urls():
-            file_path = url.toLocalFile()
+            file_path = Path(url.toLocalFile())
             if url.isLocalFile() and isfile(url.path()):
                 try:
                     # check what kind of file we have.
