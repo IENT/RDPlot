@@ -475,24 +475,27 @@ class SimulationDataItemFactory(QObject):
             # I think this should not change in the future,
             # otherwise parts of the file would need to be parsed
             # in order to dertmine the type
-            from rdplot.SimulationDataItemClasses.CsvLogs import CSVLog
+            try:
+                from rdplot.SimulationDataItemClasses.CsvLogs import CSVLog
 
-            with open(path) as csvfile:
-                lines = csvfile.readlines()
+                with open(path) as csvfile:
+                    lines = csvfile.readlines()
 
-            header = lines[0]
-            # the config is assumed to be in the file name
-            config = splitext(basename(path))[0]
+                header = lines[0]
+                # the config is assumed to be in the file name
+                config = splitext(basename(path))[0]
 
-            item_list = []
-            for line in lines[1:]:
-                # first remove newline characters
-                line = line.replace("\n", "")
-                # and if we have empty lines somewhere, continue
-                if not line:
-                    continue
-                item_list.append(CSVLog(config, header, line))
-            return item_list
+                item_list = []
+                for line in lines[1:]:
+                    # first remove newline characters
+                    line = line.replace("\n", "")
+                    # and if we have empty lines somewhere, continue
+                    if not line:
+                        continue
+                    item_list.append(CSVLog(config, header, line))
+                return item_list
+            except:
+                raise SimulationDataItemError()
 
         if isfile(path):
             return self.create_item_from_file(path)
