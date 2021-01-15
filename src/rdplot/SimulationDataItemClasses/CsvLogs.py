@@ -22,23 +22,35 @@ from rdplot.SimulationDataItem import AbstractSimulationDataItem
 
 
 class CSVLog(AbstractSimulationDataItem):
-    def __init__(self, config, line):
+    def __init__(self, config, header, line):
         # we do not have a unique path for each simulation data item
         # in the case of a csv file. Abuse the line as unique identifier
         # there should'nt be any equal lines
         super().__init__(line)
 
-        # so the structure of the csv file has to be
-        # sequence;qp;rate;y-psnr;u-psnr;v-psnr
+        header = header.replace("\n", "")
+        header = header.lower().split(';')
+        sequence_idx = header.index("sequence")
+        qp_idx = header.index("qp")
+        
+        # split also the line
         line = line.split(';')
-        self.sequence = line[0]
-        self.qp = line[1]
+
+        # I want to allow for all header fields looking like the bitrate
+        # Therefore, it is a little bit more complicated here
+        tmp = list(map(lambda x: 'rate' in x, header))
+        rate_idx = tmp.index(1)
+        rate = float(line[rate_idx])
+        
+        self.sequence = line[sequence_idx]
+        self.qp = line[qp_idx]
         self.config = config
 
         data = {}
-        data['Y-PSNR'] = [(float(line[2]), float(line[3]))]
-        data['U-PSNR'] = [(float(line[2]), float(line[4]))]
-        data['V-PSNR'] = [(float(line[2]), float(line[5]))]
+        for i in range(0, len(header)):
+            if i in [sequence_idx, qp_idx, rate_idx]:
+                continue
+            data[header[i]] = [(rate, float(line[i]))]
         self.summary_data = data
 
     @property

@@ -480,6 +480,7 @@ class SimulationDataItemFactory(QObject):
             with open(path) as csvfile:
                 lines = csvfile.readlines()
 
+            header = lines[0]
             # the config is assumed to be in the file name
             config = splitext(basename(path))[0]
 
@@ -490,7 +491,7 @@ class SimulationDataItemFactory(QObject):
                 # and if we have empty lines somewhere, continue
                 if not line:
                     continue
-                item_list.append(CSVLog(config, line))
+                item_list.append(CSVLog(config, header, line))
             return item_list
 
         if isfile(path):
