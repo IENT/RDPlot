@@ -186,7 +186,7 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
                     file_ending = file_path.suffix
                     if file_ending == '.rd':
                         self.load_rd_data(str(file_path))
-                    elif file_ending == '.log' or file_ending == '.xml':
+                    elif file_ending == '.log' or file_ending == '.xml' or file_ending == '.csv':
                         self.parserThread.add_path(str(file_path))
                         self.parserThread.start()
                 except json.decoder.JSONDecodeError:
