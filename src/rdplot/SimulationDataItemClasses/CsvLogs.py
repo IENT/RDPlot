@@ -32,7 +32,7 @@ class CSVLog(AbstractSimulationDataItem):
         header = header.lower().split(';')
         sequence_idx = header.index("sequence")
         qp_idx = header.index("qp")
-        
+
         # split also the line
         line = line.split(';')
 
@@ -41,7 +41,7 @@ class CSVLog(AbstractSimulationDataItem):
         tmp = list(map(lambda x: 'rate' in x, header))
         rate_idx = tmp.index(1)
         rate = float(line[rate_idx])
-        
+
         self.sequence = line[sequence_idx]
         self.qp = line[qp_idx]
         self.config = config
