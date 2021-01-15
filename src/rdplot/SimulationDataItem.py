@@ -23,7 +23,7 @@ from abc import ABCMeta, abstractmethod
 from collections import deque
 from copy import copy
 from os import listdir
-from os.path import join, abspath, isfile, isdir
+from os.path import join, abspath, isfile, isdir, basename, splitext
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QComboBox, QPushButton, QDialogButtonBox, QLabel, QCheckBox, QGroupBox, QMessageBox, QApplication
 import re
@@ -456,12 +456,42 @@ class SimulationDataItemFactory(QObject):
         either be a file or a directory and is parsed accordingly. The
         method fails if not at least one simulation data item can be
         created.
+        Typically, a simulation data item is obtained from a single file.
+        However, if the file is a csv file multiple simulation data items are
+        assumed to occur in that file. Therefore, handle the csv separately.
 
         :param path: :class: `str` path
 
         :rtype: :class: `list` of simulation data items
         """
         self.class_selection_dialog.reset()
+
+        # this is the case of a csvfile...only one file for several
+        # simulation data items. Parse the file here and create an
+        # item for every nonempty line
+        if (isfile(path) and path.endswith(".csv")):
+            # we already know that we need the csvlog
+            # currently there is only one...just use it
+            # I think this should not change in the future,
+            # otherwise parts of the file would need to be parsed
+            # in order to dertmine the type
+            from rdplot.SimulationDataItemClasses.CsvLogs import CSVLog
+
+            with open(path) as csvfile:
+                lines = csvfile.readlines()
+
+            # the config is assumed to be in the file name
+            config = splitext(basename(path))[0]
+
+            item_list = []
+            for line in lines[1:]:
+                # first remove newline characters
+                line = line.replace("\n", "")
+                # and if we have empty lines somewhere, continue
+                if not line:
+                    continue
+                item_list.append(CSVLog(config, line))
+            return item_list
 
         if isfile(path):
             return self.create_item_from_file(path)
