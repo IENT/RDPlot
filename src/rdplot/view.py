@@ -19,8 +19,7 @@
 ##################################################################################################
 import json
 from collections import deque
-from os.path import isdir, abspath, sep, dirname, basename, isfile, join
-from pathlib import Path, PureWindowsPath
+from os.path import isdir, abspath, sep, dirname, isfile, join, splitext
 import jsonpickle
 from PyQt5 import QtWidgets
 from PyQt5.Qt import QApplication
@@ -29,7 +28,6 @@ from PyQt5.QtCore import QObject, QItemSelectionModel, QItemSelection, QModelInd
 from PyQt5.QtGui import *
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QMessageBox, QMenu, QListView
-from pathlib import Path
 
 from rdplot.SimulationDataItem import SimulationDataItemFactory, SimulationDataItemError
 from rdplot.model import AmbiguousSimDataItems
@@ -178,12 +176,12 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
 
     def dropEvent(self, event):
         for url in event.mimeData().urls():
-            file_path = Path(url.toLocalFile())
+            file_path = url.toLocalFile()
             if url.isLocalFile() and isfile(url.path()):
                 try:
                     # check what kind of file we have.
                     # process .rd with load_rd_data, .xml and .log with the parsers
-                    file_ending = file_path.suffix
+                    name, file_ending = splitext(file_path)
                     if file_ending == '.rd':
                         self.load_rd_data(str(file_path))
                     elif file_ending == '.log' or file_ending == '.xml' or file_ending == '.csv':
