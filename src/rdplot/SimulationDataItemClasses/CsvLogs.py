@@ -30,11 +30,13 @@ class CSVLog(AbstractSimulationDataItem):
 
         header = header.replace("\n", "")
         header = header.lower().split(';')
+        header = list(filter(None, header))
         sequence_idx = header.index("sequence")
         qp_idx = header.index("qp")
 
         # split also the line
         line = line.split(';')
+        line = list(filter(None, line))
 
         # I want to allow for all header fields looking like the bitrate
         # Therefore, it is a little bit more complicated here
