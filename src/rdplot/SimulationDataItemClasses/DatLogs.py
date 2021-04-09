@@ -63,7 +63,7 @@ class AbstractDatLog(AbstractSimulationDataItem):
 
     @property
     def tree_identifier_list(self):
-        return [self.__class__.__name__, self.sequence, self.config, self.qp]
+        return ["XML-Datlog", self.sequence, self.config, self.qp]
 
     @abstractmethod
     def _parse_config(self):
@@ -97,16 +97,15 @@ class AbstractDatLog(AbstractSimulationDataItem):
         return False
 
 
-class DatLogBasedOnClassName(AbstractDatLog):
+class XMLDatLog(AbstractDatLog):
     @classmethod
     def can_parse_file(cls, path):
             try:
                 with open(path, 'r') as dat_log:
                     xml = dat_log.read()
-                sim_data = xmltodict.parse(xml)
-                # discard 'DatLog' from class name, then compare to class specified in log file
-                is_sim_of_this_class = ( cls.__name__[6:]  in sim_data['Logfile']['Codec']['Value'])
-                return is_sim_of_this_class
+                xmltodict.parse(xml)
+                # if we can parse the xml file, assume that RDPlot can display the data
+                return True
             except (ExpatError, UnicodeDecodeError, KeyError, IsADirectoryError,FileNotFoundError, PermissionError):
                 return False
 
@@ -149,56 +148,3 @@ class DatLogBasedOnClassName(AbstractDatLog):
             label = ('dummy', 'dummy')
 
         return label
-
-class DatLogHEVC(DatLogBasedOnClassName):
-    pass
-
-class DatLogVTM1_0(DatLogBasedOnClassName):
-    pass
-
-class DatLogJEM501_360(DatLogBasedOnClassName):
-    pass
-
-class DatLogJEM70_360(DatLogBasedOnClassName):
-    pass
-
-class DatLogJEM70(DatLogBasedOnClassName):
-    pass
-
-class DatLogJEM70Geo(DatLogBasedOnClassName):
-    pass
-
-class DatLogJEM70GeoHOMC(DatLogBasedOnClassName):
-    pass
-
-class DatLogConversionPSNRLoss360(DatLogBasedOnClassName):
-
-    def _parse_path(self, path):
-        # logs from this class are not actual encoder simulations, don't have qp, using the conversion size for qp
-        # todo: should rd-plot allow different x-axis then qp?
-        filename = basename(path)
-
-        separator = '-'
-        try:
-            filename_split = filename.split('_CodingFaceWidth')[0].split(separator)
-            sequence = filename_split[-1]
-            config = separator.join(filename_split[0: -2])
-        except IndexError:
-            raise SimulationDataItemError((
-                "Filename {} can not be split into config until '{}' and"
-                " sequence between last '{}' and '_QP'"
-            ).format(filename, separator, separator))
-
-        # prepend simulation directory to config
-        config = dirname(normpath(path)) + config
-        qp = None
-        with open(self.path, 'r') as dat_log:
-            try:
-                xml = dat_log.read()
-                sim_data = xmltodict.parse(xml)
-                # TODO support for layer specific qp
-                qp = sim_data['Logfile']['QP']['Value']
-            except (IndexError, ExpatError):
-                raise SimulationDataItemError
-
-        return sequence, config, qp

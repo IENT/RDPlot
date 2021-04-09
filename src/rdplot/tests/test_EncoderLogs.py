@@ -56,7 +56,7 @@ class TestEncoderLogs(unittest.TestCase):
         del self.tested_parsers[AbstractSimulationDataItem]
         del self.tested_parsers[EncoderLogs.AbstractEncLog]
         del self.tested_parsers[DatLogs.AbstractDatLog]
-        del self.tested_parsers[DatLogs.DatLogBasedOnClassName]
+        del self.tested_parsers[DatLogs.XMLDatLog]
         del self.tested_parsers[EncoderLogs.EncLogVTM360Lib]
 
     def tearDown(self):
@@ -199,7 +199,7 @@ class TestEncoderLogs(unittest.TestCase):
                                                       ['Frames', 'Bitrate', 'Y-PSNR', 'U-PSNR', 'V-PSNR',
                                                        'YUV-PSNR'])
 
-                if isinstance(parsed_instance, DatLogs.DatLogBasedOnClassName):
+                if isinstance(parsed_instance, DatLogs.XMLDatLog):
                     summary_data = parsed_instance.summary_data
                     sequence = parsed_instance.sequence
                     config = parsed_instance.config
@@ -232,7 +232,7 @@ class TestEncoderLogs(unittest.TestCase):
                 elif isinstance(parsed_instance, DatLogs.AbstractDatLog):
                     # we are only testing concrete implementations, not the abstract base class
                     pass
-                elif isinstance(parsed_instance, DatLogs.DatLogBasedOnClassName):
+                elif isinstance(parsed_instance, DatLogs.XMLDatLog):
                     # we are only testing concrete implementations,
                     # this is also a base class which will not be used directly
                     pass

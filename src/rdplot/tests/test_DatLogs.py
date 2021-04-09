@@ -56,7 +56,7 @@ class TestDatLogs(unittest.TestCase):
         del self.tested_parsers[AbstractSimulationDataItem]
         del self.tested_parsers[EncoderLogs.AbstractEncLog]
         del self.tested_parsers[DatLogs.AbstractDatLog]
-        del self.tested_parsers[DatLogs.DatLogBasedOnClassName]
+        del self.tested_parsers[DatLogs.XMLDatLog]
         # todo: add parsers for these
         del self.tested_parsers[DatLogs.DatLogJEM70]
         del self.tested_parsers[DatLogs.DatLogJEM70Geo]
@@ -233,7 +233,7 @@ class TestDatLogs(unittest.TestCase):
                 elif isinstance(parsed_instance, DatLogs.AbstractDatLog):
                     # we are only testing concrete implementations, not the abstract base class
                     pass
-                elif isinstance(parsed_instance, DatLogs.DatLogBasedOnClassName):
+                elif isinstance(parsed_instance, DatLogs.XMLDatLog):
                     # we are only testing concrete implementations,
                     # this is also a base class which will not be used directly
                     pass
