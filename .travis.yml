@@ -26,7 +26,7 @@ install:
 
 script:
  - cd src
- - xvfb-run pytest --cov-report= --cov=rdplot
+ - pytest --cov-report= --cov=rdplot
 
 after_success:
     - coveralls
