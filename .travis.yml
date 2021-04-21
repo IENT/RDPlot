@@ -24,6 +24,11 @@ before_install:
 install:
     pip3 install --no-binary rdplot  dist/rdplot-*.tar.gz
 
+before_script:
+  - "Xvfb :99.0 &"
+  - "export DISPLAY=:99.0"
+  - sleep 3 # give xvfb some time to start
+  
 script:
  - cd src
  - pytest --cov-report= --cov=rdplot
