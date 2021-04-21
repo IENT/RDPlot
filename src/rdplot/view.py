@@ -143,9 +143,9 @@ class SimDataItemTreeView(QtWidgets.QTreeView):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        #self.parserThread = ParserWorkThread()
+        self.parserThread = ParserWorkThread()
         # helpful for debugging, when breakpoints don't work because of threading
-        self.parserThread = ParserWorkNoThread()
+        # self.parserThread = ParserWorkNoThread()
         self.parserThread.newParsedData.connect(self._update_model)
         self.parserThread.allParsed.connect(self._hide_parse_message)
         self.msg = QMessageBox(self)  # use self as parent here
