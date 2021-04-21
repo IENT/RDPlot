@@ -4,6 +4,12 @@ language: python
 os: linux
 dist: bionic
 
+addons:
+  apt:
+    packages:
+    - x11-utils
+    - libxkbcommon-x11-0
+
 python:
   - 3.5
   - 3.6
