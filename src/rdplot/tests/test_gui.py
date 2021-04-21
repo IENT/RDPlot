@@ -31,7 +31,6 @@ class TestMain(unittest.TestCase):
     """Start the GUI, once load all example simulation directories and rd data, then exit."""
     def setUp(self):
         """Create the GUI"""
-        print('Executing Main Test')
         self.app = QtWidgets.QApplication(sys.argv)
         self.main_window = MainWindow()
         # catch invoked message boxes for additional parameters and make random selection
@@ -77,68 +76,9 @@ class TestMain(unittest.TestCase):
 
     def tearDown(self):
         #EXIT
-        self.main_window.close()
         self.app.exit()
-
-
-class FuzzTestGUI(unittest.TestCase):
-    """ 1. Start the GUI,
-        2. load a few randomly selected log directories or rd-data
-        3. randomly select something from sequences and plot settings; do this several times
-        4. repeat from 2. Do this for a given number of iterations
-    """
-    def setUp(self):
-        """Create the GUI"""
-        print('Executing Fuzz Test')
-        self.app = QtWidgets.QApplication(sys.argv)
-        self.main_window = MainWindow()
-        # catch invoked message boxes for additional parameters and make random selection
-        self.main_window.simDataItemTreeModel.dialog.message_shown.connect(self.random_attributes_selection)
-        self.main_window.show()
-        QTest.qWaitForWindowExposed(self.main_window)
-
-    def test_fuzz_plot(self):
-        # find all logs and rd-data
-
-        # find all sim dirs
-        sim_dirs_root = path.join(TEST_DIR, 'test_logs/exampleSimLogDirs/')
-        sim_dirs = listdir(sim_dirs_root)
-        sim_dirs = [path.join(sim_dirs_root, dir) for dir in sim_dirs]
-        # find all rd-data
-        rd_data_root = path.join(TEST_DIR, 'test_logs/exampleRDData/')
-        rd_data_files = listdir(rd_data_root)
-        rd_data_files = [path.join(rd_data_root, file) for file in rd_data_files]
-        # find all dat log dirs
-        rd_data_root = path.join(TEST_DIR, 'test_logs/exampleDatLogDirs/')
-        rd_data_files = listdir(rd_data_root)
-        rd_data_files = [path.join(rd_data_root, file) for file in rd_data_files]
-
-        all_data = sim_dirs + rd_data_files
-
-        # randomly choose 3 items from all data
-        random_sim_items = random.sample(all_data, 3)
-
-        # add the chosen items
-        for item in random_sim_items:
-            with wait_signal(self.main_window.simDataItemTreeView.parserThread.allParsed, timeout=10000):
-                self.main_window.process_cmd_line_args(['dummyAppName', item])
-
-        # now fuzz the gui
-        # todo
-
-    def random_attributes_selection(self):
-        for i in range(random.randint(0, len(self.main_window.simDataItemTreeModel.dialog.not_chosen_par)-1)):
-            rnd_nmbr = random.randint(0, len(self.main_window.simDataItemTreeModel.dialog.not_chosen_par)-1)
-            rnd_item = self.main_window.simDataItemTreeModel.dialog.not_chosen_par.item(rnd_nmbr)
-            if not self.main_window.simDataItemTreeModel.dialog.chosen_par.findItems(rnd_item.text(), QtCore.Qt.MatchExactly):
-                self.main_window.simDataItemTreeModel.dialog.chosen_par.addItems([rnd_item.text()])
-                self.main_window.simDataItemTreeModel.dialog.not_chosen_par.takeItem(rnd_nmbr)
-        self.main_window.simDataItemTreeModel.dialog.accept()
-
-    def tearDown(self):
-        #EXIT
         self.main_window.close()
-        self.app.exit()
+
 
 if __name__ == '__main__':
     unittest.main()
