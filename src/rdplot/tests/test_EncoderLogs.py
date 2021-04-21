@@ -58,8 +58,10 @@ class TestEncoderLogs(unittest.TestCase):
         del self.tested_parsers[DatLogs.AbstractDatLog]
         del self.tested_parsers[DatLogs.XMLDatLog]
         del self.tested_parsers[EncoderLogs.EncLogVTM360Lib]
+        del self.tested_parsers[EncoderLogs.EncLogVTMRPR]
 
     def tearDown(self):
+        self.app.deleteLater()
         self.app.exit()
 
     def test_parsing_of_logs(self):
@@ -213,14 +215,6 @@ class TestEncoderLogs(unittest.TestCase):
 
                     # no further checks possible, since the structure is defined by the xml format. not specific to a
                     # specific version
-
-                # todo: need to add test code for these:
-                elif isinstance(parsed_instance, DatLogs.DatLogHEVC):
-                    # we are only testing concrete implementations, not the abstract base class
-                    pass
-                elif isinstance(parsed_instance, DatLogs.DatLogConversionPSNRLoss360):
-                    # we are only testing concrete implementations, not the abstract base class
-                    pass
 
                 # these should not be tested
                 elif isinstance(parsed_instance, AbstractSimulationDataItem):
