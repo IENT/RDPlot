@@ -26,7 +26,7 @@ install:
   - pip3 install coveralls
   - pip3 install gitpython
   - python3 setup.py sdist
-    pip3 install --no-binary rdplot  dist/rdplot-*.tar.gz
+  - pip3 install --no-binary rdplot  dist/rdplot-*.tar.gz
 
 script:
  - cd src
