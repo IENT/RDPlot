@@ -52,7 +52,7 @@ This should work on all platforms.
 However, on Apple silicon you might have to fiddle a bit and use Rosetta.
 
 Snap
-_____
+----
 You can install RDPlot directly via snap for various Linux distributions.
 It was tested with Ubuntu 16.04 and Arch Linux.
 Be aware of the fact that you cannot access any directory in your system when rdplot is installed via snap.
@@ -83,7 +83,7 @@ If you run into any problems, don't hesitate to use the `Issue tracker <https://
    :local:
 
 Virtual Environment
-___________________
+----
 If you need system packages that conflict with the packages required for RDPlot, you can use a python virtual environment (see below).
 
 When you are inside a virtual environment, python ignores all system packages and instead uses a dedicated environment, allowing you to install packages with pip that would otherwise conflict with system packages and/or different versions. The pitfall is that you need to activate the environment each time you want to use the program.
