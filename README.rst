@@ -3,6 +3,7 @@ RDPlot
 
 RDPlot is a tool for plotting rate distortion curves.
 In particular, it can
+
 - Parse the output of reference software such as HM, SHM, or VTM.
 - Parse data points from xml-formatted files.
 - Parse data from csv-formatted files.
