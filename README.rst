@@ -1,20 +1,27 @@
-RDPlot 
+RDPlot
 =======================
 
-RdPlot is a tool for plotting rate distortion curves.  
+RDPlot is a tool for plotting rate distortion curves.
+In particular, it can
+- Parse the output of reference software such as HM, SHM, or VTM.
+- Parse data points from xml-formatted files.
+- Parse data from csv-formatted files.
+- Calculate Bjontegaard Delta statistics.
+- Export plots and BD statistics for camera ready presentation.
 
-Further information can be found in `src/rdplot/README.md
-<https://github.com/IENT/RDPlot/blob/master/src/rdplot/README.md>`_.
+It was developed along the design principle of easy extensibility.
+If no parse for your data is available, you can consider to introduce a `new parser <https://github.com/IENT/RDPlot/wiki/How-to-implement-a-new-parser>`_.
+If you feel like your parser would be of interest for others, please submit a PR.
 
 Build status
 =======================
 .. |Appveyor| image:: https://ci.appveyor.com/api/projects/status/y4gvft2pb3vmm4qe/branch/master?svg=true
   :target: https://ci.appveyor.com/project/JensAc/rdplot
 .. |TravisCI| image:: https://travis-ci.org/IENT/RDPlot.svg?branch=master
-  :target: https://travis-ci.org/IENT/RDPlot 
+  :target: https://travis-ci.org/IENT/RDPlot
 .. |SnapCraft| image:: https://snapcraft.io/rdplot/badge.svg
   :target: https://snapcraft.io/rdplot
-  
+
 +------------+------------+-------------+
 |  AppVeyor  | Travis CI  |  SnapCraft  |
 +============+============+=============+
@@ -34,97 +41,46 @@ Installation
 
 In the following sections different installation strategies are outlined:
 
-On this level of the repository you can build a python package which is 
-installable via pip3.
+Installation via pipx
+----
+RDPlot is available on `PyPi <https://pypi.org/project/rdplot/>`_.
+Therefore, you can directly install RDPlot via `pipx <https://pypi.org/project/pipx/>`_::
 
-You can also build an app for OS X.
+  pipx install rdplot
 
-For Windows an installer is available on the release page.
-
-Linux 
------
+This should work on all platforms.
+However, on Apple silicon you might have to fiddle a bit and use Rosetta.
 
 Snap
 _____
-
-You can install RDPlot directly via snap for various Linux distributions. 
-It was tested with Ubuntu 16.04 and Arch Linux. 
-Be aware of the fact that you cannot access any directory in your system when rdplot is installed via snap. 
+You can install RDPlot directly via snap for various Linux distributions.
+It was tested with Ubuntu 16.04 and Arch Linux.
+Be aware of the fact that you cannot access any directory in your system when rdplot is installed via snap.
 This is due to the confinement limitations of snaps.
 You will have access to /home and /media.
-Therefore, you should make sure, that the data you want to plot is accessible under these directories. 
+Therefore, you should make sure, that the data you want to plot is accessible under these directories.
 If you feel comfortable with that::
 
     sudo snap install rdplot
     sudo snap connect rdplot:removable-media
 
-Note, that connecting removable-media is not necessary, if you do not wish to acess files 
+Note, that connecting removable-media is not necessary, if you do not wish to acess files
 under /media.
 
-Building from Source 
-____________________
+Windows installer
+----
+For Windows an installer is available on the release page.
+The installer will install a released version.
+If you want to install the most recent (unreleased) version, you can download the installer from `Appveyors' artifacts <https://ci.appveyor.com/project/JensAc/rdplot/build/artifacts>`_.
 
-The following was tested with Ubuntu 16.04. It should be similar for other
-distributions.
 
-First of all there is a conflict between the python3-matplotlib package for
-Ubuntu and matplotlib installed from pip. 
+Building from Source
+=====================
+We assume that you are familiar to Python development for the following sections.
+If you run into any problems, don't hesitate to use the `Issue tracker <https://github.com/IENT/RDPlot/issues>`_.
 
-RDPlot will only work with matplotlib
-directly installed from pip and python3-matplotlib not installed via the system packet manager (e.g. apt).
-If you need system packages that conflict with the packages required for RDPlot, you can use a python virtual environment (see below).
-The general recommendation for installing python packages is to use pip.
-
-Make sure that you are using python 3 and pip is up to date::
-
-    python3 -V
-    pip3 -V
-    sudo pip3 install --upgrade pip
-    
-Note: python2 has been retired_ in 2020. python3 might also be called simply python on your system.
-
-.. _retired: https://www.python.org/doc/sunset-python-2/
-    
-If missing, install python3::
-
-    sudo apt-get install python3
-    
-If missing, install pip3::
-
-    sudo sh -c "curl https://bootstrap.pypa.io/get-pip.py | python3"
-
-Sadly but true, we need a few dependencies.  
-You need to install them with either your system packet manager, **or** pip::
-
-    sudo apt-get install python3-jsonpickle python3-setuptools python3-git # <- apt OR
-    sudo pip3 install gitpython                                            # <- pip
-    
-Now we can download the source and build our rdplot package::
-
-    git clone --depth 1 https://github.com/IENT/RDPlot && cd RDPlot # alternativly download and unpack current stable from  https://github.com/IENT/RDPlot/releases
-    python3 setup.py sdist
-
-Now you can install rdplot, either as user or system wide.
-Install it system wide::
-
-    sudo pip3 install --no-binary rdplot dist/rdplot-*.tar.gz
-
-As user. This will install the binary to ~/.local/bin/rdplot. Make sure it is 
-in your PATH. The desktop launcher also will work only if this is the case::
-
-    pip3 install --user --no-binary rdplot  dist/rdplot-*.tar.gz
-
-If you already have the tool installed run::
-
-    sudo pip3 install --no-binary rdplot --upgrade dist/rdplot-*.tar.gz 
-     
-     
-Now you should be able to run rdplot from the command line and have a
-launcher in your favourite desktop enviroment.
-
-If you do not want to build the distribution but a simple install run::
-    
-    sudo python setup.py install
+.. contents::
+   :local:
 
 Virtual Environment
 ___________________
@@ -137,30 +93,30 @@ You can find more info on virtual environments at https://packaging.python.org/g
 venv is included in python since version 3.3. If your python version is older consider upgrading, or install venv using::
 
     sudo pip install virtualenv
-    
+
 Download RDPlot. Make sure you do this at a place where it can stay::
 
     git clone --depth 1 https://github.com/IENT/RDPlot
     cd RDPlot
-    
+
 Create a virtualenv named "env" inside the RDPlot directory::
 
     python3 -m venv env
-    
+
 Activate the venv and install dependencies::
-    
+
     source env/bin/activate
     pip3 install --upgrade pip gitpython
-    
+
 Build and install RDPlot::
 
     python3 setup.py sdist
     pip3 install --no-binary rdplot --upgrade dist/rdplot-*.tar.gz
-    
+
 Leave the environment::
 
     deactivate
-    
+
 Remember to activate the environment every time you want to run RDPlot::
 
     cd RDPlot
@@ -169,27 +125,6 @@ Remember to activate the environment every time you want to run RDPlot::
     deactivate
 
 To uninstall, simply delete the RDPlot directory.
-    
-Windows
--------
-As mentioned above you can find an installer on the release page. Download, install, done.
-
-Docker
-------
-If you prefer to run RDPlot in a Docker container, no problem::
-    
-    docker build rd-plot-gui/
-    docker run -ti --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix CONTAINERID
-    
-Make sure that you added your user to the docker group. If the container cannot connect to the display run::
-    
-    xhost local:docker
-    
-and try again. It should work.
-
-**Note:** Most probably the dockerized version is something for enthusiasts. 
-It is not really tested and the image needs approx. 1.4 GB of disk-space. 
-If you want to spend that, enjoy!
 
 Mac OS X
 --------
@@ -197,23 +132,23 @@ Mac OS X
 Please contribute, if you have ideas for improvements.
 
 First of all you need to install python3.
-You can get it `here  
-<https://www.python.org/downloads/>`_. 
+You can get it `here
+<https://www.python.org/downloads/>`_.
 
 Moreover, install all the requirements::
-    
+
     cd src/rdplot
     pip3 install -r requirements.txt
 
 Addtionally install py2app::
-    
+
     pip3 install py2app
 
 Then navigate back to the top level and build an app in alias mode::
-    
+
     cd ../..
     python3 setup.py py2app -A
-    
+
 Now you should have an app in the dist folder.
 
 **Note:** This app contains hard links to the directory with the source.
@@ -226,19 +161,19 @@ Navigate to the local copy of the repository (now most probably in your Applicat
 
     git pull
     python3 setup.py py2app -A
-    
+
 Done!
 
-Unistall is also simple: Just delete the local copy of the repositories and all aliases.
+Uninstall is also simple: Just delete the local copy of the repositories and all aliases.
 
 Running from repository without installation
 =============================================
+If you want to help improving RDPlot, you most probably need to run it directly from source for development and testing.
 
-Linux 
+Linux
 -----
-
-You can start rdplot from the command line with::
+You can start RDPlot from the command line with::
 
     PYTHONPATH=~PATH_TO_RDPLOT/src/ python3 PATH_TO_RDPLOT/src/rdplot/__main__.py
-    
-If you want to start the tool out of an IDE like PyCharm, make sure that you have set the PYTHONPATH environment variable correctly.
+
+If you want to start the tool out of an IDE, make sure that you have set the PYTHONPATH environment variable correctly.
