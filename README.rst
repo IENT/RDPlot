@@ -11,7 +11,7 @@ In particular, it can
 - Export plots and BD statistics for camera ready presentation.
 
 It was developed along the design principle of easy extensibility.
-If no parse for your data is available, you can consider to introduce a `new parser <https://github.com/IENT/RDPlot/wiki/How-to-implement-a-new-parser>`_.
+If no parser for your data is available, you can consider to introduce a `new parser <https://github.com/IENT/RDPlot/wiki/How-to-implement-a-new-parser>`_.
 If you feel like your parser would be of interest for others, please submit a PR.
 
 Build status
@@ -56,7 +56,7 @@ Snap
 ----
 You can install RDPlot directly via snap for various Linux distributions.
 It was tested with Ubuntu 16.04 and Arch Linux.
-Be aware of the fact that you cannot access any directory in your system when rdplot is installed via snap.
+Be aware of the fact that you cannot access all the directories of your system, when RDPlot is installed via snap.
 This is due to the confinement limitations of snaps.
 You will have access to /home and /media.
 Therefore, you should make sure, that the data you want to plot is accessible under these directories.
@@ -65,14 +65,14 @@ If you feel comfortable with that::
     sudo snap install rdplot
     sudo snap connect rdplot:removable-media
 
-Note, that connecting removable-media is not necessary, if you do not wish to acess files
+Note, that connecting removable-media is not necessary, if you do not wish to access files
 under /media.
 
 Windows installer
 ----
 For Windows an installer is available on the release page.
 The installer will install a released version.
-If you want to install the most recent (unreleased) version, you can download the installer from `Appveyors' artifacts <https://ci.appveyor.com/project/JensAc/rdplot/build/artifacts>`_.
+If you want to install the most recent (unreleased) version, you can download the installer from `Appveyor's artifacts <https://ci.appveyor.com/project/JensAc/rdplot/build/artifacts>`_.
 
 
 Building from Source
@@ -141,7 +141,7 @@ Moreover, install all the requirements::
     cd src/rdplot
     pip3 install -r requirements.txt
 
-Addtionally install py2app::
+Additionally install py2app::
 
     pip3 install py2app
 
