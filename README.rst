@@ -43,7 +43,7 @@ Installation
 In the following sections different installation strategies are outlined:
 
 Installation via pipx
-----
+---------------------
 RDPlot is available on `PyPi <https://pypi.org/project/rdplot/>`_.
 Therefore, you can directly install RDPlot via `pipx <https://pypi.org/project/pipx/>`_::
 
@@ -69,7 +69,7 @@ Note, that connecting removable-media is not necessary, if you do not wish to ac
 under /media.
 
 Windows installer
-----
+-----------------
 For Windows an installer is available on the release page.
 The installer will install a released version.
 If you want to install the most recent (unreleased) version, you can download the installer from `Appveyor's artifacts <https://ci.appveyor.com/project/JensAc/rdplot/build/artifacts>`_.
@@ -84,7 +84,7 @@ If you run into any problems, don't hesitate to use the `Issue tracker <https://
    :local:
 
 Virtual Environment
-----
+-------------------
 If you need system packages that conflict with the packages required for RDPlot, you can use a python virtual environment (see below).
 
 When you are inside a virtual environment, python ignores all system packages and instead uses a dedicated environment, allowing you to install packages with pip that would otherwise conflict with system packages and/or different versions. The pitfall is that you need to activate the environment each time you want to use the program.
