@@ -34,6 +34,7 @@ script:
     - pytest --cov-report= --cov=rdplot
 after_success:
     - coveralls
+    - cd ..
 deploy:
     provider: pypi
     username: "__token__"
