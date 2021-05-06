@@ -20,14 +20,12 @@ Build status
   :target: https://ci.appveyor.com/project/JensAc/rdplot
 .. |TravisCI| image:: https://travis-ci.org/IENT/RDPlot.svg?branch=master
   :target: https://travis-ci.org/IENT/RDPlot
-.. |SnapCraft| image:: https://snapcraft.io/rdplot/badge.svg
-  :target: https://snapcraft.io/rdplot
 
-+------------+------------+-------------+
-|  AppVeyor  | Travis CI  |  SnapCraft  |
-+============+============+=============+
-| |Appveyor| | |TravisCI| | |SnapCraft| |
-+------------+------------+-------------+
++------------+------------+
+|  AppVeyor  | Travis CI  |
++============+============+
+| |Appveyor| | |TravisCI| |
++------------+------------+
 
 Code Coverage
 =======================
@@ -52,21 +50,6 @@ Therefore, you can directly install RDPlot via `pipx <https://pypi.org/project/p
 This should work on all platforms.
 However, on Apple silicon you might have to fiddle a bit and use Rosetta.
 
-Snap
-----
-You can install RDPlot directly via snap for various Linux distributions.
-It was tested with Ubuntu 16.04 and Arch Linux.
-Be aware of the fact that you cannot access all the directories of your system, when RDPlot is installed via snap.
-This is due to the confinement limitations of snaps.
-You will have access to /home and /media.
-Therefore, you should make sure, that the data you want to plot is accessible under these directories.
-If you feel comfortable with that::
-
-    sudo snap install rdplot
-    sudo snap connect rdplot:removable-media
-
-Note, that connecting removable-media is not necessary, if you do not wish to access files
-under /media.
 
 Windows installer
 -----------------
