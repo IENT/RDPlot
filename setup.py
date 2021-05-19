@@ -80,7 +80,7 @@ def get_version():
     else: 
         try:
             r = git.repo.Repo(here)
-            git_describe = r.git.describe()
+            git_describe = r.git.describe('--tags')
             f = open('version.txt','w')
             f.write(git_describe)
             f.close()
