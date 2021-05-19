@@ -32,14 +32,6 @@ Code Coverage
 
 Installation
 ========================
-
-.. contents::
-   :local:
-
-In the following sections different installation strategies are outlined:
-
-Installation via pipx
----------------------
 RDPlot is available on `PyPi <https://pypi.org/project/rdplot/>`_.
 Therefore, you can directly install RDPlot via `pipx <https://pypi.org/project/pipx/>`_::
 
