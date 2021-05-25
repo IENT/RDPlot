@@ -86,7 +86,8 @@ class CSVLog(AbstractSimulationDataItem):
 
     def can_parse_file(self):
         # we assume that we can parse it for the moment
-        pass
+        if self.endswith('.csv'):
+            return True
 
     # Non-abstract Helper Functions
     @classmethod
