@@ -17,6 +17,7 @@
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 ###############################################################################
+import re
 
 from rdplot.SimulationDataItem import AbstractSimulationDataItem
 
@@ -25,17 +26,17 @@ class CSVLog(AbstractSimulationDataItem):
     def __init__(self, config, header, line):
         # we do not have a unique path for each simulation data item
         # in the case of a csv file. Abuse the line as unique identifier
-        # there should'nt be any equal lines
+        # there should not be any equal lines
         super().__init__(line)
 
         header = header.replace("\n", "")
-        header = header.lower().split(';')
+        header = re.split(r'[,;]',header.lower())
         header = list(filter(None, header))
         sequence_idx = header.index("sequence")
         qp_idx = header.index("qp")
 
         # split also the line
-        line = line.split(';')
+        line = re.split(r'[,;]',line)
         line = list(filter(None, line))
 
         # I want to allow for all header fields looking like the bitrate
