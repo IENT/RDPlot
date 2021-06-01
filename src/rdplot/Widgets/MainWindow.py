@@ -730,7 +730,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 curve_name, ok = QtWidgets.QInputDialog.getText(self, "New curve", "Please enter a name for the new curve.\n"
                                             "If you enter an already existing name,\nits data will be overwritten.")
                 curve_name = curve_name.strip()
-                if curve_name is not '':
+                if curve_name != '':
                     new_plot_data = PlotData([curve_name], new_plot_values, [],
                                              plot_data_collection[0].label)
                     self.add_curve(curve_name, new_plot_data)
