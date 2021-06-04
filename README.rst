@@ -16,7 +16,7 @@ If you feel like your parser would be of interest for others, please submit a PR
 
 Build status
 =======================
-.. |Appveyor| image:: https://ci.appveyor.com/api/projects/status/t674taft7a9i5trl/branch/master?svg=true
+.. |Appveyor| image:: https://ci.appveyor.com/api/projects/status/github/IENT/rdplot?branch=development?svg=true?retina=true
   :target: https://ci.appveyor.com/project/mircodilly/rdplot
 .. |TravisCI| image:: https://travis-ci.org/IENT/RDPlot.svg?branch=master
   :target: https://travis-ci.org/IENT/RDPlot
