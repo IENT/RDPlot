@@ -16,14 +16,16 @@ If you feel like your parser would be of interest for others, please submit a PR
 
 Build status
 =======================
+.. |Appveyor| image:: https://ci.appveyor.com/api/projects/status/y4gvft2pb3vmm4qe/branch/master?svg=true
+  :target: https://ci.appveyor.com/project/JensAc/rdplot
 .. |TravisCI| image:: https://travis-ci.org/IENT/RDPlot.svg?branch=master
   :target: https://travis-ci.org/IENT/RDPlot
 
-+------------+
-| Travis CI  |
-+============+
-| |TravisCI| |
-+------------+
++------------+------------+
+|  AppVeyor  | Travis CI  |
++============+============+
+| |Appveyor| | |TravisCI| |
++------------+------------+
 
 Code Coverage
 =======================
@@ -32,6 +34,14 @@ Code Coverage
 
 Installation
 ========================
+
+.. contents::
+   :local:
+
+In the following sections different installation strategies are outlined:
+
+Installation via pipx
+---------------------
 RDPlot is available on `PyPi <https://pypi.org/project/rdplot/>`_.
 Therefore, you can directly install RDPlot via `pipx <https://pypi.org/project/pipx/>`_::
 
@@ -39,6 +49,14 @@ Therefore, you can directly install RDPlot via `pipx <https://pypi.org/project/p
 
 This should work on all platforms.
 However, on Apple silicon you might have to fiddle a bit and use Rosetta.
+
+
+Windows installer
+-----------------
+For Windows an installer is available on the release page.
+The installer will install a released version.
+If you want to install the most recent (unreleased) version, you can download the installer from `Appveyor's artifacts <https://ci.appveyor.com/project/JensAc/rdplot/build/artifacts>`_.
+
 
 Building from Source
 =====================
