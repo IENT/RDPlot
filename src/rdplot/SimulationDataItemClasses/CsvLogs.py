@@ -17,17 +17,12 @@
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 ###############################################################################
-
+from os.path import normpath, dirname
 from rdplot.SimulationDataItem import AbstractSimulationDataItem
 
 
 class CSVLog(AbstractSimulationDataItem):
-    def __init__(self, config, header, line):
-        # we do not have a unique path for each simulation data item
-        # in the case of a csv file. Abuse the line as unique identifier
-        # there should'nt be any equal lines
-        super().__init__(line)
-
+    def __init__(self, header, line, path):
         header = header.replace("\n", "")
         header = header.lower().split(';')
         header = list(filter(None, header))
@@ -46,13 +41,20 @@ class CSVLog(AbstractSimulationDataItem):
 
         self.sequence = line[sequence_idx]
         self.qp = line[qp_idx]
-        self.config = config
+        self.config = dirname(normpath(path))
+
+        # use parsed info to set unique identifier for item
+        # not actually a real path like in the other simulation item classe!
+        self.path = path + f":{self.sequence}/{self.qp}"
 
         data = {}
         for i in range(0, len(header)):
             if i in [sequence_idx, qp_idx, rate_idx]:
                 continue
-            data[header[i]] = [(rate, float(line[i]))]
+            try:
+                data[header[i]] = [(rate, float(line[i]))]
+            except ValueError:
+                continue
         self.summary_data = data
 
     @property
