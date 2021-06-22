@@ -170,10 +170,18 @@ class XMLDatLog(AbstractDatLog):
         :return: tuple of labels: (x-axis label, y-axis label)
         """
         sim_data = self.sim_data
-        unit_rate = sim_data['Rate']['Unit']
-        if 'Unit' in sim_data[keys[-1]]:
-            label = (unit_rate, sim_data[keys[-1]]['Unit'])
-        else:
-            label = ('dummy', 'dummy')
 
-        return label
+        if keys[0] == 'Summary':
+            unit_rate = sim_data['Rate']['Unit']
+            label_x = unit_rate
+        elif keys[0] == 'Temporal':
+            label_x = 'Frame'
+        else:
+            label_x = 'dummy'
+
+        if 'Unit' in sim_data[keys[-1]]:
+            label_y = sim_data[keys[-1]]['Unit']
+        else:
+            label_y = 'dummy'
+
+        return (label_x, label_y)
