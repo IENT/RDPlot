@@ -24,6 +24,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        # pulls all commits (needed for lerna / semantic release to correctly version)
+        fetch-depth: "0"
+    # pulls all tags (needed for lerna / semantic release to correctly version)
+    - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
     - name: apt
       run: |
         sudo apt-get install x11-utils
