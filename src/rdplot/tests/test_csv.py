@@ -2,14 +2,18 @@ import unittest
 from rdplot.SimulationDataItemClasses import CsvLogs
 from rdplot.SimulationDataItem import SimulationDataItemFactory
 from PyQt5 import QtWidgets
+from os import path, listdir
 import sys
 
+# path to test module (this file)
+TEST_DIR = path.dirname(path.abspath(__file__))
 
 class TestCsvLogs(unittest.TestCase):
     def setUp(self):
         self.app = QtWidgets.QApplication(sys.argv)
         self._factory = SimulationDataItemFactory.from_path('../SimulationDataItemClasses')
-        self.logs_parsed = self._factory.create_item_list_from_directory('test_logs/exampleCsv')
+        test_log_path = path.join(TEST_DIR, 'test_logs/exampleCsv')
+        self.logs_parsed = self._factory.create_item_list_from_directory(test_log_path)
 
     def tearDown(self):
         self.app.exit()
