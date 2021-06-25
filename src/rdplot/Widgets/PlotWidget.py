@@ -260,7 +260,7 @@ class DataCursor(object):
         self.template = template
         self.offsets = offsets
         self.display_all = display_all
-        if not cbook.iterable(artists):
+        if not hasattr(artists, '__iter__'):
             artists = [artists]
         self.artists = artists
         self.axes = tuple(set(art.axes for art in self.artists))

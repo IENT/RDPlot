@@ -400,6 +400,9 @@ class SimulationDataItemFactory(QObject):
         list_classes = list(reversed(sorted(self._classes, key=lambda parser_class: parser_class.parse_order)))
         list_classes = list(filter(lambda x: True if str(x).find('Abstract') == -1 else False, list_classes))
         for cls in list_classes:
+            if cls.can_parse_file(file_path) and file_path.endswith('.csv'):
+                cls_list.extend(self.parse_csv_item_list(file_path))
+                break
             if cls.can_parse_file(file_path):
                 cls_list.append(cls(file_path))
                 break
@@ -470,32 +473,7 @@ class SimulationDataItemFactory(QObject):
         # simulation data items. Parse the file here and create an
         # item for every nonempty line
         if (isfile(path) and path.endswith(".csv")):
-            # we already know that we need the csvlog
-            # currently there is only one...just use it
-            # I think this should not change in the future,
-            # otherwise parts of the file would need to be parsed
-            # in order to dertmine the type
-            try:
-                from rdplot.SimulationDataItemClasses.CsvLogs import CSVLog
-
-                with open(path) as csvfile:
-                    lines = csvfile.readlines()
-
-                header = lines[0]
-                # the config is assumed to be in the file name
-                config = splitext(basename(path))[0]
-
-                item_list = []
-                for line in lines[1:]:
-                    # first remove newline characters
-                    line = line.replace("\n", "")
-                    # and if we have empty lines somewhere, continue
-                    if not line:
-                        continue
-                    item_list.append(CSVLog(config, header, line))
-                return item_list
-            except:
-                raise SimulationDataItemError()
+            self.parse_csv_item_list(path)
 
         if isfile(path):
             return self.create_item_from_file(path)
@@ -509,6 +487,34 @@ class SimulationDataItemFactory(QObject):
                                           "Not at least one simulation data item can be created from path"
                                           " '{}'"
                                       ).format(path))
+
+    def parse_csv_item_list(self, log_path):
+        # we already know that we need the csvlog
+        # currently there is only one...just use it
+        # I think this should not change in the future,
+        # otherwise parts of the file would need to be parsed
+        # in order to dertmine the type
+        try:
+            from rdplot.SimulationDataItemClasses.CsvLogs import CSVLog
+
+            with open(log_path) as csvfile:
+                lines = csvfile.readlines()
+
+            header = lines[0]
+            # the config is assumed to be in the file name
+            config = splitext(basename(log_path))[0]
+
+            item_list = []
+            for line in lines[1:]:
+                # first remove newline characters
+                line = line.replace("\n", "")
+                # and if we have empty lines somewhere, continue
+                if not line:
+                    continue
+                item_list.append(CSVLog(config, header, line))
+            return item_list
+        except:
+            raise SimulationDataItemError()
 
     # Magic Methods
     def __str__(self):

@@ -127,7 +127,7 @@ def get_install_requires():
                       'xmltodict', 'jsonpickle', 
                       'tikzplotlib', 'Pillow'],
     else:
-        install_requires=['cycler', 'matplotlib==3.2.2', 'numpy',
+        install_requires=['cycler', 'matplotlib==3.4.2', 'numpy',
                       'py', 'pyparsing', 'pyqt5', 'pytest',
                       'python-dateutil', 'pytz', 'six', 
                       'scipy', 'tabulate', 'mpldatacursor',
@@ -179,6 +179,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9'
     ],
 
     # What does your project relate to?
