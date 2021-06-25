@@ -16,8 +16,8 @@ If you feel like your parser would be of interest for others, please submit a PR
 
 Build status
 =======================
-.. |Appveyor| image:: https://ci.appveyor.com/api/projects/status/a8rlrahljgkik3qs/branch/development?svg=true&retina=true
-  :target: https://ci.appveyor.com/project/mircodilly/rdplot
+.. |Appveyor| image:: https://ci.appveyor.com/api/projects/status/o1qbjnf29err9o2a/branch/master?svg=true&retina=true
+  :target: https://ci.appveyor.com/project/JensAc/rdplot
 .. |TravisCI| image:: https://travis-ci.org/IENT/RDPlot.svg?branch=master
   :target: https://travis-ci.org/IENT/RDPlot
 
@@ -55,7 +55,7 @@ Windows installer
 -----------------
 For Windows an installer is available on the release page.
 The installer will install a released version.
-If you want to install the most recent (unreleased) version, you can download the installer from `Appveyor's artifacts <https://ci.appveyor.com/project/mircodilly/rdplot/build/artifacts>`_.
+If you want to install the most recent (unreleased) version, you can download the installer from `Appveyor's artifacts <https://ci.appveyor.com/project/JensAc/rdplot/build/artifacts>`_.
 
 
 Building from Source
@@ -118,6 +118,9 @@ Please contribute, if you have ideas for improvements.
 First of all you need to install python3.
 You can get it `here
 <https://www.python.org/downloads/>`_.
+If you are using Homebrew you can alternatively install python3 via console::
+
+    brew install python@3.9
 
 Moreover, install all the requirements::
 
