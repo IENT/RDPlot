@@ -2,16 +2,20 @@ import unittest
 from rdplot.SimulationDataItemClasses import CsvLogs
 from rdplot.SimulationDataItem import SimulationDataItemFactory
 from PyQt5 import QtWidgets
-from os import path, listdir
+from os import path
 import sys
 
 # path to test module (this file)
 TEST_DIR = path.dirname(path.abspath(__file__))
 
+# Path to the folder containing simulation data sub classes. The classes
+# are loaded by the simulation data item factory and used for parsing files
+SIMULATION_DATA_ITEM_CLASSES_PATH = path.normpath(path.join(TEST_DIR, '../SimulationDataItemClasses'))
+
 class TestCsvLogs(unittest.TestCase):
     def setUp(self):
         self.app = QtWidgets.QApplication(sys.argv)
-        self._factory = SimulationDataItemFactory.from_path('../SimulationDataItemClasses')
+        self._factory = SimulationDataItemFactory.from_path(SIMULATION_DATA_ITEM_CLASSES_PATH)
         test_log_path = path.join(TEST_DIR, 'test_logs/exampleCsv')
         self.logs_parsed = self._factory.create_item_list_from_directory(test_log_path)
 
