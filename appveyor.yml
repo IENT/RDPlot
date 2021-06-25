@@ -1,21 +1,17 @@
-image: Visual Studio 2015
+image: Visual Studio 2019
 platform:
   -x86
-  
+
 environment:
   matrix:
-  - PYTHON: "C:\\Python36"
-    PYTHON_VERSION: "3.6.1"
-    PYTHON_ARCH: "32"
-    PIP: "C:\\Python36\\Scripts\\pip"
+  - PYTHON: "C:\\Python39-x64"
+    PYTHON_VERSION: "3.9.1"
+    PYTHON_ARCH: "64"
 
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-  - cmd: "%PIP% install cycler matplotlib py pyparsing PyQt5 pytest python-dateutil pytz sip six tabulate mpldatacursor jsonpickle xmltodict tikzplotlib pynsist Pillow"
-  - git clone https://github.com/JensAc/WinPythonModules.git
-  - cd WinPythonModules
-  - cmd: "%PIP% install numpy-1.13.1+mkl-cp36-cp36m-win32.whl scipy-0.19.1-cp36-cp36m-win32.whl"
-  - cd ..
+  - python --version
+  - python -m pip install numpy scipy cycler matplotlib py pyparsing PyQt5 pytest python-dateutil pytz sip six tabulate mpldatacursor jsonpickle xmltodict tikzplotlib pynsist Pillow
 
 build_script:
   - git describe > .\src\rdplot\version.txt
@@ -27,5 +23,5 @@ after_build:
 
 artifacts:
   - path: /build/nsis/install-rdplot.exe
-  
+
 test: off
