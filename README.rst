@@ -55,7 +55,7 @@ Windows installer
 -----------------
 For Windows an installer is available on the release page.
 The installer will install a released version.
-If you want to install the most recent (unreleased) version, you can download the installer from `Appveyor's artifacts <https://ci.appveyor.com/project/JensAc/rdplot/build/artifacts>`_.
+If you want to install the most recent (unreleased) version, you can download the installer from `Appveyor's artifacts <https://ci.appveyor.com/project/mircodilly/rdplot/build/artifacts>`_.
 
 
 Building from Source
