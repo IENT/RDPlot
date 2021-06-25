@@ -24,8 +24,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - run: npm install
-    - run: xvfb-run --auto-servernum npm test
     - name: apt
       run: |
         sudo apt-get install x11-utils
@@ -63,7 +61,7 @@ jobs:
     - name: Test with pytest
       run: |
         cd src
-        pytest --cov-report= --cov=rdplot
+        xvfb-run --auto-servernum pytest --cov-report= --cov=rdplot
     - name: After Success
       run: |
         coveralls
