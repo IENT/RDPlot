@@ -127,7 +127,7 @@ def get_install_requires():
                       'xmltodict', 'jsonpickle', 
                       'tikzplotlib', 'Pillow'],
     else:
-        install_requires=['cycler', 'matplotlib==3.4.1', 'numpy',
+        install_requires=['cycler', 'matplotlib==3.4.2', 'numpy',
                       'py', 'pyparsing', 'pyqt5', 'pytest',
                       'python-dateutil', 'pytz', 'six', 
                       'scipy', 'tabulate', 'mpldatacursor',
