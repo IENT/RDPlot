@@ -46,8 +46,8 @@ class AbstractDecAnalyserLog(AbstractSimulationDataItem):
 
         # decoder logs do not contain description of the related sequence, have to parse all from file name
         try:
-            sequence = re.search("(\w+)_\d+x\d+", basename(path)).group(1)
-            qp = re.search("_QP(\d+)_", basename(path)).group(1)
+            sequence = re.search(r"(\w+)_\d+x\d+", basename(path)).group(1)
+            qp = re.search(r"_QP(\d+)_", basename(path)).group(1)
         except:  # could not get name and qp from file name
             raise SimulationDataItemError
 
@@ -108,7 +108,7 @@ class DecAnalyserLogHM(AbstractDecAnalyserLog):
     @classmethod
     def can_parse_file(cls, path):
         matches_class = cls._enc_log_file_matches_re_pattern(path, r'^HM \s software')
-        is_finished = cls._enc_log_file_matches_re_pattern(path, '\[TOTAL')
+        is_finished = cls._enc_log_file_matches_re_pattern(path, r'\[TOTAL')
         return matches_class and is_finished
 
     def _parse_analyser_data(self):
@@ -130,17 +130,17 @@ class DecAnalyserLogHM(AbstractDecAnalyserLog):
             for statistic in dec_statistics:
                 # try to match non total items
                 m = re.match(
-                    '\s*(\S+)\s*:' +         # name
-                    '\s*(\S+)' +             # width
-                    '\s*(\S+)' +             # type
-                    '\s*(\S+)' +             # CABAC Count
-                    '\s*(\S+)' +             # CABAC Sum
-                    '\s*(\S+)' +             # CABAC bits
-                    '\s*(\S+)' +             # EP Count
-                    '\s*(\S+)' +             # EP Sum
-                    '\s*(\S+)' +             # EP bits
-                    '\s*(\S+)' +             # Total bits
-                    '\s*\(\s*(\S+)\)',       # Total bytes
+                    r'\s*(\S+)\s*:' +         # name
+                    r'\s*(\S+)' +             # width
+                    r'\s*(\S+)' +             # type
+                    r'\s*(\S+)' +             # CABAC Count
+                    r'\s*(\S+)' +             # CABAC Sum
+                    r'\s*(\S+)' +             # CABAC bits
+                    r'\s*(\S+)' +             # EP Count
+                    r'\s*(\S+)' +             # EP Sum
+                    r'\s*(\S+)' +             # EP bits
+                    r'\s*(\S+)' +             # Total bits
+                    r'\s*\(\s*(\S+)\)',       # Total bytes
                     statistic)
                 if m:
                     statistic_name = m.group(1)
@@ -167,17 +167,17 @@ class DecAnalyserLogHM(AbstractDecAnalyserLog):
 
                 # try to match total items
                 m = re.match(
-                    '\[(\S+)\s*~' +          # name
-                    '\s*(\S+)' +             # width
-                    '\s*(\S+)' +             # type
-                    '\s*(\S+)' +             # CABAC Count
-                    '\s*(\S+)' +             # CABAC Sum
-                    '\s*(\S+)' +             # CABAC bits
-                    '\s*(\S+)' +             # EP Count
-                    '\s*(\S+)' +             # EP Sum
-                    '\s*(\S+)' +             # EP bits
-                    '\s*(\S+)' +             # Total bits
-                    '\s*\(\s*(\S+)\)\]',     # Total bytes
+                    r'\[(\S+)\s*~' +          # name
+                    r'\s*(\S+)' +             # width
+                    r'\s*(\S+)' +             # type
+                    r'\s*(\S+)' +             # CABAC Count
+                    r'\s*(\S+)' +             # CABAC Sum
+                    r'\s*(\S+)' +             # CABAC bits
+                    r'\s*(\S+)' +             # EP Count
+                    r'\s*(\S+)' +             # EP Sum
+                    r'\s*(\S+)' +             # EP bits
+                    r'\s*(\S+)' +             # Total bits
+                    r'\s*\(\s*(\S+)\)\]',     # Total bytes
                     statistic)
                 if m:
                     statistic_name = m.group(1)

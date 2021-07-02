@@ -203,7 +203,7 @@ class EncLogHM(AbstractEncLog):
     @classmethod
     def can_parse_file(cls, path):
         matches_class = cls._enc_log_file_matches_re_pattern(path, r'^HM \s software')
-        is_finished = cls._enc_log_file_matches_re_pattern(path, 'Total\ Time')
+        is_finished = cls._enc_log_file_matches_re_pattern(path, r'Total\ Time')
         if is_finished is False and matches_class is True:
             # In case an enc.log file has not a Total Time mark it is very likely that the file is erroneous.
             # TODO: Inform user with a dialog window
@@ -295,15 +295,15 @@ class EncLogHM(AbstractEncLog):
                         break
                     if one_line.count(':') == 1:
                         clean_line = one_line.strip(' \n\t\r')
-                        clean_line = re.sub('\s+', '', clean_line)
+                        clean_line = re.sub(r'\s+', '', clean_line)
                         if not any(re.search(param, clean_line) for param in param_not_considered):
                             cleanlist.append(clean_line)
                     elif one_line.count(':') > 1:
-                        if re.search('\w+ \s+ \w+ \s+ \w+ \s+ :\s+ \( \w+ : \d+ , \s+ \w+ : \d+ \)', one_line, re.X):
-                            clean_line = re.findall('\w+ \s+ \w+ \s+ \w+ \s+ :\s+ \( \w+ : \d+ , \s+ \w+ : \d+ \)',
+                        if re.search(r'\w+ \s+ \w+ \s+ \w+ \s+ :\s+ \( \w+ : \d+ , \s+ \w+ : \d+ \)', one_line, re.X):
+                            clean_line = re.findall(r'\w+ \s+ \w+ \s+ \w+ \s+ :\s+ \( \w+ : \d+ , \s+ \w+ : \d+ \)',
                                                     one_line, re.X)
                         else:
-                            clean_line = re.findall('\w+ : \d+ | \w+ : \s+ \w+ = \d+', one_line, re.X)
+                            clean_line = re.findall(r'\w+ : \d+ | \w+ : \s+ \w+ = \d+', one_line, re.X)
                         for clean_item in clean_line:
                             if not any(re.search(param, clean_item) for param in param_not_considered):
                                 cleanlist.append(clean_item)
@@ -349,7 +349,7 @@ class EncLogHM360Lib(AbstractEncLog):
     @classmethod
     def can_parse_file(cls, path):
         matches_class = cls._enc_log_file_matches_re_pattern(path, r'Y-PSNR_(?:DYN_)?VP0')
-        is_finished = cls._enc_log_file_matches_re_pattern(path, 'Total\ Time')
+        is_finished = cls._enc_log_file_matches_re_pattern(path, r'Total\ Time')
         return matches_class and is_finished
 
     def _parse_config(self):
@@ -369,15 +369,15 @@ class EncLogHM360Lib(AbstractEncLog):
                         break
                     if one_line.count(':') == 1:
                         clean_line = one_line.strip(' \n\t\r')
-                        clean_line = re.sub('\s+', '', clean_line)
+                        clean_line = re.sub(r'\s+', '', clean_line)
                         if not any(re.search(param, clean_line) for param in param_not_considered):
                             cleanlist.append(clean_line)
                     elif one_line.count(':') > 1:
-                        if re.search('\w+ \s+ \w+ \s+ \w+ \s+ :\s+ \( \w+ : \d+ , \s+ \w+ : \d+ \)', one_line, re.X):
-                            clean_line = re.findall('\w+ \s+ \w+ \s+ \w+ \s+ :\s+ \( \w+ : \d+ , \s+ \w+ : \d+ \)',
+                        if re.search(r'\w+ \s+ \w+ \s+ \w+ \s+ :\s+ \( \w+ : \d+ , \s+ \w+ : \d+ \)', one_line, re.X):
+                            clean_line = re.findall(r'\w+ \s+ \w+ \s+ \w+ \s+ :\s+ \( \w+ : \d+ , \s+ \w+ : \d+ \)',
                                                     one_line, re.X)
                         else:
-                            clean_line = re.findall('\w+ : \d+ | \w+ : \s+ \w+ = \d+', one_line, re.X)
+                            clean_line = re.findall(r'\w+ : \d+ | \w+ : \s+ \w+ = \d+', one_line, re.X)
                         for clean_item in clean_line:
                             if not any(re.search(param, clean_item) for param in param_not_considered):
                                 cleanlist.append(clean_item)
@@ -385,7 +385,7 @@ class EncLogHM360Lib(AbstractEncLog):
         parsed_config = dict(item.split(':', maxsplit=1) for item in cleanlist)
 
         # parse 360 rotation parameter
-        m = re.search('Rotation in 1/100 degrees:\s+\(yaw:(\d+)\s+pitch:(\d+)\s+roll:(\d+)\)', log_text)
+        m = re.search(r'Rotation in 1/100 degrees:\s+\(yaw:(\d+)\s+pitch:(\d+)\s+roll:(\d+)\)', log_text)
         if m:
             yaw = m.group(1)
             pitch = m.group(2)
@@ -413,7 +413,7 @@ class EncLogHM360Lib(AbstractEncLog):
         data = {}
 
         # get the summaries as pair of summary type and summary text, splitting at summary type and capturing it
-        summaries_texts_and_types = re.split('((?:\w )?\w+) ?--------------------------------------------------------',
+        summaries_texts_and_types = re.split(r'((?:\w )?\w+) ?--------------------------------------------------------',
                                              log_text)
         del summaries_texts_and_types[0]  # remove the log text up to the first summary item
         if len(summaries_texts_and_types) % 2:
@@ -423,12 +423,12 @@ class EncLogHM360Lib(AbstractEncLog):
             summary_text = summary_text.strip().splitlines()  # first line is header, second line are the values
 
             # parsing header
-            first_header_item, remaining_items = re.split('\|', summary_text[0])  # since first item has a space
-            remaining_items = re.split('\s+', remaining_items.strip())
+            first_header_item, remaining_items = re.split(r'\|', summary_text[0])  # since first item has a space
+            remaining_items = re.split(r'\s+', remaining_items.strip())
             header = [first_header_item] + remaining_items
 
             # parsing values
-            values = re.split('\s+', summary_text[1].strip())
+            values = re.split(r'\s+', summary_text[1].strip())
             del values[1]  # remove the letter below the | in the header (a, b, p or i)
 
             if header[1] != 'Bitrate':
@@ -500,7 +500,7 @@ class EncLogSHM(AbstractEncLog):
     @classmethod
     def can_parse_file(cls, path):
         matches_class = cls._enc_log_file_matches_re_pattern(path, r'^SHM \s software')
-        is_finished = cls._enc_log_file_matches_re_pattern(path, 'Total\ Time')
+        is_finished = cls._enc_log_file_matches_re_pattern(path, r'Total\ Time')
         return matches_class and is_finished
 
     def _parse_summary_data(self):
@@ -603,9 +603,9 @@ class EncLogSHM(AbstractEncLog):
             for one_line in lines:
                 if '=== Common configuration settings === ' in one_line:
                     break
-                if re.match('QP\s+',one_line):
+                if re.match(r'QP\s+',one_line):
                     clean_line = one_line.strip(' \n\t\r')
-                    clean_line = re.sub('\s+', '', clean_line)
+                    clean_line = re.sub(r'\s+', '', clean_line)
                     clean_list.append(clean_line)
             clean_list = [item.split(':', maxsplit=1) for item in clean_list]
             parsed_config = {}
@@ -632,7 +632,7 @@ class EncLogVTM360Lib(AbstractEncLog):
     def can_parse_file(cls, path):
         matches_vtm_bms = cls._enc_log_file_matches_re_pattern(path, r'^VVCSoftware')    
         matches_360 = cls._enc_log_file_matches_re_pattern(path, r'Y-E2ESPSNR')
-        is_finished = cls._enc_log_file_matches_re_pattern(path, 'Total\ Time')
+        is_finished = cls._enc_log_file_matches_re_pattern(path, r'Total\ Time')
         return matches_vtm_bms and is_finished and matches_360
 
     def _parse_path(self, path):
@@ -669,15 +669,15 @@ class EncLogVTM360Lib(AbstractEncLog):
                         break
                     if one_line.count(':') == 1:
                         clean_line = one_line.strip(' \n\t\r')
-                        clean_line = re.sub('\s+', '', clean_line)
+                        clean_line = re.sub(r'\s+', '', clean_line)
                         if not any(re.search(param, clean_line) for param in param_not_considered):
                             cleanlist.append(clean_line)
                     elif one_line.count(':') > 1:
-                        if re.search('\w+ \s+ \w+ \s+ \w+ \s+ :\s+ \( \w+ : \d+ , \s+ \w+ : \d+ \)', one_line, re.X):
-                            clean_line = re.findall('\w+ \s+ \w+ \s+ \w+ \s+ :\s+ \( \w+ : \d+ , \s+ \w+ : \d+ \)',
+                        if re.search(r'\w+ \s+ \w+ \s+ \w+ \s+ :\s+ \( \w+ : \d+ , \s+ \w+ : \d+ \)', one_line, re.X):
+                            clean_line = re.findall(r'\w+ \s+ \w+ \s+ \w+ \s+ :\s+ \( \w+ : \d+ , \s+ \w+ : \d+ \)',
                                                     one_line, re.X)
                         else:
-                            clean_line = re.findall('\w+ : \d+ | \w+ : \s+ \w+ = \d+', one_line, re.X)
+                            clean_line = re.findall(r'\w+ : \d+ | \w+ : \s+ \w+ = \d+', one_line, re.X)
                         for clean_item in clean_line:
                             if not any(re.search(param, clean_item) for param in param_not_considered):
                                 cleanlist.append(clean_item)
@@ -685,7 +685,7 @@ class EncLogVTM360Lib(AbstractEncLog):
         parsed_config = dict(item.split(':', maxsplit=1) for item in cleanlist)
 
         # parse 360 rotation parameter
-        m = re.search('Rotation in 1/100 degrees:\s+\(yaw:(\d+)\s+pitch:(\d+)\s+roll:(\d+)\)', log_text)
+        m = re.search(r'Rotation in 1/100 degrees:\s+\(yaw:(\d+)\s+pitch:(\d+)\s+roll:(\d+)\)', log_text)
         if m:
             yaw = m.group(1)
             pitch = m.group(2)
@@ -729,12 +729,12 @@ class EncLogVTM360Lib(AbstractEncLog):
             # summary_text = summary_text.strip().splitlines()  # first line is header, second line are the values
 
             # parsing header
-            first_header_item, remaining_items = re.split('\|', summary_text[0])  # since first item has a space
-            remaining_items = re.split('\s+', remaining_items.strip())
+            first_header_item, remaining_items = re.split(r'\|', summary_text[0])  # since first item has a space
+            remaining_items = re.split(r'\s+', remaining_items.strip())
             header = [first_header_item] + remaining_items
 
             # parsing values
-            values = re.split('\s+', summary_text[1].strip())
+            values = re.split(r'\s+', summary_text[1].strip())
             del values[1]  # remove the letter below the | in the header (a, b, p or i)
 
             if header[1] != 'Bitrate':
@@ -814,12 +814,12 @@ class EncLogVTM(AbstractEncLog):
 
             # parsing header
             first_header_item, remaining_items = re.split(
-                '\|', summary_text[0])  # since first item has a space
-            remaining_items = re.split('\s+', remaining_items.strip())
+                r'\|', summary_text[0])  # since first item has a space
+            remaining_items = re.split(r'\s+', remaining_items.strip())
             header = [first_header_item] + remaining_items
 
             # parsing values
-            values = re.split('\s+', summary_text[1].strip())
+            values = re.split(r'\s+', summary_text[1].strip())
             del values[
                 1]  # remove the letter below the | in the header (a, b, p or i)
 
@@ -900,12 +900,12 @@ class EncLogVTMRPR(AbstractEncLog):
 
             # parsing header
             first_header_item, remaining_items = re.split(
-                '\|', summary_text[0])  # since first item has a space
-            remaining_items = re.split('\s+', remaining_items.strip())
+                r'\|', summary_text[0])  # since first item has a space
+            remaining_items = re.split(r'\s+', remaining_items.strip())
             header = [first_header_item] + remaining_items
 
             # parsing values
-            values = re.split('\s+', summary_text[1].strip())
+            values = re.split(r'\s+', summary_text[1].strip())
             del values[
                 1]  # remove the letter below the | in the header (a, b, p or i)
 
@@ -922,8 +922,8 @@ class EncLogVTMRPR(AbstractEncLog):
                 data[summary_type].update(summary_item)
 
             # parse values for PSNR1 and PSNR2
-            header = re.split('\s+', summary_text[3].strip())
-            values = re.split('\s+', summary_text[4].strip())
+            header = re.split(r'\s+', summary_text[3].strip())
+            values = re.split(r'\s+', summary_text[4].strip())
 
             summary_type = header.pop(0)
             data[summary_type] = {}
@@ -934,8 +934,8 @@ class EncLogVTMRPR(AbstractEncLog):
                 data[summary_type].update(summary_item)
 
             # parse values for PSNR1
-            header = re.split('\s+', summary_text[5].strip())
-            values = re.split('\s+', summary_text[6].strip())
+            header = re.split(r'\s+', summary_text[5].strip())
+            values = re.split(r'\s+', summary_text[6].strip())
 
             summary_type = header.pop(0)
             data[summary_type] = {}
