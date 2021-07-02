@@ -29,7 +29,7 @@ jobs:
         fetch-depth: "0"
     # pulls all tags (needed for lerna / semantic release to correctly version)
     - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-    - name: apt
+    - name: Install apt packages
       run: |
         sudo apt-get install x11-utils
         sudo apt-get install libxkbcommon-x11-0
@@ -57,17 +57,30 @@ jobs:
         python -m pip install gitpython
         python3 setup.py sdist
         python -m pip install --no-binary rdplot  dist/rdplot-*.tar.gz
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+  #  - name: Lint with flake8
+  #    run: |
+  #      # stop the build if there are Python syntax errors or undefined names
+  #      flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+  #      # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+  #      flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        cd src
         xvfb-run --auto-servernum pytest --cov-report= --cov=rdplot
-    - name: After Success
-      run: |
-        coveralls
-        cd ..
+    - name: Upload coverage data to coveralls.io
+      run: coveralls --service=github
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        COVERALLS_FLAG_NAME: ${{ matrix.test-name }}
+        COVERALLS_PARALLEL: true
+  coveralls:
+   name: Coveralls
+   needs: build
+   runs-on: ubuntu-latest
+   container: python:3-slim
+   steps:
+     - name: Finished
+       run: |
+         pip3 install --upgrade coveralls
+         coveralls --service=github --finish
+       env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
