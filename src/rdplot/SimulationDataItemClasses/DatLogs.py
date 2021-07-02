@@ -42,7 +42,7 @@ class AbstractDatLog(AbstractSimulationDataItem):
 
         # Dictionaries holding the parsed values
         self.summary_data = self._parse_summary_data()
-        self.temporal_data = {}  # Dat logs have no temporal data
+        self.temporal_data = self._parse_temporal_data()
 
         self.log_config = self._parse_config()
 
@@ -106,7 +106,7 @@ class XMLDatLog(AbstractDatLog):
                 xmltodict.parse(xml)
                 # if we can parse the xml file, assume that RDPlot can display the data
                 return True
-            except (ExpatError, UnicodeDecodeError, KeyError, IsADirectoryError,FileNotFoundError, PermissionError):
+            except (ExpatError, UnicodeDecodeError, KeyError, IsADirectoryError,FileNotFoundError, PermissionError) as err:
                 return False
 
     def _parse_summary_data(self):
@@ -118,12 +118,41 @@ class XMLDatLog(AbstractDatLog):
 
             data = {}
             for key, value in sim_data.items():
+                if 'temporal_data' == key:
+                    continue
                 try:
                     data[key] = [(rate, float(sim_data[key]['Value']))]
                 except ValueError:
                     print("Could not convert %s: %s to float" % (key,sim_data[key]['Value'] ))
                     continue
 
+            return data
+        except IndexError:
+            raise
+
+    def _parse_temporal_data(self):
+        try:
+            # create local copy of sim data. we don't want to delete the rate field outside of this function
+            sim_data = dict(self.sim_data)
+            data = {}
+
+            if 'temporal_data' in sim_data:
+                temporal_data = sim_data['temporal_data']
+                for frame_string, frame_items in temporal_data.items():
+                    frame_nr = int(frame_string.split('Frame')[1])
+                    for key, item_desc in frame_items.items():
+                        try:
+                            if not key in data:
+                                # start new list
+                                data[key] = [(frame_nr, float(item_desc['Value']))]
+                            else:
+                                # append to list
+                                data[key] += [(frame_nr, float(item_desc['Value']))]
+                        except ValueError:
+                            print("Could not convert %s: %s to float" % (key,sim_data[key]['Value'] ))
+                            continue
+            else:
+                return {}
             return data
         except IndexError:
             raise
@@ -141,10 +170,18 @@ class XMLDatLog(AbstractDatLog):
         :return: tuple of labels: (x-axis label, y-axis label)
         """
         sim_data = self.sim_data
-        unit_rate = sim_data['Rate']['Unit']
-        if 'Unit' in sim_data[keys[-1]]:
-            label = (unit_rate, sim_data[keys[-1]]['Unit'])
-        else:
-            label = ('dummy', 'dummy')
 
-        return label
+        if keys[0] == 'Summary':
+            unit_rate = sim_data['Rate']['Unit']
+            label_x = unit_rate
+        elif keys[0] == 'Temporal':
+            label_x = 'Frame'
+        else:
+            label_x = 'dummy'
+
+        if 'Unit' in sim_data[keys[-1]]:
+            label_y = sim_data[keys[-1]]['Unit']
+        else:
+            label_y = 'dummy'
+
+        return (label_x, label_y)

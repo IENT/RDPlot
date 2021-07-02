@@ -118,6 +118,9 @@ Please contribute, if you have ideas for improvements.
 First of all you need to install python3.
 You can get it `here
 <https://www.python.org/downloads/>`_.
+If you are using Homebrew you can alternatively install python3 via console::
+
+    brew install python@3.9
 
 Moreover, install all the requirements::
 

@@ -74,7 +74,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Connect list view with model for the selected values of tree view
         self.selectedSimulationDataItemListModel = OrderedDictModel()
         self.simDataItemListView.setModel(self.selectedSimulationDataItemListModel)
-        self._selection_model.selectionChanged.disconnect()
         self._selection_model.selectionChanged.connect(self.change_list)
 
         # set up signals and slots
@@ -189,7 +188,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.actionHide_PlotSettings.setChecked(True)
         else:
             self.actionHide_PlotSettings.setChecked(False)
-        self._variable_tree_selection_model.selectionChanged.disconnect()
         self._variable_tree_selection_model.selectionChanged.connect(self.update_plot)
         self.curveListSelectionModel.selectionChanged.connect(self.update_plot)
         self.simDataItemTreeView.deleteKey.connect(self.remove)
