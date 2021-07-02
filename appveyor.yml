@@ -2,6 +2,10 @@ image: Visual Studio 2019
 platform:
   -x86
 
+branches:
+  only:
+    - master
+
 environment:
   matrix:
   - PYTHON: "C:\\Python39-x64"
