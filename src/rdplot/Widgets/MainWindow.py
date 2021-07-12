@@ -476,7 +476,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         header = legend[0]
 
         for plot_data in plot_data_collection:
-            values = ((float(x), float(y)) for (x, y) in plot_data.values)
+            # check if confidence interval is used
+            if len(plot_data.values[0]) == 2:
+                values = ((float(x), float(y)) for (x, y) in plot_data.values)
+            else:
+                values = ((float(x), float(y)) for (x, y, z) in plot_data.values)
 
             sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
             [xs, ys] = list(zip(*sorted_value_pairs))
@@ -533,7 +537,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         for plot_data in plot_data_collection:
 
-            values = ((float(x), float(y)) for (x, y) in plot_data.values)
+            # check if confidence interval is used
+            if len(plot_data.values[0]) == 2:
+                values = ((float(x), float(y)) for (x, y) in plot_data.values)
+            else:
+                values = ((float(x), float(y)) for (x, y, z) in plot_data.values)
 
             sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
             [xs, ys] = list(zip(*sorted_value_pairs))

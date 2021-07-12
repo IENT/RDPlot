@@ -51,9 +51,18 @@ class CSVLog(AbstractSimulationDataItem):
 
         data = {}
         for i in range(0, len(header)):
+            # skip the header entries
             if i in [sequence_idx, qp_idx, rate_idx]:
                 continue
-            data[header[i]] = [(rate, float(line[i]))]
+            # check if a value has a confidence interval
+            if line[i].find('+-') == -1:
+                data[header[i]] = [(rate, float(line[i]))]
+                continue
+            else:
+                ci_value = line[i].split('+-')
+                data[header[i]] = [(rate, float(ci_value[0]), float(ci_value[1]))]
+                continue
+
         self.summary_data = data
 
     @property

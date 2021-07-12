@@ -23,6 +23,8 @@ from PyQt5.QtWidgets import QMessageBox, QFileDialog
 import matplotlib
 matplotlib.use('Qt5Agg')
 
+import sys
+
 from matplotlib.figure import Figure
 from matplotlib import cbook
 from scipy import spatial
@@ -161,15 +163,36 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             l = legend[plot_count] #" ".join([i for i in plot_data.identifiers] + plot_data.path)
 
             # Convert list of pairs of strings to two sorted lists of floats
-            values = ((float(x), float(y)) for (x, y) in plot_data.values)
-            sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
-            [xs, ys] = list(zip(*sorted_value_pairs))
+            # Check if a confidence interval is given
+            try:
+                if len(plot_data.values[0]) == 2:
+                    values = ((float(x), float(y)) for (x, y) in plot_data.values)
+                    sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
+                    [xs, ys] = list(zip(*sorted_value_pairs))
 
-            # plot the current plotdata and set the legend
-            curve = self.ax.plot(xs, ys, label=l)
+                    # plot the current plot data
+                    curve = self.ax.plot(xs, ys, label=l)
 
-            plot_count += 1
+                    plot_count += 1
+                else:
+                    values = ((float(x), float(y), float(z)) for (x, y, z) in plot_data.values)
+                    sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
+                    [xs, ys, zs] = list(zip(*sorted_value_pairs))
 
+                    # plot the current plot data
+                    ys_low = np.subtract(ys, zs)
+                    ys_up = np.add(ys, zs)
+                    ys_ci = np.concatenate((ys_low, ys_up[::-1]))
+                    xs_ci = np.concatenate((xs, xs[::-1]))
+
+                    curve = self.ax.plot(xs, ys, label=l)
+                    curve_ci = self.ax.fill(xs_ci, ys_ci, alpha=0.3, ec='black')
+
+                    plot_count += 1
+            except:
+                sys.stderr.write("Too many values for confidence interval. Please only add one value.")
+
+        # Set the legend
         if not(legend == ['']):
             self.ax.legend(loc='lower right')
         DataCursor(self.ax.get_lines())
