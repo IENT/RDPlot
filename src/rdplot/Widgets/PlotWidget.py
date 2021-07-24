@@ -163,7 +163,9 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             l = legend[plot_count] #" ".join([i for i in plot_data.identifiers] + plot_data.path)
 
             # Convert list of pairs of strings to two sorted lists of floats
-            # Check if a confidence interval is given
+            # Check if plot_data value has a confidence interval
+            # Confidence intervals are stored in tuples with three entries
+            # (rate, value, ci-value) instead of (rate, value) in the default case
             try:
                 if len(plot_data.values[0]) == 2:
                     values = ((float(x), float(y)) for (x, y) in plot_data.values)
@@ -175,16 +177,18 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
                     plot_count += 1
                 else:
+                    # A confidence interval is included in the data
                     values = ((float(x), float(y), float(z)) for (x, y, z) in plot_data.values)
                     sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
                     [xs, ys, zs] = list(zip(*sorted_value_pairs))
 
-                    # plot the current plot data
+                    # calculate the lower and upper boundaries of the CI
                     ys_low = np.subtract(ys, zs)
                     ys_up = np.add(ys, zs)
                     ys_ci = np.concatenate((ys_low, ys_up[::-1]))
                     xs_ci = np.concatenate((xs, xs[::-1]))
 
+                    # plot the curve and afterwards the CI as polygon
                     curve = self.ax.plot(xs, ys, label=l)
                     curve_ci = self.ax.fill(xs_ci, ys_ci, alpha=0.3, ec='black')
 

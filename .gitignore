@@ -105,3 +105,6 @@ example_simulation_data
 
 #additional data logs
 datDec/
+
+# macos
+.DS_STORE

@@ -54,14 +54,32 @@ class CSVLog(AbstractSimulationDataItem):
             # skip the header entries
             if i in [sequence_idx, qp_idx, rate_idx]:
                 continue
-            # check if a value has a confidence interval
-            if line[i].find('+-') == -1:
-                data[header[i]] = [(rate, float(line[i]))]
+            # check if value is a confidence value (CI)
+            # if entry is a ci-value we can skip it, since
+            # it will be later processed with the according value
+            if header[i].find('-ci') != -1:
                 continue
             else:
-                ci_value = line[i].split('+-')
-                data[header[i]] = [(rate, float(ci_value[0]), float(ci_value[1]))]
-                continue
+                # Check if CI value can be found, else just read the data.
+                # In case that a CI value is found, store its header index.
+                # Afterwards store the value and CI into a tuple with three
+                # entries (rate, value, ci-value). Otherwise we will just
+                # store the data in a tuple with two entries (rate, value).
+                # CI columns are always labeled as '<VALUE_NAME>-CI'.
+                ci_idx = -1
+                for j in range(0, len(header)):
+                    if header[j].find(header[i]+'-ci') != -1:
+                        ci_idx = j
+                        break
+
+                if ci_idx == -1:
+                    # Read only the data (no CI available)
+                    data[header[i]] = [(rate, float(line[i]))]
+                    continue
+                else:
+                    # Read the data and CI in one tuple
+                    data[header[i]] = [(rate, float(line[i]), float(line[ci_idx]))]
+                    continue
 
         self.summary_data = data
 

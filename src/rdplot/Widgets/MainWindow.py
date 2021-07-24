@@ -476,7 +476,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         header = legend[0]
 
         for plot_data in plot_data_collection:
-            # check if confidence interval is used
+            # check if plot_data value has a confidence interval
+            # confidence intervals are stored in tuples with three entries
+            # (rate, value, ci-value) instead of (rate, value) in the default case
             if len(plot_data.values[0]) == 2:
                 values = ((float(x), float(y)) for (x, y) in plot_data.values)
             else:
@@ -537,7 +539,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         for plot_data in plot_data_collection:
 
-            # check if confidence interval is used
+            # check if plot_data value has a confidence interval
+            # confidence intervals are stored in tuples with three entries
+            # (rate, value, ci-value) instead of (rate, value) in the default case
             if len(plot_data.values[0]) == 2:
                 values = ((float(x), float(y)) for (x, y) in plot_data.values)
             else:
