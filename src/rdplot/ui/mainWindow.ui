@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1253</width>
-    <height>1000</height>
+    <height>784</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -209,7 +209,7 @@ padding: 4px;
    <property name="minimumSize">
     <size>
      <width>200</width>
-     <height>232</height>
+     <height>251</height>
     </size>
    </property>
    <property name="autoFillBackground">
@@ -250,6 +250,16 @@ padding: 4px;
       <widget class="QComboBox" name="combo_rate_psnr"/>
      </item>
      <item>
+      <widget class="QComboBox" name="combo_ci">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="currentText">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QCheckBox" name="checkBox_bdplot">
        <property name="text">
         <string>Plot Bjontegaard</string>
@@ -265,7 +275,7 @@ padding: 4px;
      <x>0</x>
      <y>0</y>
      <width>1253</width>
-     <height>23</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

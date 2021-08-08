@@ -82,6 +82,10 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
         self.label_warning.hide()
 
+        # Anchor identifier for ci plots
+        self.anchor_identifier = ''
+        self.ci_mode = 'average'
+
     def create_legend(self, plot_data_collection):
         tmp_legend = []
         for plot_data in plot_data_collection:
@@ -108,6 +112,17 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             objects, which should be plotted.
             temporal data
         """
+
+        # Set the anchor identifier for the first time
+        # if no identifier has been set so far (similar
+        # to the selection in BdTableModel update method)
+        if self.anchor_identifier == '':
+            config_set = set()
+            for i in plot_data_collection:
+                config_set.add('+'.join(i.identifiers[1:]))
+            config_set = sorted(config_set)
+            config = list(config_set)
+            self.anchor_identifier = config[0]
 
         if len(plot_data_collection) == 0:
             self._clear_plot()
@@ -167,7 +182,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             # Confidence intervals are stored in tuples with three entries
             # (rate, value, ci-value) instead of (rate, value) in the default case
             try:
-                if len(plot_data.values[0]) == 2:
+                if not plot_data.ci:
                     values = ((float(x), float(y)) for (x, y) in plot_data.values)
                     sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
                     [xs, ys] = list(zip(*sorted_value_pairs))
@@ -188,9 +203,22 @@ class PlotWidget(QWidget, Ui_PlotWidget):
                     ys_ci = np.concatenate((ys_low, ys_up[::-1]))
                     xs_ci = np.concatenate((xs, xs[::-1]))
 
-                    # plot the curve and afterwards the CI as polygon
-                    curve = self.ax.plot(xs, ys, label=l)
-                    curve_ci = self.ax.fill(xs_ci, ys_ci, alpha=0.3, ec='black')
+                    # plot the curve (depending on ci mode)
+                    if self.ci_mode == 'average':
+                        curve = self.ax.plot(xs, ys, label=l)
+                    elif self.ci_mode == 'best':
+                        if plot_data.identifiers[1] == self.anchor_identifier:
+                            curve = self.ax.plot(xs, ys_low, label=l)
+                        else:
+                            curve = self.ax.plot(xs, ys_up, label=l)
+                    elif self.ci_mode == 'worst':
+                        if plot_data.identifiers[1] == self.anchor_identifier:
+                            curve = self.ax.plot(xs, ys_up, label=l)
+                        else:
+                            curve = self.ax.plot(xs, ys_low, label=l)
+
+                    # plot the ci as polygon around the current curve
+                    poly_ci = self.ax.fill(xs_ci, ys_ci, c=curve[0].get_c(), ec=curve[0].get_c(), alpha=0.3)
 
                     plot_count += 1
             except:

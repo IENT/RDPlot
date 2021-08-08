@@ -245,7 +245,8 @@ def brate(rate1, psnr1, rate2, psnr2, interpol, seq, directories, testmode):
     return avg_diff
 
 
-def bjontegaard(curve1, curve2, mode='dsnr', interpol='pol', seq='', d=list(), testmode=False):
+def bjontegaard(curve1, curve2, mode='dsnr', interpol='pol', seq='', d=list(), testmode=False, ci1_mode='average',
+                ci2_mode='average'):
     """
     Bjontegaard metric calculation
     Bjontegaard's metric allows to compute the average gain in PSNR or the
@@ -279,12 +280,33 @@ def bjontegaard(curve1, curve2, mode='dsnr', interpol='pol', seq='', d=list(), t
     curve1 = sorted(curve1, key=lambda tup: tup[1])
     curve2 = sorted(curve2, key=lambda tup: tup[1])
 
-    # convert rates in logarithmic units
-    psnr1 = [i[1] for i in curve1]
-    rate1 = [math.log(i[0]) for i in curve1]
+    # select the first curve according to ci mode
+    if ci1_mode == 'best':
+        # convert rates in logarithmic units
+        psnr1 = [i[1]-i[2] for i in curve1]
+        rate1 = [math.log(i[0]) for i in curve1]
+    elif ci1_mode == 'worst':
+        # convert rates in logarithmic units
+        psnr1 = [i[1]+i[2] for i in curve1]
+        rate1 = [math.log(i[0]) for i in curve1]
+    else:
+        # convert rates in logarithmic units
+        psnr1 = [i[1] for i in curve1]
+        rate1 = [math.log(i[0]) for i in curve1]
 
-    psnr2 = [i[1] for i in curve2]
-    rate2 = [math.log(i[0]) for i in curve2]
+    # select the second curve according to ci mode
+    if ci2_mode == 'best':
+        # convert rates in logarithmic units
+        psnr2 = [i[1]+i[2] for i in curve2]
+        rate2 = [math.log(i[0]) for i in curve2]
+    elif ci2_mode == 'worst':
+        # convert rates in logarithmic units
+        psnr2 = [i[1]-i[2] for i in curve2]
+        rate2 = [math.log(i[0]) for i in curve2]
+    else:
+        # convert rates in logarithmic units
+        psnr2 = [i[1] for i in curve2]
+        rate2 = [math.log(i[0]) for i in curve2]
 
     if mode == 'dsnr':
         return bdsnr(rate1, psnr1, rate2, psnr2, interpol, seq, d, testmode)

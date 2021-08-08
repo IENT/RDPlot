@@ -928,6 +928,9 @@ class BdTableModel(QAbstractTableModel):
         self._anchor_index = 0
         self._plot_data_collection = []
 
+    def getAnchorIdentifier(self):
+        return self._horizontal_headers[self._anchor_index]
+
     def rowCount(self, parent):
         return self._data.shape[0]
 
@@ -1049,7 +1052,7 @@ class BdTableModel(QAbstractTableModel):
 
     # This function is called when the anchor, the interpolation method
     # or the output of the bjontegaard delta is changed
-    def update_table(self, bd_option, interp_option, anchor_index, bd_plot):
+    def update_table(self, bd_option, interp_option, anchor_index, bd_plot, ci_mode='average'):
         # if there are no rows and columns in the model,
         # nothing can be updated
         if bd_plot:
@@ -1111,8 +1114,15 @@ class BdTableModel(QAbstractTableModel):
 
                 # get the rd values for curve c1 which is the anchor
                 c1 = [x for x in self._plot_data_collection if
-                      '+'.join(x.identifiers).__eq__('+'.join([identifiers_tmp[0], anchor]))][0].values
-                c1 = sorted(list(set(c1)))  # remove duplicates, this is just a workaround for the moment....
+                      '+'.join(x.identifiers).__eq__('+'.join([identifiers_tmp[0], anchor]))]
+
+                # set the ci mode values for c1
+                ci1_mode = 'average'  # no ci value available
+                if c1[0].ci:
+                    ci1_mode = ci_mode
+
+                # sort the rd values for curve c1
+                curve1 = sorted(list(set(c1[0].values)))  # remove duplicates, this is just a workaround for the moment
 
                 # if the configuration is not available for the current seq continue
                 if len([x for x in self._plot_data_collection if
@@ -1123,19 +1133,27 @@ class BdTableModel(QAbstractTableModel):
 
                 # get the rd values for curve c2
                 c2 = [x for x in self._plot_data_collection
-                      if '+'.join(x.identifiers).__eq__('+'.join(identifiers_tmp))][0].values
-                c2 = sorted(list(set(c2)))
+                      if '+'.join(x.identifiers).__eq__('+'.join(identifiers_tmp))]
+
+                # set the ci mode values for c2
+                ci2_mode = 'average'  # no ci value available
+                if c2[0].ci:
+                    ci2_mode = ci_mode
+
+                # sort the rd values for curve c2
+                curve2 = sorted(list(set(c2[0].values))) # remove duplicates, this is just a workaround for the moment
 
                 # if a simulation does not contain at least 4 rate points,
                 # we do not want to calculate the bd
-                if len(c1) < 4 or len(c2) < 4:
+                if len(curve1) < 4 or len(curve2) < 4:
                     self._data[row, col] = np.nan
                     col += 1
                     continue
 
                 # calculate the bd, actually this can be extended by some plots
                 configs = [anchor, identifiers_tmp[1]]
-                self._data[row, col] = bjontegaard(c1, c2, bd_option, interp_option, 'BD Plot ' + seq, configs, bd_plot)
+                self._data[row, col] = bjontegaard(curve1, curve2, bd_option, interp_option, 'BD Plot ' + seq, configs,
+                                                   bd_plot, ci1_mode, ci2_mode)
                 col += 1
             row += 1
 

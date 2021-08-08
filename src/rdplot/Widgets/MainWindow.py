@@ -63,7 +63,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.plotPreview.tableView.setModel(self.bdTableModel)
 
         # connect a double clicked section of the bd table to a change of the anchor
-        self.plotPreview.tableView.horizontalHeader().sectionDoubleClicked.connect(self.update_bd_table)
+        self.plotPreview.tableView.horizontalHeader().sectionDoubleClicked.connect(self.update_doubleClicked_horizontalHeader)
         self.plotPreview.tableView.verticalHeader().sectionDoubleClicked.connect(self.update_bd_user_generated_curves_table)
 
         # Set custom selection model, so that sub items are automatically
@@ -138,8 +138,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # set up combo boxes for rate/psnr and interpolation options
         self.combo_interp.addItems(["pchip", "pol"])
         self.combo_rate_psnr.addItems(["drate", "dsnr"])
+        self.combo_ci.addItems(["average", "worst", "best"])
         self.combo_interp.currentIndexChanged.connect(self.on_combo_box)
         self.combo_rate_psnr.currentIndexChanged.connect(self.on_combo_box)
+        self.combo_ci.currentIndexChanged.connect(self.on_ci_combo_box)
+        self.combo_ci.setEnabled(False)
 
         # set up bd plot checkbox
         self.checkBox_bdplot.stateChanged.connect(self.update_bd_plot)
@@ -271,6 +274,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # is much more efficient, despite it would seem, that selectively
         # overwriting keys is.
         self.selectedSimulationDataItemListModel.clear_and_update_from_tuples(tuples)
+
+        # reset the ci combo box if list selection changed
+        self.combo_ci.setCurrentIndex(0)
 
     def get_selected_simulation_data_items(self):
         return [self.selectedSimulationDataItemListModel[key] for key in self.selectedSimulationDataItemListModel]
@@ -404,6 +410,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return
 
         plot_data_collection = data_collection + data_collection_user_generated
+
+        # check if ci values are contained in the plot data
+        # enable the ci combo box if at least one data point
+        # has a confidence interval
+        self.combo_ci.setEnabled(False)
+        for plot_data in plot_data_collection:
+            if plot_data.ci:
+                self.combo_ci.setEnabled(True)
+                break
+
         if len(data_collection_user_generated):
             self.plotPreview.tableView.setModel(self.bdUserGeneratedTableModel)
             self.plotPreview.change_plot(plot_data_collection, True)
@@ -598,6 +614,27 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 column_saver = config_count = 0
             data_count += 1
 
+    def update_doubleClicked_horizontalHeader(self, index):
+        # update the bd table (new anchor)
+        self.update_bd_table(index)
+
+        # update the anchor identifier and ci mode for the ci plot view
+        self.plotPreview.anchor_identifier = self.bdTableModel.getAnchorIdentifier()
+        self.plotPreview.ci_mode = self.combo_ci.currentText()
+
+        # update plot
+        self.check_labels()
+        data_collection = self.get_plot_data_collection_from_selected_variables()
+        data_collection_user_generated = []
+        for index in self.curveListView.selectedIndexes():
+            data_collection_user_generated.append(self.curveListModel[index.data()])
+
+        plot_data_collection = data_collection + data_collection_user_generated
+
+        self.plotPreview.tableView.setModel(self.bdTableModel)
+        self.update_table(data_collection)
+        self.plotPreview.change_plot(plot_data_collection, False)
+
     def update_bd_table(self, index):
         # update bd table, the index determines the anchor,
         # if it is non integer per default the first config is regarded as
@@ -605,7 +642,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.bdTableModel.update_table(self.combo_rate_psnr.currentText(),
                                            self.combo_interp.currentText(), index,
-                                       not(self.checkBox_bdplot.isChecked()))
+                                       not(self.checkBox_bdplot.isChecked()),
+                                       self.combo_ci.currentText())
 
     def update_bd_user_generated_curves_table(self, index):
         clicked_text = self.bdUserGeneratedTableModel.headerData(index, Qt.Vertical, Qt.DisplayRole)
@@ -658,6 +696,26 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def on_combo_box(self):
         # just update the bd table but do not change the anchor
         self.update_bd_table(-1)
+
+    def on_ci_combo_box(self):
+        # update the bd table (new ci mode)
+        self.update_bd_table(-1)
+
+        # update the ci mode for the ci plot view
+        self.plotPreview.ci_mode = self.combo_ci.currentText()
+
+        # update plot
+        self.check_labels()
+        data_collection = self.get_plot_data_collection_from_selected_variables()
+        data_collection_user_generated = []
+        for index in self.curveListView.selectedIndexes():
+            data_collection_user_generated.append(self.curveListModel[index.data()])
+
+        plot_data_collection = data_collection + data_collection_user_generated
+
+        self.plotPreview.tableView.setModel(self.bdTableModel)
+        self.update_table(data_collection)
+        self.plotPreview.change_plot(plot_data_collection, False)
 
     def save_current_selection(self):
         """Saves the current selected sim data item collection"""
