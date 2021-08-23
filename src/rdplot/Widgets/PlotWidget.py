@@ -122,7 +122,10 @@ class PlotWidget(QWidget, Ui_PlotWidget):
                 config_set.add('+'.join(i.identifiers[1:]))
             config_set = sorted(config_set)
             config = list(config_set)
-            self.anchor_identifier = config[0]
+            try:
+                self.anchor_identifier = config[0]
+            except:
+                self.anchor_identifier = ''
 
         if len(plot_data_collection) == 0:
             self._clear_plot()
@@ -182,7 +185,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             # Confidence intervals are stored in tuples with three entries
             # (rate, value, ci-value) instead of (rate, value) in the default case
             try:
-                if not plot_data.ci:
+                if not plot_data.has_ci:
                     values = ((float(x), float(y)) for (x, y) in plot_data.values)
                     sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
                     [xs, ys] = list(zip(*sorted_value_pairs))

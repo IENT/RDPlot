@@ -929,7 +929,10 @@ class BdTableModel(QAbstractTableModel):
         self._plot_data_collection = []
 
     def getAnchorIdentifier(self):
-        return self._horizontal_headers[self._anchor_index]
+        if len(self._horizontal_headers) != 0:
+            return self._horizontal_headers[self._anchor_index]
+        else:
+            return ''
 
     def rowCount(self, parent):
         return self._data.shape[0]
@@ -1041,7 +1044,7 @@ class BdTableModel(QAbstractTableModel):
         self._plot_data_collection = plot_data_collection
 
         self._data = np.zeros((len(seq_set) + 1, len(config_set)))
-        allowed_units = [("kbps","dB"),("kbps","s"),("kbps","VMAFScore")]
+        allowed_units = [("kbps","dB"),("kbps","s"),("kbps","VMAFScore"),("kbps","mos")]
         if all(collection.label in allowed_units for collection in plot_data_collection):
             self.update_table(bd_option, interp_option, 0, bd_plot)
         else:
@@ -1118,7 +1121,7 @@ class BdTableModel(QAbstractTableModel):
 
                 # set the ci mode values for c1
                 ci1_mode = 'average'  # no ci value available
-                if c1[0].ci:
+                if c1[0].has_ci:
                     ci1_mode = ci_mode
 
                 # sort the rd values for curve c1
@@ -1137,7 +1140,7 @@ class BdTableModel(QAbstractTableModel):
 
                 # set the ci mode values for c2
                 ci2_mode = 'average'  # no ci value available
-                if c2[0].ci:
+                if c2[0].has_ci:
                     ci2_mode = ci_mode
 
                 # sort the rd values for curve c2

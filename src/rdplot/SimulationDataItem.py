@@ -167,12 +167,12 @@ class PlotData:
         self.values = values
         self.path = path
         self.label = label
-        self.ci = False
+        self.has_ci = False
 
         # plot data has confidence interval if tuple has 3 entries
         # tuple: (rate, value, ci-value)
         if len(self.values[0]) == 3:
-            self.ci = True
+            self.has_ci = True
 
 
 class SimulationDataItemError(Exception):

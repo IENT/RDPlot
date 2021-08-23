@@ -406,17 +406,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             data_collection_user_generated = []
             for index in self.curveListView.selectedIndexes():
                 data_collection_user_generated.append(self.curveListModel[index.data()])
+
+            # Update the anchor identifier for the plot preview which is selected by the
+            # user in the bdTableModel by clicking on the header lines
+            self.plotPreview.anchor_identifier = self.bdTableModel.getAnchorIdentifier()
         else:
             return
 
         plot_data_collection = data_collection + data_collection_user_generated
 
-        # check if ci values are contained in the plot data
-        # enable the ci combo box if at least one data point
-        # has a confidence interval
+        # Check if ci values are contained in the plot data. Enable the ci combo box, if at
+        # least one data point has a confidence interval and set the current plot anchor with
+        # respect to the anchor of the bdTableModel. Combo_ci is only available if more than
+        # one plot is selected by the user.
         self.combo_ci.setEnabled(False)
+
         for plot_data in plot_data_collection:
-            if plot_data.ci:
+            if plot_data.has_ci and len(plot_data_collection) > 1:
                 self.combo_ci.setEnabled(True)
                 break
 
