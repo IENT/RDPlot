@@ -176,6 +176,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.simDataItemTreeView.customContextMenuRequested.connect(self.show_sequences_context_menu)
         # self.curveListView.actionCalculateBD.triggered.connect(self.bd_user_generated_curves)
 
+        # Set status Widget invisible as default
+        self.statusWidget.setVisible(False)
+
     # sets Visibility for the Plotsettings Widget
     def set_plot_settings_visibility(self):
         self.plotsettings.visibilityChanged.disconnect(self.plot_settings_visibility_changed)
