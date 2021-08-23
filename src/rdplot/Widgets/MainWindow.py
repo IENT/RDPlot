@@ -275,8 +275,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # overwriting keys is.
         self.selectedSimulationDataItemListModel.clear_and_update_from_tuples(tuples)
 
-        # reset the ci combo box if list selection changed
-        self.combo_ci.setCurrentIndex(0)
+        # update the bd table
+        self.update_bd_table(-1)
 
     def get_selected_simulation_data_items(self):
         return [self.selectedSimulationDataItemListModel[key] for key in self.selectedSimulationDataItemListModel]
