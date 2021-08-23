@@ -425,6 +425,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.combo_ci.setEnabled(False)
 
         for plot_data in plot_data_collection:
+            if len(plot_data_collection) <= 1:
+                self.combo_ci.setCurrentIndex(0)
             if plot_data.has_ci and len(plot_data_collection) > 1:
                 self.combo_ci.setEnabled(True)
                 break
