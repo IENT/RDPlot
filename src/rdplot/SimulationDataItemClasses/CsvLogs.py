@@ -103,8 +103,12 @@ class CSVLog(AbstractSimulationDataItem):
         :param keys: Variable/Path for which to get the labels
         :return: tuple of labels: (x-axis label, y-axis label)
         """
-        if keys[1].find('psnr') != -1:
-            label = ('kbps','dB')
+        if keys[1].lower().find('psnr') != -1:
+            label = ('kbps', 'dB')
+        elif keys[1].lower().find('vmaf') != -1:
+            label = ("kbps", "VMAFScore")
+        elif keys[1].lower().find('mos') != -1:
+            label = ("kbps", "MOS")
         else:
             label = ('kbps', keys[1])
 
