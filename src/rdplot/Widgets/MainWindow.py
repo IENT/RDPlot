@@ -710,8 +710,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.bdTableModel.export_to_latex(filename)
 
     def on_combo_box(self):
-        # just update the bd table but do not change the anchor
-        self.update_bd_table(-1)
+        # check if user generated curves are available and update bd table
+        if self.curveListModel:
+            self.bdUserGeneratedTableModel.update_table(self.combo_rate_psnr.currentText(),
+                                           self.combo_interp.currentText(), -1,
+                                       not(self.checkBox_bdplot.isChecked()),
+                                       self.combo_ci.currentText())
+        else:
+            self.update_bd_table(-1)
 
     def on_ci_combo_box(self):
         # update the ci mode for the ci plot view
