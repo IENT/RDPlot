@@ -1188,6 +1188,12 @@ class BdUserGeneratedCurvesTableModel(BdTableModel):
     def __init__(self):
         super().__init__()
 
+    def getAnchorIdentifier(self):
+        if len(self._horizontal_headers) != 0:
+            return self._plot_data_collection[self._anchor_index].identifiers[0]
+        else:
+            return ''
+
     def data(self, q_index, role):
         if q_index.isValid() and role == Qt.DisplayRole:
             value = self._data[q_index.row(), q_index.column()]
@@ -1197,13 +1203,15 @@ class BdUserGeneratedCurvesTableModel(BdTableModel):
         return QVariant()
 
     def headerData(self, col, orientation, role):
+        if len(self._vertical_headers) == 0:
+            return QVariant()
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             return QVariant(self._horizontal_headers)
         elif orientation == Qt.Vertical and role == Qt.DisplayRole:
             return QVariant(self._vertical_headers[col])
         return QVariant()
 
-    def update(self, plot_data_collection, bd_option, interp_option, bd_plot, anchor_text=''):
+    def update(self, plot_data_collection, bd_option, interp_option, bd_plot, anchor_text='', ci_mode='average'):
         # reset the model in the first place and set data afterwards appropriately
         self.beginResetModel()
         self.reset_model()
@@ -1262,15 +1270,16 @@ class BdUserGeneratedCurvesTableModel(BdTableModel):
         self._plot_data_collection = plot_data_collection
 
         self._data = np.zeros((len(self._vertical_headers), 1))
-        if all(collection.label == ("kbps", "dB") for collection in plot_data_collection):
-            self.update_table(bd_option, interp_option, bd_plot)
+        allowed_units = [("kbps", "dB"), ("kbps", "s"), ("kbps", "VMAFScore"), ("kbps", "MOS")]
+        if all(collection.label in allowed_units for collection in plot_data_collection):
+            self.update_table(bd_option, interp_option, 0, bd_plot, ci_mode)
         else:
             self.beginResetModel()
             self.reset_model()
             self.endResetModel()
             plt.close()
 
-    def update_table(self, bd_option, interp_option, bd_plot):
+    def update_table(self, bd_option, interp_option, anchor_index, bd_plot, ci_mode='average'):
         # if there are no rows and columns in the model,
         # nothing can be updated
         if self.rowCount(self) == 0 and self.columnCount(self) == 0:
@@ -1278,6 +1287,7 @@ class BdUserGeneratedCurvesTableModel(BdTableModel):
 
         anchor_curve = self._plot_data_collection[self._anchor_index]
         c1 = sorted(list(set(anchor_curve.values)))
+        ci1_mode = ci_mode if anchor_curve.has_ci else 'average'
         index = 0
         table_index = 0
         curve_names = [self._horizontal_headers]
@@ -1287,7 +1297,9 @@ class BdUserGeneratedCurvesTableModel(BdTableModel):
         for curve in self._plot_data_collection:
             if index != self._anchor_index:
                 c2 = sorted(list(set(curve.values)))
-                self._data[table_index, 0] = bjontegaard(c1, c2, bd_option, interp_option, 'BD Plot', curve_names, bd_plot)
+                ci2_mode = ci_mode if curve.has_ci else 'average'
+                self._data[table_index, 0] = bjontegaard(c1, c2, bd_option, interp_option, 'BD Plot', curve_names, bd_plot,
+                                                         ci1_mode, ci2_mode)
                 table_index += 1
             index += 1
 

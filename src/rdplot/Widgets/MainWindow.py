@@ -412,7 +412,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
             # Update the anchor identifier for the plot preview which is selected by the
             # user in the bdTableModel by clicking on the header lines
-            self.plotPreview.anchor_identifier = self.bdTableModel.getAnchorIdentifier()
+            self.plotPreview.anchor_identifier = self.bdTableModel.getAnchorIdentifier() if len(data_collection_user_generated) == 0 else \
+                self.bdUserGeneratedTableModel.getAnchorIdentifier()
         else:
             return
 
@@ -626,14 +627,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             data_count += 1
 
     def update_doubleClicked_horizontalHeader(self, index):
-        # update the bd table (new anchor)
-        self.update_bd_table(index)
-
-        # update the anchor identifier and ci mode for the ci plot view
-        self.plotPreview.anchor_identifier = self.bdTableModel.getAnchorIdentifier()
-        self.plotPreview.ci_mode = self.combo_ci.currentText()
-
-        # update plot
+        # load the plot data collection
         self.check_labels()
         data_collection = self.get_plot_data_collection_from_selected_variables()
         data_collection_user_generated = []
@@ -642,6 +636,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         plot_data_collection = data_collection + data_collection_user_generated
 
+        if len(data_collection_user_generated) > 0:
+            return
+
+        # update the bd table (new anchor)
+        self.update_bd_table(index)
+
+        # update the anchor identifier and ci mode for the ci plot view
+        self.plotPreview.anchor_identifier = self.bdTableModel.getAnchorIdentifier()
+        self.plotPreview.ci_mode = self.combo_ci.currentText()
+
+        # update the table and plot
         self.plotPreview.tableView.setModel(self.bdTableModel)
         self.update_table(data_collection)
         self.plotPreview.change_plot(plot_data_collection, False)
@@ -660,7 +665,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         clicked_text = self.bdUserGeneratedTableModel.headerData(index, Qt.Vertical, Qt.DisplayRole)
         self.bdUserGeneratedTableModel.update(None, self.combo_rate_psnr.currentText(),
                                            self.combo_interp.currentText(), not(self.checkBox_bdplot.isChecked()),
-                                              clicked_text)
+                                              clicked_text, self.combo_ci.currentText())
 
     def update_bd_plot(self):
         data_collection = self.get_plot_data_collection_from_selected_variables()
@@ -709,13 +714,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.update_bd_table(-1)
 
     def on_ci_combo_box(self):
-        # update the bd table (new ci mode)
-        self.update_bd_table(-1)
-
         # update the ci mode for the ci plot view
         self.plotPreview.ci_mode = self.combo_ci.currentText()
 
-        # update plot
+        # load the plot data collection
         self.check_labels()
         data_collection = self.get_plot_data_collection_from_selected_variables()
         data_collection_user_generated = []
@@ -724,9 +726,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         plot_data_collection = data_collection + data_collection_user_generated
 
-        self.plotPreview.tableView.setModel(self.bdTableModel)
-        self.update_table(data_collection)
-        self.plotPreview.change_plot(plot_data_collection, False)
+        # Update tables and plots
+        if len(data_collection_user_generated) == 0:
+            self.bdTableModel.update_table(self.combo_rate_psnr.currentText(),
+                                           self.combo_interp.currentText(), -1,
+                                           not (self.checkBox_bdplot.isChecked()),
+                                           self.combo_ci.currentText())
+            self.update_table(data_collection)
+            self.plotPreview.anchor_identifier = self.bdTableModel.getAnchorIdentifier()
+            self.plotPreview.change_plot(plot_data_collection, False)
+        else:
+            self.bdUserGeneratedTableModel.update_table(self.combo_rate_psnr.currentText(),
+                                           self.combo_interp.currentText(), -1,
+                                       not(self.checkBox_bdplot.isChecked()),
+                                       self.combo_ci.currentText())
+            self.update_table(data_collection)
+            self.plotPreview.anchor_identifier = self.bdUserGeneratedTableModel.getAnchorIdentifier()
+            self.plotPreview.change_plot(plot_data_collection, True)
 
     def save_current_selection(self):
         """Saves the current selected sim data item collection"""

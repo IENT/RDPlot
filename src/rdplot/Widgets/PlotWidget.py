@@ -207,15 +207,17 @@ class PlotWidget(QWidget, Ui_PlotWidget):
                     xs_ci = np.concatenate((xs, xs[::-1]))
 
                     # plot the curve (depending on ci mode)
+                    anchor_index = 1 if not user_generated_curves else 0
+
                     if self.ci_mode == 'average':
                         curve = self.ax.plot(xs, ys, label=l)
                     elif self.ci_mode == 'best':
-                        if plot_data.identifiers[1] == self.anchor_identifier:
+                        if plot_data.identifiers[anchor_index] == self.anchor_identifier:
                             curve = self.ax.plot(xs, ys_low, label=l)
                         else:
                             curve = self.ax.plot(xs, ys_up, label=l)
                     elif self.ci_mode == 'worst':
-                        if plot_data.identifiers[1] == self.anchor_identifier:
+                        if plot_data.identifiers[anchor_index] == self.anchor_identifier:
                             curve = self.ax.plot(xs, ys_up, label=l)
                         else:
                             curve = self.ax.plot(xs, ys_low, label=l)
