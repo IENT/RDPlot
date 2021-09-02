@@ -667,6 +667,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                                            self.combo_interp.currentText(), not(self.checkBox_bdplot.isChecked()),
                                               clicked_text, self.combo_ci.currentText())
 
+        # update the anchor identifier
+        self.plotPreview.anchor_identifier = self.bdUserGeneratedTableModel.getAnchorIdentifier()
+
+        # load the user generated curves
+        data_collection_user_generated = []
+        for index in self.curveListView.selectedIndexes():
+            data_collection_user_generated.append(self.curveListModel[index.data()])
+
+        # update the plot
+        self.plotPreview.change_plot(data_collection_user_generated, True)
+
     def update_bd_plot(self):
         data_collection = self.get_plot_data_collection_from_selected_variables()
         data_collection_user_generated = []
