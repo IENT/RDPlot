@@ -950,7 +950,10 @@ class BdTableModel(QAbstractTableModel):
             for c in tmp_horizontal_headers:
                 result = list(filter(lambda x: all(x in l for l in tmp_horizontal_headers) == False, c))
                 headers.append(" ".join(result))
-            return QVariant(headers[col])
+            try:
+                return QVariant(headers[col])
+            except (IndexError):
+                return QVariant()
         elif orientation == Qt.Vertical and role == Qt.DisplayRole:
             return QVariant(self._vertical_headers[col])
         return QVariant()
