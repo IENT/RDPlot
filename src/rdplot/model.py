@@ -929,10 +929,7 @@ class BdTableModel(QAbstractTableModel):
         self._plot_data_collection = []
 
     def getAnchorIdentifier(self):
-        if len(self._horizontal_headers) != 0:
-            return self._horizontal_headers[self._anchor_index]
-        else:
-            return ''
+        return self._horizontal_headers[self._anchor_index] if len(self._horizontal_headers) else ''
 
     def rowCount(self, parent):
         return self._data.shape[0]
@@ -1120,9 +1117,7 @@ class BdTableModel(QAbstractTableModel):
                       '+'.join(x.identifiers).__eq__('+'.join([identifiers_tmp[0], anchor]))]
 
                 # set the ci mode values for c1
-                ci1_mode = 'average'  # no ci value available
-                if c1[0].has_ci:
-                    ci1_mode = ci_mode
+                ci1_mode = ci_mode if c1[0].has_ci else 'average'
 
                 # sort the rd values for curve c1
                 curve1 = sorted(list(set(c1[0].values)))  # remove duplicates, this is just a workaround for the moment
@@ -1139,9 +1134,7 @@ class BdTableModel(QAbstractTableModel):
                       if '+'.join(x.identifiers).__eq__('+'.join(identifiers_tmp))]
 
                 # set the ci mode values for c2
-                ci2_mode = 'average'  # no ci value available
-                if c2[0].has_ci:
-                    ci2_mode = ci_mode
+                ci2_mode = ci_mode if c2[0].has_ci else 'average'
 
                 # sort the rd values for curve c2
                 curve2 = sorted(list(set(c2[0].values))) # remove duplicates, this is just a workaround for the moment
@@ -1189,10 +1182,7 @@ class BdUserGeneratedCurvesTableModel(BdTableModel):
         super().__init__()
 
     def getAnchorIdentifier(self):
-        if len(self._horizontal_headers) != 0:
-            return self._plot_data_collection[self._anchor_index].identifiers[0]
-        else:
-            return ''
+        return self._plot_data_collection[self._anchor_index].identifiers[0] if len(self._horizontal_headers) else ''
 
     def data(self, q_index, role):
         if q_index.isValid() and role == Qt.DisplayRole:
