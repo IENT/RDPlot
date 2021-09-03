@@ -928,6 +928,9 @@ class BdTableModel(QAbstractTableModel):
         self._anchor_index = 0
         self._plot_data_collection = []
 
+    def getAnchorIdentifier(self):
+        return self._horizontal_headers[self._anchor_index] if len(self._horizontal_headers) else ''
+
     def rowCount(self, parent):
         return self._data.shape[0]
 
@@ -947,7 +950,10 @@ class BdTableModel(QAbstractTableModel):
             for c in tmp_horizontal_headers:
                 result = list(filter(lambda x: all(x in l for l in tmp_horizontal_headers) == False, c))
                 headers.append(" ".join(result))
-            return QVariant(headers[col])
+            try:
+                return QVariant(headers[col])
+            except (IndexError):
+                return QVariant()
         elif orientation == Qt.Vertical and role == Qt.DisplayRole:
             return QVariant(self._vertical_headers[col])
         return QVariant()
@@ -1038,7 +1044,7 @@ class BdTableModel(QAbstractTableModel):
         self._plot_data_collection = plot_data_collection
 
         self._data = np.zeros((len(seq_set) + 1, len(config_set)))
-        allowed_units = [("kbps","dB"),("kbps","s"),("kbps","VMAFScore")]
+        allowed_units = [("kbps","dB"),("kbps","s"),("kbps","VMAFScore"),("kbps","MOS")]
         if all(collection.label in allowed_units for collection in plot_data_collection):
             self.update_table(bd_option, interp_option, 0, bd_plot)
         else:
@@ -1049,7 +1055,7 @@ class BdTableModel(QAbstractTableModel):
 
     # This function is called when the anchor, the interpolation method
     # or the output of the bjontegaard delta is changed
-    def update_table(self, bd_option, interp_option, anchor_index, bd_plot):
+    def update_table(self, bd_option, interp_option, anchor_index, bd_plot, ci_mode='average'):
         # if there are no rows and columns in the model,
         # nothing can be updated
         if bd_plot:
@@ -1111,8 +1117,13 @@ class BdTableModel(QAbstractTableModel):
 
                 # get the rd values for curve c1 which is the anchor
                 c1 = [x for x in self._plot_data_collection if
-                      '+'.join(x.identifiers).__eq__('+'.join([identifiers_tmp[0], anchor]))][0].values
-                c1 = sorted(list(set(c1)))  # remove duplicates, this is just a workaround for the moment....
+                      '+'.join(x.identifiers).__eq__('+'.join([identifiers_tmp[0], anchor]))]
+
+                # set the ci mode values for c1
+                ci1_mode = ci_mode if c1[0].has_ci else 'average'
+
+                # sort the rd values for curve c1
+                curve1 = sorted(list(set(c1[0].values)))  # remove duplicates, this is just a workaround for the moment
 
                 # if the configuration is not available for the current seq continue
                 if len([x for x in self._plot_data_collection if
@@ -1123,19 +1134,25 @@ class BdTableModel(QAbstractTableModel):
 
                 # get the rd values for curve c2
                 c2 = [x for x in self._plot_data_collection
-                      if '+'.join(x.identifiers).__eq__('+'.join(identifiers_tmp))][0].values
-                c2 = sorted(list(set(c2)))
+                      if '+'.join(x.identifiers).__eq__('+'.join(identifiers_tmp))]
+
+                # set the ci mode values for c2
+                ci2_mode = ci_mode if c2[0].has_ci else 'average'
+
+                # sort the rd values for curve c2
+                curve2 = sorted(list(set(c2[0].values))) # remove duplicates, this is just a workaround for the moment
 
                 # if a simulation does not contain at least 4 rate points,
                 # we do not want to calculate the bd
-                if len(c1) < 4 or len(c2) < 4:
+                if len(curve1) < 4 or len(curve2) < 4:
                     self._data[row, col] = np.nan
                     col += 1
                     continue
 
                 # calculate the bd, actually this can be extended by some plots
                 configs = [anchor, identifiers_tmp[1]]
-                self._data[row, col] = bjontegaard(c1, c2, bd_option, interp_option, 'BD Plot ' + seq, configs, bd_plot)
+                self._data[row, col] = bjontegaard(curve1, curve2, bd_option, interp_option, 'BD Plot ' + seq, configs,
+                                                   bd_plot, ci1_mode, ci2_mode)
                 col += 1
             row += 1
 
@@ -1167,6 +1184,9 @@ class BdUserGeneratedCurvesTableModel(BdTableModel):
     def __init__(self):
         super().__init__()
 
+    def getAnchorIdentifier(self):
+        return self._plot_data_collection[self._anchor_index].identifiers[0] if len(self._horizontal_headers) else ''
+
     def data(self, q_index, role):
         if q_index.isValid() and role == Qt.DisplayRole:
             value = self._data[q_index.row(), q_index.column()]
@@ -1176,13 +1196,15 @@ class BdUserGeneratedCurvesTableModel(BdTableModel):
         return QVariant()
 
     def headerData(self, col, orientation, role):
+        if len(self._vertical_headers) == 0:
+            return QVariant()
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             return QVariant(self._horizontal_headers)
         elif orientation == Qt.Vertical and role == Qt.DisplayRole:
             return QVariant(self._vertical_headers[col])
         return QVariant()
 
-    def update(self, plot_data_collection, bd_option, interp_option, bd_plot, anchor_text=''):
+    def update(self, plot_data_collection, bd_option, interp_option, bd_plot, anchor_text='', ci_mode='average'):
         # reset the model in the first place and set data afterwards appropriately
         self.beginResetModel()
         self.reset_model()
@@ -1241,15 +1263,16 @@ class BdUserGeneratedCurvesTableModel(BdTableModel):
         self._plot_data_collection = plot_data_collection
 
         self._data = np.zeros((len(self._vertical_headers), 1))
-        if all(collection.label == ("kbps", "dB") for collection in plot_data_collection):
-            self.update_table(bd_option, interp_option, bd_plot)
+        allowed_units = [("kbps", "dB"), ("kbps", "s"), ("kbps", "VMAFScore"), ("kbps", "MOS")]
+        if all(collection.label in allowed_units for collection in plot_data_collection):
+            self.update_table(bd_option, interp_option, 0, bd_plot, ci_mode)
         else:
             self.beginResetModel()
             self.reset_model()
             self.endResetModel()
             plt.close()
 
-    def update_table(self, bd_option, interp_option, bd_plot):
+    def update_table(self, bd_option, interp_option, anchor_index, bd_plot, ci_mode='average'):
         # if there are no rows and columns in the model,
         # nothing can be updated
         if self.rowCount(self) == 0 and self.columnCount(self) == 0:
@@ -1257,6 +1280,7 @@ class BdUserGeneratedCurvesTableModel(BdTableModel):
 
         anchor_curve = self._plot_data_collection[self._anchor_index]
         c1 = sorted(list(set(anchor_curve.values)))
+        ci1_mode = ci_mode if anchor_curve.has_ci else 'average'
         index = 0
         table_index = 0
         curve_names = [self._horizontal_headers]
@@ -1266,7 +1290,9 @@ class BdUserGeneratedCurvesTableModel(BdTableModel):
         for curve in self._plot_data_collection:
             if index != self._anchor_index:
                 c2 = sorted(list(set(curve.values)))
-                self._data[table_index, 0] = bjontegaard(c1, c2, bd_option, interp_option, 'BD Plot', curve_names, bd_plot)
+                ci2_mode = ci_mode if curve.has_ci else 'average'
+                self._data[table_index, 0] = bjontegaard(c1, c2, bd_option, interp_option, 'BD Plot', curve_names, bd_plot,
+                                                         ci1_mode, ci2_mode)
                 table_index += 1
             index += 1
 

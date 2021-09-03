@@ -167,6 +167,12 @@ class PlotData:
         self.values = values
         self.path = path
         self.label = label
+        self.has_ci = False
+
+        # plot data has confidence interval if tuple has 3 entries
+        # tuple: (rate, value, ci-value)
+        if len(self.values[0]) == 3:
+            self.has_ci = True
 
 
 class SimulationDataItemError(Exception):
@@ -489,11 +495,11 @@ class SimulationDataItemFactory(QObject):
                                       ).format(path))
 
     def parse_csv_item_list(self, log_path):
-        # we already know that we need the csvlog
+        # we already know that we need the csv log
         # currently there is only one...just use it
         # I think this should not change in the future,
         # otherwise parts of the file would need to be parsed
-        # in order to dertmine the type
+        # in order to determine the type
         try:
             from rdplot.SimulationDataItemClasses.CsvLogs import CSVLog
 

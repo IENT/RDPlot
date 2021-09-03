@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1253</width>
-    <height>1000</height>
+    <height>782</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -209,7 +209,7 @@ padding: 4px;
    <property name="minimumSize">
     <size>
      <width>200</width>
-     <height>232</height>
+     <height>329</height>
     </size>
    </property>
    <property name="autoFillBackground">
@@ -240,6 +240,20 @@ padding: 4px;
       </widget>
      </item>
      <item>
+      <widget class="Line" name="line">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Bjontegaard Settings</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QComboBox" name="combo_interp">
        <property name="currentText">
         <string/>
@@ -256,6 +270,30 @@ padding: 4px;
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="Line" name="line_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Confidence Interval Settings</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="combo_ci">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="currentText">
+        <string/>
+       </property>
+      </widget>
+     </item>
     </layout>
    </widget>
   </widget>
@@ -265,7 +303,7 @@ padding: 4px;
      <x>0</x>
      <y>0</y>
      <width>1253</width>
-     <height>23</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -451,6 +489,9 @@ padding: 4px;
   </action>
   <action name="actionHide_Status">
    <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
     <bool>true</bool>
    </property>
    <property name="text">

@@ -51,9 +51,36 @@ class CSVLog(AbstractSimulationDataItem):
 
         data = {}
         for i in range(0, len(header)):
+            # skip the header entries
             if i in [sequence_idx, qp_idx, rate_idx]:
                 continue
-            data[header[i]] = [(rate, float(line[i]))]
+            # check if value is a confidence value (CI)
+            # if entry is a ci-value we can skip it, since
+            # it will be later processed with the according value
+            if header[i].find('-ci') != -1:
+                continue
+            else:
+                # Check if CI value can be found, else just read the data.
+                # In case that a CI value is found, store its header index.
+                # Afterwards store the value and CI into a tuple with three
+                # entries (rate, value, ci-value). Otherwise we will just
+                # store the data in a tuple with two entries (rate, value).
+                # CI columns are always labeled as '<VALUE_NAME>-CI'.
+                ci_idx = -1
+                for j in range(0, len(header)):
+                    if header[j].find(header[i]+'-ci') != -1:
+                        ci_idx = j
+                        break
+
+                if ci_idx == -1:
+                    # Read only the data (no CI available)
+                    data[header[i]] = [(rate, float(line[i]))]
+                    continue
+                else:
+                    # Read the data and CI in one tuple
+                    data[header[i]] = [(rate, float(line[i]), float(line[ci_idx]))]
+                    continue
+
         self.summary_data = data
 
     @property
@@ -76,7 +103,14 @@ class CSVLog(AbstractSimulationDataItem):
         :param keys: Variable/Path for which to get the labels
         :return: tuple of labels: (x-axis label, y-axis label)
         """
-        label = ('kbps', 'dB')
+        if keys[1].lower().find('psnr') != -1:
+            label = ('kbps', 'dB')
+        elif keys[1].lower().find('vmaf') != -1:
+            label = ("kbps", "VMAFScore")
+        elif keys[1].lower().find('mos') != -1:
+            label = ("kbps", "MOS")
+        else:
+            label = ('kbps', keys[1])
 
         return label
 

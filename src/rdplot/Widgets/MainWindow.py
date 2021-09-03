@@ -63,7 +63,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.plotPreview.tableView.setModel(self.bdTableModel)
 
         # connect a double clicked section of the bd table to a change of the anchor
-        self.plotPreview.tableView.horizontalHeader().sectionDoubleClicked.connect(self.update_bd_table)
+        self.plotPreview.tableView.horizontalHeader().sectionDoubleClicked.connect(self.update_doubleClicked_horizontalHeader)
         self.plotPreview.tableView.verticalHeader().sectionDoubleClicked.connect(self.update_bd_user_generated_curves_table)
 
         # Set custom selection model, so that sub items are automatically
@@ -138,8 +138,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # set up combo boxes for rate/psnr and interpolation options
         self.combo_interp.addItems(["pchip", "pol"])
         self.combo_rate_psnr.addItems(["drate", "dsnr"])
+        self.combo_ci.addItems(["average", "worst", "best"])
         self.combo_interp.currentIndexChanged.connect(self.on_combo_box)
         self.combo_rate_psnr.currentIndexChanged.connect(self.on_combo_box)
+        self.combo_ci.currentIndexChanged.connect(self.on_ci_combo_box)
+        self.combo_ci.setEnabled(False)
 
         # set up bd plot checkbox
         self.checkBox_bdplot.stateChanged.connect(self.update_bd_plot)
@@ -172,6 +175,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.simDataItemTreeView.customContextMenuRequested.connect(self.show_sequences_context_menu)
         # self.curveListView.actionCalculateBD.triggered.connect(self.bd_user_generated_curves)
+
+        # Set status Widget invisible as default
+        self.statusWidget.setVisible(False)
 
     # sets Visibility for the Plotsettings Widget
     def set_plot_settings_visibility(self):
@@ -271,6 +277,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # is much more efficient, despite it would seem, that selectively
         # overwriting keys is.
         self.selectedSimulationDataItemListModel.clear_and_update_from_tuples(tuples)
+
+        # update the bd table
+        self.update_bd_table(-1)
 
     def get_selected_simulation_data_items(self):
         return [self.selectedSimulationDataItemListModel[key] for key in self.selectedSimulationDataItemListModel]
@@ -400,10 +409,29 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             data_collection_user_generated = []
             for index in self.curveListView.selectedIndexes():
                 data_collection_user_generated.append(self.curveListModel[index.data()])
+
+            # Update the anchor identifier for the plot preview which is selected by the
+            # user in the bdTableModel by clicking on the header lines
+            self.plotPreview.anchor_identifier = self.bdTableModel.getAnchorIdentifier() if len(data_collection_user_generated) == 0 else \
+                self.bdUserGeneratedTableModel.getAnchorIdentifier()
         else:
             return
 
         plot_data_collection = data_collection + data_collection_user_generated
+
+        # Check if ci values are contained in the plot data. Enable the ci combo box, if at
+        # least one data point has a confidence interval and set the current plot anchor with
+        # respect to the anchor of the bdTableModel. Combo_ci is only available if more than
+        # one plot is selected by the user.
+        self.combo_ci.setEnabled(False)
+
+        for plot_data in plot_data_collection:
+            if len(plot_data_collection) <= 1:
+                self.combo_ci.setCurrentIndex(0)
+            if plot_data.has_ci and len(plot_data_collection) > 1:
+                self.combo_ci.setEnabled(True)
+                break
+
         if len(data_collection_user_generated):
             self.plotPreview.tableView.setModel(self.bdUserGeneratedTableModel)
             self.plotPreview.change_plot(plot_data_collection, True)
@@ -476,7 +504,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         header = legend[0]
 
         for plot_data in plot_data_collection:
-            values = ((float(x), float(y)) for (x, y) in plot_data.values)
+            # check if plot_data value has a confidence interval
+            # confidence intervals are stored in tuples with three entries
+            # (rate, value, ci-value) instead of (rate, value) in the default case
+            if len(plot_data.values[0]) == 2:
+                values = ((float(x), float(y)) for (x, y) in plot_data.values)
+            else:
+                values = ((float(x), float(y)) for (x, y, z) in plot_data.values)
 
             sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
             [xs, ys] = list(zip(*sorted_value_pairs))
@@ -533,7 +567,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         for plot_data in plot_data_collection:
 
-            values = ((float(x), float(y)) for (x, y) in plot_data.values)
+            # check if plot_data value has a confidence interval
+            # confidence intervals are stored in tuples with three entries
+            # (rate, value, ci-value) instead of (rate, value) in the default case
+            if len(plot_data.values[0]) == 2:
+                values = ((float(x), float(y)) for (x, y) in plot_data.values)
+            else:
+                values = ((float(x), float(y)) for (x, y, z) in plot_data.values)
 
             sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
             [xs, ys] = list(zip(*sorted_value_pairs))
@@ -586,6 +626,31 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 column_saver = config_count = 0
             data_count += 1
 
+    def update_doubleClicked_horizontalHeader(self, index):
+        # load the plot data collection
+        self.check_labels()
+        data_collection = self.get_plot_data_collection_from_selected_variables()
+        data_collection_user_generated = []
+        for index in self.curveListView.selectedIndexes():
+            data_collection_user_generated.append(self.curveListModel[index.data()])
+
+        plot_data_collection = data_collection + data_collection_user_generated
+
+        if len(data_collection_user_generated) > 0:
+            return
+
+        # update the bd table (new anchor)
+        self.update_bd_table(index)
+
+        # update the anchor identifier and ci mode for the ci plot view
+        self.plotPreview.anchor_identifier = self.bdTableModel.getAnchorIdentifier()
+        self.plotPreview.ci_mode = self.combo_ci.currentText()
+
+        # update the table and plot
+        self.plotPreview.tableView.setModel(self.bdTableModel)
+        self.update_table(data_collection)
+        self.plotPreview.change_plot(plot_data_collection, False)
+
     def update_bd_table(self, index):
         # update bd table, the index determines the anchor,
         # if it is non integer per default the first config is regarded as
@@ -593,13 +658,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.bdTableModel.update_table(self.combo_rate_psnr.currentText(),
                                            self.combo_interp.currentText(), index,
-                                       not(self.checkBox_bdplot.isChecked()))
+                                       not(self.checkBox_bdplot.isChecked()),
+                                       self.combo_ci.currentText())
 
     def update_bd_user_generated_curves_table(self, index):
         clicked_text = self.bdUserGeneratedTableModel.headerData(index, Qt.Vertical, Qt.DisplayRole)
         self.bdUserGeneratedTableModel.update(None, self.combo_rate_psnr.currentText(),
                                            self.combo_interp.currentText(), not(self.checkBox_bdplot.isChecked()),
-                                              clicked_text)
+                                              clicked_text, self.combo_ci.currentText())
+
+        # update the anchor identifier
+        self.plotPreview.anchor_identifier = self.bdUserGeneratedTableModel.getAnchorIdentifier()
+
+        # load the user generated curves
+        data_collection_user_generated = []
+        for index in self.curveListView.selectedIndexes():
+            data_collection_user_generated.append(self.curveListModel[index.data()])
+
+        # update the plot
+        self.plotPreview.change_plot(data_collection_user_generated, True)
 
     def update_bd_plot(self):
         data_collection = self.get_plot_data_collection_from_selected_variables()
@@ -644,8 +721,45 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.bdTableModel.export_to_latex(filename)
 
     def on_combo_box(self):
-        # just update the bd table but do not change the anchor
-        self.update_bd_table(-1)
+        # check if user generated curves are available and update bd table
+        if self.curveListModel:
+            self.bdUserGeneratedTableModel.update_table(self.combo_rate_psnr.currentText(),
+                                           self.combo_interp.currentText(), -1,
+                                       not(self.checkBox_bdplot.isChecked()),
+                                       self.combo_ci.currentText())
+        else:
+            self.update_bd_table(-1)
+
+    def on_ci_combo_box(self):
+        # update the ci mode for the ci plot view
+        self.plotPreview.ci_mode = self.combo_ci.currentText()
+
+        # load the plot data collection
+        self.check_labels()
+        data_collection = self.get_plot_data_collection_from_selected_variables()
+        data_collection_user_generated = []
+        for index in self.curveListView.selectedIndexes():
+            data_collection_user_generated.append(self.curveListModel[index.data()])
+
+        plot_data_collection = data_collection + data_collection_user_generated
+
+        # Update tables and plots
+        if len(data_collection_user_generated) == 0:
+            self.bdTableModel.update_table(self.combo_rate_psnr.currentText(),
+                                           self.combo_interp.currentText(), -1,
+                                           not (self.checkBox_bdplot.isChecked()),
+                                           self.combo_ci.currentText())
+            self.update_table(data_collection)
+            self.plotPreview.anchor_identifier = self.bdTableModel.getAnchorIdentifier()
+            self.plotPreview.change_plot(plot_data_collection, False)
+        else:
+            self.bdUserGeneratedTableModel.update_table(self.combo_rate_psnr.currentText(),
+                                           self.combo_interp.currentText(), -1,
+                                       not(self.checkBox_bdplot.isChecked()),
+                                       self.combo_ci.currentText())
+            self.update_table(data_collection)
+            self.plotPreview.anchor_identifier = self.bdUserGeneratedTableModel.getAnchorIdentifier()
+            self.plotPreview.change_plot(plot_data_collection, True)
 
     def save_current_selection(self):
         """Saves the current selected sim data item collection"""
