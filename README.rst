@@ -1,6 +1,9 @@
 RDPlot
 =======================
 
+.. image:: https://raw.githubusercontent.com/wiki/IENT/RDPlot/resources/figures/rdplot_gui.png
+  :alt: RDPlot GUI
+
 RDPlot is a tool for plotting rate distortion curves.
 In particular, it can
 
