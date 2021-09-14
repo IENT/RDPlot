@@ -235,10 +235,17 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         DataCursor(self.ax.get_lines())
 
         start, end = self.ax.get_ylim()
-        start = math.floor(start)
-        end = math.ceil(end)
-        if abs(start-end)<20:
-            self.ax.yaxis.set_ticks(np.arange(start, end, 0.5))
+        data_range = end - start
+        # get ticks with decimal precision
+        tick_precision = math.pow(10, math.ceil(math.log10(data_range)) - 1)
+        # make sure we have at least 8 ticks
+        while data_range / tick_precision  < 8:
+            tick_precision /= 2
+        # adjust ticks to be at decimal positions
+        start = math.floor(start / tick_precision) * tick_precision
+        end  = math.ceil(end / tick_precision) * tick_precision
+
+        self.ax.yaxis.set_ticks(np.arange(start, end, tick_precision))
 
         self.plotAreaWidget.canvas.draw()
 
