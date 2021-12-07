@@ -17,6 +17,20 @@ It was developed along the design principle of easy extensibility.
 If no parser for your data is available, you can consider to introduce a `new parser <https://github.com/IENT/RDPlot/wiki/How-to-implement-a-new-parser>`_.
 If you feel like your parser would be of interest for others, please submit a PR.
 
+Citation
+=======================
+RDPlot was presented as a Demo on VCIP 2021. Please consider citing the corresponding demo paper when using RDPlot for the evaluation of your simulations.::
+
+    @inproceedings{ScSaWi21,
+    author = {Schneider, J. and Sauer, J. and Wien, M.},
+    title = {{RDP}lot -- An Evaluation Tool for Video Coding Simulations},
+    booktitle = {Visual Communications and Image Processing {VCIP}~'21},
+    address = {Munich},
+    year = {2021},
+    month = {12},
+    publisher = {{IEEE}, Piscataway},
+    }
+
 Build status
 =======================
 .. |Appveyor| image:: https://ci.appveyor.com/api/projects/status/o1qbjnf29err9o2a/branch/master?svg=true&retina=true
