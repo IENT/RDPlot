@@ -47,6 +47,7 @@ jobs:
         python -m pip install pytest-cov
         python -m pip install coveralls
         python -m pip install gitpython
+        python -m pip install wheel
         python3 setup.py sdist
         python -m pip install --no-binary rdplot  dist/rdplot-*.tar.gz
     - name: Test with pytest
