@@ -563,7 +563,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.change_table_temporal(plot_data_collection)
             return
 
-        self.tableWidget.setRowCount(len(plot_data_collection)/len(config))
+        self.tableWidget.setRowCount(int(len(plot_data_collection)/len(config)))
 
         for plot_data in plot_data_collection:
 

@@ -1,13 +1,12 @@
 cycler
-matplotlib
+matplotlib<3.8.0 #tikzplotlib not compatible with matplotlib 3.8.0 due to removed method as of 23/10/15
 numpy
 py
 pyparsing
-PyQt5<5.11
+PyQt5
 pytest
 python-dateutil
 pytz
-sip
 six
 scipy
 tabulate
