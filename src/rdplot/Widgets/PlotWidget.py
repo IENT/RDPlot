@@ -165,8 +165,10 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             for c in tmp_legend:
                 result = list(filter(lambda x: all(x in l for l in tmp_legend) == False, c))
                 legend.append(" ".join(result))
+
+            # legend should also be shown if only one element is plotted
             if len(tmp_legend) == 1:
-                legend = ['']
+                legend = [tmp_legend[0][1]]
         else:
             # when user-generated curves are involved the legend tends to break the layout and makes the plot impossible
             # to read. therefore only the first identifier is being shown in the legend
