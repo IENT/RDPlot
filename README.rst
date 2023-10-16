@@ -83,17 +83,13 @@ If you run into any problems, don't hesitate to use the `Issue tracker <https://
 .. contents::
    :local:
 
-Virtual Environment
+Virtual Environment (For Linux/MacOS)
 -------------------
 If you need system packages that conflict with the packages required for RDPlot, you can use a python virtual environment (see below).
 
 When you are inside a virtual environment, python ignores all system packages and instead uses a dedicated environment, allowing you to install packages with pip that would otherwise conflict with system packages and/or different versions. The pitfall is that you need to activate the environment each time you want to use the program.
 
 You can find more info on virtual environments at https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/.
-
-venv is included in python since version 3.3. If your python version is older consider upgrading, or install venv using::
-
-    sudo pip install virtualenv
 
 Download RDPlot. Make sure you do this at a place where it can stay::
 
@@ -129,28 +125,21 @@ To uninstall, simply delete the RDPlot directory.
 
 Mac OS X
 --------
-**Note:** things are not tested for Mac. You may have to fiddle a little bit.
-Please contribute, if you have ideas for improvements.
+**Note:** It is recommended to also install the required packages in a virtualenvironment. For further information see above.
 
 First of all you need to install python3.
 You can get it `here
 <https://www.python.org/downloads/>`_.
 If you are using Homebrew you can alternatively install python3 via console::
 
-    brew install python@3.9
+    brew install python@3.11
 
-Moreover, install all the requirements::
+Moreover, install all the requirements, GitPython and py2app::
 
-    cd src/rdplot
-    pip3 install -r requirements.txt
+    pip3 install --upgrade pip -r src/rdplot/requirements.txt gitpython py2app
 
-Additionally install py2app::
+Then build the app in alias mode::
 
-    pip3 install py2app
-
-Then navigate back to the top level and build an app in alias mode::
-
-    cd ../..
     python3 setup.py py2app -A
 
 Now you should have an app in the dist folder.
