@@ -97,7 +97,7 @@ venv is included in python since version 3.3. If your python version is older co
 
 Download RDPlot. Make sure you do this at a place where it can stay::
 
-    git clone --depth 1 https://github.com/IENT/RDPlot
+    git clone https://github.com/IENT/RDPlot
     cd RDPlot
 
 Create a virtualenv named "env" inside the RDPlot directory::
@@ -107,7 +107,7 @@ Create a virtualenv named "env" inside the RDPlot directory::
 Activate the venv and install dependencies::
 
     source env/bin/activate
-    pip3 install --upgrade pip gitpython
+    pip3 install --upgrade pip gitpython wheel
 
 Build and install RDPlot::
 

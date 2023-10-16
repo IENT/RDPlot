@@ -120,19 +120,19 @@ def get_version():
 
 def get_install_requires():
     if 'FLATPAK_INSTALL' in os.environ:
-        install_requires=['cycler', 'matplotlib', 'numpy', 
-                      'py', 'pyparsing', 'pyqt5', 'pytest',
-                      'python-dateutil', 'pytz', 'six', 
-                      'scipy', 'tabulate', 'mpldatacursor',
-                      'xmltodict', 'jsonpickle', 
-                      'tikzplotlib', 'Pillow'],
+        install_requires=['cycler', 'jsonpickle', 'matplotlib',
+                        'mpldatacursor', 'numpy', 'Pillow',
+                        'py', 'pyparsing', 'pyqt5', 'pytest',
+                        'python-dateutil', 'pytz', 'six', 
+                        'scipy', 'tabulate', 'tikzplotlib',
+                        'xmltodict'],
     else:
-        install_requires=['cycler', 'matplotlib==3.4.2', 'numpy',
-                      'py', 'pyparsing', 'pyqt5', 'pytest',
-                      'python-dateutil', 'pytz', 'six', 
-                      'scipy', 'tabulate', 'mpldatacursor',
-                      'xmltodict', 'jsonpickle', 
-                      'tikzplotlib', 'Pillow'],
+        install_requires=['cycler', 'jsonpickle', 'matplotlib<3.8.0',
+                        'mpldatacursor', 'numpy', 'Pillow',
+                        'py', 'pyparsing', 'pyqt5', 'pytest',
+                        'python-dateutil', 'pytz', 'six', 
+                        'scipy', 'tabulate', 'tikzplotlib',
+                        'xmltodict'],
     return install_requires
 
 setup(
