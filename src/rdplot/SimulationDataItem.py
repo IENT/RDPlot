@@ -27,6 +27,7 @@ from os.path import join, abspath, isfile, isdir, basename, splitext
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QComboBox, QPushButton, QDialogButtonBox, QLabel, QCheckBox, QGroupBox, QMessageBox, QApplication
 import re
+#from rdplot.Widgets.PlotWidget import color_dict
 
 
 #
@@ -502,7 +503,6 @@ class SimulationDataItemFactory(QObject):
         # in order to determine the type
         try:
             from rdplot.SimulationDataItemClasses.CsvLogs import CSVLog
-
             with open(log_path) as csvfile:
                 lines = csvfile.readlines()
 
