@@ -5,6 +5,7 @@ platform:
 branches:
   only:
     - master
+    - development
 
 environment:
   matrix:
@@ -15,7 +16,7 @@ environment:
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - python --version
-  - python -m pip install numpy scipy cycler matplotlib py pyparsing PyQt5 pytest python-dateutil pytz sip six tabulate mpldatacursor jsonpickle xmltodict tikzplotlib pynsist Pillow
+  - python -m pip install --upgrade pip -r .\src\rdplot\requirements.txt pynsist
 
 build_script:
   - git describe > .\src\rdplot\version.txt

@@ -33,8 +33,8 @@ RDPlot was presented as a Demo on VCIP 2021. Please consider citing the correspo
 
 Build status
 =======================
-.. |Appveyor| image:: https://ci.appveyor.com/api/projects/status/o1qbjnf29err9o2a/branch/master?svg=true&retina=true
-  :target: https://ci.appveyor.com/project/JensAc/rdplot
+.. |Appveyor| image:: https://ci.appveyor.com/api/projects/status/37mam1gyisyauvkv/branch/master?svg=true
+  :target: https://ci.appveyor.com/project/dmehlem/rdplot
 .. |Actions| image:: https://github.com/IENT/RDPlot/actions/workflows/build_test_rdplot.yml/badge.svg?branch=master
   :target: https://github.com/IENT/RDPlot/actions/workflows/build_test_rdplot.yml
 
