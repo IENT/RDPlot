@@ -86,6 +86,12 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.anchor_identifier = ''
         self.ci_mode = 'average'
 
+        self.color_cycle = ['r', 'b', 'y', 'k', 'c', 'm', 'g', 'r', 'b', 'y', 'k', 'c', 'm', 'g']
+        self.marker_cycle = ['x', 'x', 'x', 'x', 'x', 'x', 'x', 'o', 'o', 'o', 'o', 'o', 'o', 'o']
+        self.plot_index = 0
+        self.color_list = []
+
+
     def create_legend(self, plot_data_collection):
         tmp_legend = []
         for plot_data in plot_data_collection:
@@ -103,6 +109,23 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             legend = ['']
 
         return legend
+
+    
+    def set_color(self, name, path):
+        for color_item in self.color_list:
+            if color_item[0] == name:  # and color_item[1] == path:
+                return (color_item[2], color_item[3]) 
+        
+        color = self.color_cycle[self.plot_index]
+        marker = self.marker_cycle[self.plot_index]
+
+        self.plot_index += 1
+        if(self.plot_index >= len(self.color_cycle)):
+            self.plot_index = 0
+
+        self.color_list.append([name, path, color, marker])
+        return (color, marker)
+
 
     # refreshes the figure according to new changes done
     def change_plot(self, plot_data_collection, user_generated_curves=False):
@@ -144,11 +167,12 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
         self.ax.clear()
         self.ax.grid(True)
-        self.ax.set_prop_cycle(cycler('color', ['r', 'b', 'y', 'k', 'c', 'm', 'g', 'r', 'b', 'y', 'k', 'c', 'm', 'g']) +
-                               cycler('marker', ['x', 'x', 'x', 'x', 'x', 'x', 'x', 'o', 'o', 'o', 'o', 'o', 'o', 'o']))
 
         self.ax.set_xlabel(plot_data_collection[0].label[0])
         self.ax.set_ylabel(plot_data_collection[0].label[1])
+
+        # Sort PlotDataItems
+        plot_data_collection = sorted(plot_data_collection, key=lambda data: data.identifiers[1])
 
         # Now lets create a legend only containing informative
         # content (no duplicates)
@@ -180,6 +204,9 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             # Create legend from variable path and sim data items identifiers
             l = legend[plot_count] #" ".join([i for i in plot_data.identifiers] + plot_data.path)
 
+            if plot_data.color == " ":
+                (plot_data.color, plot_data.marker) = self.set_color(plot_data.identifiers[1], plot_data.path[1])
+
             # Convert list of pairs of strings to two sorted lists of floats
             # Check if plot_data value has a confidence interval
             # Confidence intervals are stored in tuples with three entries
@@ -191,7 +218,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
                     [xs, ys] = list(zip(*sorted_value_pairs))
 
                     # plot the current plot data
-                    curve = self.ax.plot(xs, ys, label=l)
+                    curve = self.ax.plot(xs, ys, label=l, color=plot_data.color, marker= plot_data.marker)
 
                     plot_count += 1
                 else:
@@ -210,20 +237,20 @@ class PlotWidget(QWidget, Ui_PlotWidget):
                     anchor_index = 1 if not user_generated_curves else 0
 
                     if self.ci_mode == 'average':
-                        curve = self.ax.plot(xs, ys, label=l)
+                        curve = self.ax.plot(xs, ys, label=l, color=plot_data.color, marker= plot_data.marker)
                     elif self.ci_mode == 'best':
                         if plot_data.identifiers[anchor_index] == self.anchor_identifier:
-                            curve = self.ax.plot(xs, ys_low, label=l)
+                            curve = self.ax.plot(xs, ys_low, label=l, color=plot_data.color, marker= plot_data.marker)
                         else:
-                            curve = self.ax.plot(xs, ys_up, label=l)
+                            curve = self.ax.plot(xs, ys_up, label=l, color=plot_data.color, marker= plot_data.marker)
                     elif self.ci_mode == 'worst':
                         if plot_data.identifiers[anchor_index] == self.anchor_identifier:
-                            curve = self.ax.plot(xs, ys_up, label=l)
+                            curve = self.ax.plot(xs, ys_up, label=l, color=plot_data.color, marker= plot_data.marker)
                         else:
-                            curve = self.ax.plot(xs, ys_low, label=l)
+                            curve = self.ax.plot(xs, ys_low, label=l, color=plot_data.color, marker= plot_data.marker)
 
                     # plot the ci as polygon around the current curve
-                    poly_ci = self.ax.fill(xs_ci, ys_ci, c=curve[0].get_c(), ec=curve[0].get_c(), alpha=0.3)
+                    poly_ci = self.ax.fill(xs_ci, ys_ci, c=curve[0].get_c(), ec=curve[0].get_c(), alpha=0.3, color=plot_data.color, marker= plot_data.marker)
 
                     plot_count += 1
             except:

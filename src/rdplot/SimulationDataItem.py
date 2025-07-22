@@ -167,7 +167,10 @@ class PlotData:
         self.values = values
         self.path = path
         self.label = label
-        self.has_ci = False
+        self.has_ci = False        
+        self.color = " "
+        self.marker = " "
+
 
         # plot data has confidence interval if tuple has 3 entries
         # tuple: (rate, value, ci-value)
