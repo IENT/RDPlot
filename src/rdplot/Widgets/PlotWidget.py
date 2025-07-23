@@ -130,7 +130,6 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         return (color, marker)
 
     def set_linestyle(self, path):
-        print(path, self.linestyle_list)
         for linestyle_item in self.linestyle_list:
             if linestyle_item[0] == path: 
                 return linestyle_item[1] 
