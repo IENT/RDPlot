@@ -52,6 +52,7 @@ jobs:
         python -m pip install --no-binary rdplot  dist/rdplot-*.tar.gz
     - name: Test with pytest
       run: |
+        export QT_QPA_PLATFORM=wayland
         xvfb-run --auto-servernum pytest --cov-report= --cov=rdplot
     - name: Upload coverage data to coveralls.io
       run: coveralls --service=github

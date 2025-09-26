@@ -31,7 +31,6 @@ class TestMain(unittest.TestCase):
     """Start the GUI, once load all example simulation directories and rd data, then exit."""
     def setUp(self):
         """Create the GUI"""
-        return
         self.app = QtWidgets.QApplication(sys.argv)
         self.main_window = MainWindow()
         # catch invoked message boxes for additional parameters and make random selection
@@ -42,7 +41,6 @@ class TestMain(unittest.TestCase):
     def test_process_cmd_line_args(self):
         # load all found logs and rd-data
         # try all log directories.
-        return
         sim_dirs_root = path.join(TEST_DIR, 'test_logs/exampleSimLogDirs/')
         sim_dirs = listdir(sim_dirs_root)
         sim_dirs = [path.join(sim_dirs_root, dir) for dir in sim_dirs]
@@ -68,7 +66,6 @@ class TestMain(unittest.TestCase):
                 self.main_window.process_cmd_line_args(['dummyAppName', rd_data_file])
 
     def random_attributes_selection(self):
-        return 
         for i in range(random.randint(0, len(self.main_window.simDataItemTreeModel.dialog.not_chosen_par)-1)):
             rnd_nmbr = random.randint(0, len(self.main_window.simDataItemTreeModel.dialog.not_chosen_par)-1)
             rnd_item = self.main_window.simDataItemTreeModel.dialog.not_chosen_par.item(rnd_nmbr)
@@ -78,7 +75,6 @@ class TestMain(unittest.TestCase):
         self.main_window.simDataItemTreeModel.dialog.accept()
 
     def tearDown(self):
-        return
         #EXIT
         self.app.exit()
         self.main_window.close()
