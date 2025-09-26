@@ -72,14 +72,17 @@ class CSVLog(AbstractSimulationDataItem):
                         ci_idx = j
                         break
 
-                if ci_idx == -1:
-                    # Read only the data (no CI available)
-                    data[header[i]] = [(rate, float(line[i]))]
-                    continue
-                else:
-                    # Read the data and CI in one tuple
-                    data[header[i]] = [(rate, float(line[i]), float(line[ci_idx]))]
-                    continue
+                try:  # Prevent errors from missing last data item
+                    if ci_idx == -1:
+                        # Read only the data (no CI available)
+                        data[header[i]] = [(rate, float(line[i]))]
+                        continue
+                    else:
+                        # Read the data and CI in one tuple
+                        data[header[i]] = [(rate, float(line[i]), float(line[ci_idx]))]
+                        continue
+                except Exception as e:
+                    pass
 
         self.summary_data = data
 

@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8]
+        python-version: [3.9]
 
     steps:
     - uses: actions/checkout@v2
@@ -52,6 +52,7 @@ jobs:
         python -m pip install --no-binary rdplot  dist/rdplot-*.tar.gz
     - name: Test with pytest
       run: |
+        export QT_QPA_PLATFORM=wayland
         xvfb-run --auto-servernum pytest --cov-report= --cov=rdplot
     - name: Upload coverage data to coveralls.io
       run: coveralls --service=github
@@ -59,15 +60,15 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_FLAG_NAME: ${{ matrix.test-name }}
         COVERALLS_PARALLEL: true
-  coveralls:
-   name: Coveralls
-   needs: build
-   runs-on: ubuntu-latest
-   container: python:3-slim
-   steps:
-     - name: Finished
-       run: |
-         pip3 install --upgrade coveralls
-         coveralls --service=github --finish
-       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#  coveralls:
+#   name: Coveralls
+#   needs: build
+#   runs-on: ubuntu-latest
+#   container: python:3-slim
+#   steps:
+#     - name: Finished
+#       run: |
+#         pip3 install --upgrade coveralls
+#         coveralls --service=github --finish
+#       env:
+#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
