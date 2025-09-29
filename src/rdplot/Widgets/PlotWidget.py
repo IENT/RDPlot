@@ -92,7 +92,11 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.plot_index = 0
         self.plot_linestyle_index = 0
         self.color_list = []
-        self.linestyle_list = [("psnr y", self.linestyle_cycle[0]), ("psnr u", self.linestyle_cycle[1]), ("psnr v", self.linestyle_cycle[2])]
+        self.linestyle_list = [
+            ("psnr y", self.linestyle_cycle[0]), ("psnr u", self.linestyle_cycle[1]), ("psnr v", self.linestyle_cycle[2]),
+            ("ssim y", self.linestyle_cycle[0]), ("ssim u", self.linestyle_cycle[1]), ("ssim v", self.linestyle_cycle[2]),    
+            ("vmaf y", self.linestyle_cycle[0]), ("vmaf u", self.linestyle_cycle[1]), ("vmaf v", self.linestyle_cycle[2]),    
+        ]
 
 
     def create_legend(self, plot_data_collection):
