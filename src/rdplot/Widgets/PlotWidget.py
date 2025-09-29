@@ -171,10 +171,10 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             self._clear_plot()
             return
 
-        if len(plot_data_collection) > 10:
+        if len(plot_data_collection) > 100:
             msg = QMessageBox(self)
             msg.setIcon(QMessageBox.Information)
-            msg.setText("Your selection intends to plot more that 10 curves, do you really want to continue?")
+            msg.setText("Your selection intends to plot more that 100 curves, do you really want to continue?")
             msg.setWindowTitle("Info")
             msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
             result = msg.exec()
