@@ -184,8 +184,11 @@ def brate(rate1, psnr1, rate2, psnr2, interpol, seq, directories, testmode):
     if interpol == 'pol':
         pv = lambda p, v: np.polyval(p, v)
 
-        pp1 = np.polyfit(psnr1, rate1, 3)
-        pp2 = np.polyfit(psnr2, rate2, 3)
+        try:
+            pp1 = np.polyfit(psnr1, rate1, 3)
+            pp2 = np.polyfit(psnr2, rate2, 3)
+        except ValueError:
+            return np.nan
 
         def find_diff(poly1, poly2, max_int, min_int):
             # find integral
@@ -202,8 +205,11 @@ def brate(rate1, psnr1, rate2, psnr2, interpol, seq, directories, testmode):
     elif interpol == 'pchip':
         pv = lambda p, v: p(v)
 
-        pp1 = pchip(y1, x1)
-        pp2 = pchip(y2, x2)
+        try:
+            pp1 = pchip(y1, x1)
+            pp2 = pchip(y2, x2)
+        except ValueError:
+            return np.nan
 
         def find_diff(poly1, poly2, max_int, min_int):
             # find integrals
