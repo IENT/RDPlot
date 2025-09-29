@@ -35,6 +35,10 @@ jobs:
         sudo apt-get install libxcb-keysyms1
         sudo apt-get install libxcb-image0
         sudo apt-get install xvfb
+
+        sudo apt update
+        sudo apt install -y qtwayland5 libxkbcommon0 libxkbcommon-x11-0
+        export QT_QPA_PLATFORM=wayland
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
@@ -52,7 +56,6 @@ jobs:
         python -m pip install --no-binary rdplot  dist/rdplot-*.tar.gz
     - name: Test with pytest
       run: |
-        export QT_QPA_PLATFORM=wayland
         xvfb-run --auto-servernum pytest --cov-report= --cov=rdplot
     - name: Upload coverage data to coveralls.io
       run: coveralls --service=github
