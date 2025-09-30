@@ -1,5 +1,5 @@
 cycler
-matplotlib<3.8.0 #tikzplotlib not compatible with matplotlib 3.8.0 due to removed method as of 23/10/15
+matplotlib==3.4.2 #tikzplotlib not compatible with matplotlib 3.8.0 due to removed method as of 23/10/15
 numpy==1.26.4 #fix numpy version due to incompatibility
 py
 pyparsing
