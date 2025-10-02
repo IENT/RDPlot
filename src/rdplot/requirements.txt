@@ -8,7 +8,7 @@ pytest
 python-dateutil
 pytz
 six
-scipy
+scipy==1.11.3
 tabulate
 mpldatacursor
 jsonpickle
