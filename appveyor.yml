@@ -11,7 +11,7 @@ branches:
 environment:
   matrix:
   - PYTHON: "C:\\Python39-x64"
-    PYTHON_VERSION: "3.9.1"
+    PYTHON_VERSION: "3.9.13"
     PYTHON_ARCH: "64"
 
 install:
