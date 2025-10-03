@@ -9,8 +9,8 @@ from  math import log10
 from rdplot.Widgets.PlotWidget import BDPlotWidget
 
 import numpy as np
-# from scipy.interpolate import pchip
-# from scipy import integrate
+from scipy.interpolate import pchip
+from scipy import integrate
 
 def bdrint(rate, dist, low, high):
     log_rate = sorted([log10(t) for t in rate])
