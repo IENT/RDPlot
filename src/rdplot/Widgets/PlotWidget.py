@@ -235,7 +235,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             # Confidence intervals are stored in tuples with three entries
             # (rate, value, ci-value) instead of (rate, value) in the default case
             try:
-                if not plot_data.has_ciF:
+                if not plot_data.has_ci:
                     values = ((float(x), float(y)) for (x, y) in plot_data.values)
                     sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
                     [xs, ys] = list(zip(*sorted_value_pairs))
@@ -274,6 +274,8 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
                     # plot the ci as polygon around the current curve
                     poly_ci = self.ax.fill(xs_ci, ys_ci, c=curve[0].get_c(), ec=curve[0].get_c(), alpha=0.3, color=plot_data.color, marker=plot_data.marker, linestyle=plot_data.linestyle)
+
+                    print(xs_ci, ys_ci)
 
                     plot_count += 1
             except:
