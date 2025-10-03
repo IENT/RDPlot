@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""A setuptools based setup module.
+"""A setuptools based setup module. 
 """
 
 # Always prefer setuptools over distutils
