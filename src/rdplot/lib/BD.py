@@ -9,8 +9,8 @@ from  math import log10
 from rdplot.Widgets.PlotWidget import BDPlotWidget
 
 import numpy as np
-from scipy.interpolate import pchip
-from scipy import integrate
+# from scipy.interpolate import pchip
+# from scipy import integrate
 
 def bdrint(rate, dist, low, high):
     log_rate = sorted([log10(t) for t in rate])
@@ -120,16 +120,16 @@ def bdsnr(rate1, psnr1, rate2, psnr2, interpol, seq, directories, testmode):
     elif interpol == 'pchip':
         pv = lambda p, v: p(v)
 
-        pp1 = pchip(x1, y1)
-        pp2 = pchip(x2, y2)
+#        pp1 = pchip(x1, y1)
+#        pp2 = pchip(x2, y2)
 
         def find_diff(poly1, poly2, max_int, min_int):
             # find integrals
-            int1 = integrate.quad(poly1, min_int, max_int)
-            int2 = integrate.quad(poly2, min_int, max_int)
+#            int1 = integrate.quad(poly1, min_int, max_int)
+#            int2 = integrate.quad(poly2, min_int, max_int)
 
             # calculate average difference
-            out = (int2[0] - int1[0]) / (max_int - min_int)
+#            out = (int2[0] - int1[0]) / (max_int - min_int)
 
             return out
     else:
