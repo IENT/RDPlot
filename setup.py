@@ -123,14 +123,16 @@ def get_install_requires():
         install_requires=['cycler', 'matplotlib', 'numpy==1.26.4', 
                       'py', 'pyparsing', 'pyqt5', 'pytest',
                       'python-dateutil', 'pytz', 'six', 
-                      'scipy', 'tabulate', 'mpldatacursor',
+#                      'scipy', 
+                      'tabulate', 'mpldatacursor',
                       'xmltodict', 'jsonpickle', 
                       'tikzplotlib', 'Pillow'],
     else:
         install_requires=['cycler', 'matplotlib==3.4.2', 'numpy==1.26.4',
                       'py', 'pyparsing', 'pyqt5', 'pytest',
                       'python-dateutil', 'pytz', 'six', 
-                      'scipy', 'tabulate', 'mpldatacursor',
+#                      'scipy', 
+                      'tabulate', 'mpldatacursor',
                       'xmltodict', 'jsonpickle', 
                       'tikzplotlib', 'Pillow'],
     return install_requires
