@@ -34,7 +34,7 @@ from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar)
 
-from tikzplotlib import save as tikz_save
+# from tikzplotlib import save as tikz_save
 
 import numpy as np
 import math
@@ -303,7 +303,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         if filename != '':      
             if '.tex' not in filename:
                 filename += '.tex'          
-            tikz_save(filename,self.plotAreaWidget.fig)
+#            tikz_save(filename,self.plotAreaWidget.fig)
 
     # this function enables zoom with mousewheel
     # see also: http://stackoverflow.com/questions/11551049/matplotlib-plot-zooming-with-scroll-wheel

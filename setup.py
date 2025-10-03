@@ -126,7 +126,8 @@ def get_install_requires():
 #                      'scipy', 
                       'tabulate', 'mpldatacursor',
                       'xmltodict', 'jsonpickle', 
-                      'tikzplotlib', 'Pillow'],
+#                      'tikzplotlib', 
+                      'Pillow'],
     else:
         install_requires=['cycler', 'matplotlib==3.4.2', 'numpy==1.26.4',
                       'py', 'pyparsing', 'pyqt5', 'pytest',
@@ -134,7 +135,8 @@ def get_install_requires():
 #                      'scipy', 
                       'tabulate', 'mpldatacursor',
                       'xmltodict', 'jsonpickle', 
-                      'tikzplotlib', 'Pillow'],
+#                      'tikzplotlib', 
+                      'Pillow'],
     return install_requires
 
 setup(
