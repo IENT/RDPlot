@@ -95,7 +95,8 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.linestyle_list = [
             ("psnr y", self.linestyle_cycle[0]), ("psnr u", self.linestyle_cycle[1]), ("psnr v", self.linestyle_cycle[2]),
             ("ssim y", self.linestyle_cycle[0]), ("ssim u", self.linestyle_cycle[1]), ("ssim v", self.linestyle_cycle[2]),    
-            ("vmaf y", self.linestyle_cycle[0]), ("vmaf u", self.linestyle_cycle[1]), ("vmaf v", self.linestyle_cycle[2]),    
+            ("vmaf y", self.linestyle_cycle[0]), ("vmaf u", self.linestyle_cycle[1]), ("vmaf v", self.linestyle_cycle[2]),   
+            ("mos",    self.linestyle_cycle[0]),     
         ]
 
 
@@ -234,7 +235,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             # Confidence intervals are stored in tuples with three entries
             # (rate, value, ci-value) instead of (rate, value) in the default case
             try:
-                if not plot_data.has_ci:
+                if not plot_data.has_ciF:
                     values = ((float(x), float(y)) for (x, y) in plot_data.values)
                     sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
                     [xs, ys] = list(zip(*sorted_value_pairs))
