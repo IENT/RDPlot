@@ -27,7 +27,7 @@ import sys
 
 from matplotlib.figure import Figure
 from matplotlib import cbook
-from scipy import spatial
+# from scipy import spatial
 
 from matplotlib import cycler
 from matplotlib.backends.backend_qt5agg import (
@@ -407,7 +407,7 @@ class DataCursor(object):
         # This will only be called if it's within "tolerance", anyway.
         x, y = event.mouseevent.xdata, event.mouseevent.ydata
         #catch the closest data point
-        x,y = event.artist.get_xydata()[spatial.KDTree(event.artist.get_xydata()).query(np.array([x, y]))[1]]
+#        x,y = event.artist.get_xydata()[spatial.KDTree(event.artist.get_xydata()).query(np.array([x, y]))[1]]
         annotation = self.annotations[event.artist.axes]
         if x is not None:
             if not self.display_all:
