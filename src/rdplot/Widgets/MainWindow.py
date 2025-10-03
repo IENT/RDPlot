@@ -1,6 +1,5 @@
 from os import path
 from os.path import sep, isfile, isdir
-from os import listdir
 import csv
 import cProfile, pstats
 
@@ -103,10 +102,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.actionSave_Table.triggered.connect(
             self.save_bd_table
-        )
-
-        self.actionExport_Figure_as_Tikzpicture.triggered.connect(
-            self.plotPreview.export_plot_tikz
         )
 
         self.actionExport_TableWidget.triggered.connect(

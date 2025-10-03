@@ -322,7 +322,6 @@ padding: 4px;
     <addaction name="actionOpen_Directory_List"/>
     <addaction name="separator"/>
     <addaction name="actionSave_Table"/>
-    <addaction name="actionExport_Figure_as_Tikzpicture"/>
     <addaction name="actionExport_TableWidget"/>
     <addaction name="separator"/>
     <addaction name="actionSave_Data"/>
@@ -524,11 +523,6 @@ padding: 4px;
   <action name="action_About">
    <property name="text">
     <string>About</string>
-   </property>
-  </action>
-  <action name="actionExport_Figure_as_Tikzpicture">
-   <property name="text">
-    <string>Export Figure as Tikzpicture</string>
    </property>
   </action>
   <action name="actionPlaceholder">

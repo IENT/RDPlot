@@ -27,7 +27,7 @@ import sys
 
 from matplotlib.figure import Figure
 from matplotlib import cbook
-# from scipy import spatial
+from scipy import spatial
 
 from matplotlib import cycler
 from matplotlib.backends.backend_qt5agg import (
@@ -298,13 +298,6 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
         self.plotAreaWidget.canvas.draw()
 
-    def export_plot_tikz(self):
-        filename, extension = QFileDialog.getSaveFileName(self, 'Save Plot as Tikzpicture', '.', 'Latex (*.tex)')
-        if filename != '':      
-            if '.tex' not in filename:
-                filename += '.tex'          
-#            tikz_save(filename,self.plotAreaWidget.fig)
-
     # this function enables zoom with mousewheel
     # see also: http://stackoverflow.com/questions/11551049/matplotlib-plot-zooming-with-scroll-wheel
     def on_wheel(self, event):
@@ -407,7 +400,7 @@ class DataCursor(object):
         # This will only be called if it's within "tolerance", anyway.
         x, y = event.mouseevent.xdata, event.mouseevent.ydata
         #catch the closest data point
-#        x,y = event.artist.get_xydata()[spatial.KDTree(event.artist.get_xydata()).query(np.array([x, y]))[1]]
+        x,y = event.artist.get_xydata()[spatial.KDTree(event.artist.get_xydata()).query(np.array([x, y]))[1]]
         annotation = self.annotations[event.artist.axes]
         if x is not None:
             if not self.display_all:
