@@ -5,6 +5,7 @@ platform:
 branches:
   only:
     - master
+    - master_copy
     - development
 
 environment:
