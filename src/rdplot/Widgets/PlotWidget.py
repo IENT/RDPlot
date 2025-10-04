@@ -235,6 +235,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             # Confidence intervals are stored in tuples with three entries
             # (rate, value, ci-value) instead of (rate, value) in the default case
             try:
+                print("Has ci, values", plot_data.has_ci, plot_data.values)
                 if not plot_data.has_ci:
                     values = ((float(x), float(y)) for (x, y) in plot_data.values)
                     sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
