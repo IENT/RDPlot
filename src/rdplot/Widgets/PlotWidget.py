@@ -99,6 +99,8 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             ("mos",    self.linestyle_cycle[0]),     
         ]
 
+        self.ci_visible = False
+
 
     def create_legend(self, plot_data_collection):
         tmp_legend = []
@@ -148,6 +150,12 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.linestyle_list.append([path, linestyle])
         return linestyle
 
+    def plot_confidence_interval(self, ax, x, y, ci, color):
+        for i in range(len(x)):
+            top = y[i] + ci[i]
+            bottom = y[i] - ci[i]
+            print(x[i], top, bottom)
+            ax.plot([x[i], x[i]], [top, bottom], color=color, marker="_", ms=8, solid_capstyle="butt") #, alpha=0.3)
 
     # refreshes the figure according to new changes done
     def change_plot(self, plot_data_collection, user_generated_curves=False):
@@ -235,7 +243,6 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             # Confidence intervals are stored in tuples with three entries
             # (rate, value, ci-value) instead of (rate, value) in the default case
             try:
-                print("Has ci, values", plot_data.has_ci, plot_data.values)
                 if not plot_data.has_ci:
                     values = ((float(x), float(y)) for (x, y) in plot_data.values)
                     sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
@@ -274,9 +281,10 @@ class PlotWidget(QWidget, Ui_PlotWidget):
                             curve = self.ax.plot(xs, ys_low, label=l, color=plot_data.color, marker=plot_data.marker, linestyle=plot_data.linestyle)
 
                     # plot the ci as polygon around the current curve
-                    poly_ci = self.ax.fill(xs_ci, ys_ci, c=curve[0].get_c(), ec=curve[0].get_c(), alpha=0.3, color=plot_data.color, marker=plot_data.marker, linestyle=plot_data.linestyle)
-
-                    print(xs_ci, ys_ci)
+                    if self.ci_visible:
+                        poly_ci = self.ax.fill(xs_ci, ys_ci, c=curve[0].get_c(), ec=curve[0].get_c(), alpha=0.3)
+                    else:
+                        self.plot_confidence_interval(self.ax, xs, ys, zs, plot_data.color)
 
                     plot_count += 1
             except:

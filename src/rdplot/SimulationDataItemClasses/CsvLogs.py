@@ -29,7 +29,6 @@ class CSVLog(AbstractSimulationDataItem):
         # there should not be any equal lines
         super().__init__(line)
 
-
         header = header.replace("\n", "")
         header = re.split(r'[,;]',header.lower())
         header = list(filter(None, header))
@@ -88,7 +87,6 @@ class CSVLog(AbstractSimulationDataItem):
                             data[header[i]] = [(rate, float(line[i]))]
                         except ValueError:
                             data[header[i]] = [(rate, float('nan'))]
-                        print(data[header[i]])
                         continue
                     else:
                         # Read the data and CI in one tuple
@@ -97,14 +95,11 @@ class CSVLog(AbstractSimulationDataItem):
                         except ValueError:
                             data[header[i]] = [(rate, float('nan'), float('nan'))]
 
-                        print(data[header[i]])
                         continue
                 except Exception as e:
-                    print("E1", e)
                     pass
 
         self.summary_data = data
-        print(self.summary_Data)
 
     @property
     def tree_identifier_list(self):
