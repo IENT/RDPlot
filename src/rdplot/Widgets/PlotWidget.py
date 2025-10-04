@@ -34,7 +34,7 @@ from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar)
 
-from tikzplotlib import save as tikz_save
+# from tikzplotlib import save as tikz_save
 
 import numpy as np
 import math
@@ -86,6 +86,23 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.anchor_identifier = ''
         self.ci_mode = 'average'
 
+        self.color_cycle = ['r', 'b', 'y', 'k', 'c', 'm', 'g', 'r', 'b', 'y', 'k', 'c', 'm', 'g']
+        self.marker_cycle = ['x', 'x', 'x', 'x', 'x', 'x', 'x', 'o', 'o', 'o', 'o', 'o', 'o', 'o']
+        self.linestyle_cycle = ["-", "--", ":", "-."]
+        self.plot_index = 0
+        self.plot_linestyle_index = 0
+        self.color_list = []
+        self.linestyle_list = [
+            ("psnr y", self.linestyle_cycle[0]), ("psnr u", self.linestyle_cycle[1]), ("psnr v", self.linestyle_cycle[2]),
+            ("wpsnr y", self.linestyle_cycle[0]), ("wpsnr u", self.linestyle_cycle[1]), ("wpsnr v", self.linestyle_cycle[2]),
+            ("ssim y", self.linestyle_cycle[0]), ("ssim u", self.linestyle_cycle[1]), ("ssim v", self.linestyle_cycle[2]),    
+            ("vmaf y", self.linestyle_cycle[0]), ("vmaf u", self.linestyle_cycle[1]), ("vmaf v", self.linestyle_cycle[2]),   
+            ("mos",    self.linestyle_cycle[0]),     
+        ]
+
+        self.ci_visible = False
+
+
     def create_legend(self, plot_data_collection):
         tmp_legend = []
         for plot_data in plot_data_collection:
@@ -103,6 +120,43 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             legend = ['']
 
         return legend
+
+    
+    def set_color(self, name):
+        for color_item in self.color_list:
+            if color_item[0] == name: 
+                return (color_item[1], color_item[2]) 
+        
+        color = self.color_cycle[self.plot_index]
+        marker = self.marker_cycle[self.plot_index]
+
+        self.plot_index += 1
+        if(self.plot_index >= len(self.color_cycle)):
+            self.plot_index = 0
+
+        self.color_list.append([name, color, marker])
+        return (color, marker)
+
+    def set_linestyle(self, path):
+        for linestyle_item in self.linestyle_list:
+            if linestyle_item[0] == path: 
+                return linestyle_item[1] 
+        
+        linestyle = self.linestyle_cycle[self.plot_linestyle_index]
+
+        self.plot_linestyle_index += 1
+        if(self.plot_linestyle_index >= len(self.linestyle_cycle)):
+            self.plot_linestyle_index = 0
+
+        self.linestyle_list.append([path, linestyle])
+        return linestyle
+
+    def plot_confidence_interval(self, ax, x, y, ci, color):
+        for i in range(len(x)):
+            top = y[i] + ci[i]
+            bottom = y[i] - ci[i]
+            print(x[i], top, bottom)
+            ax.plot([x[i], x[i]], [top, bottom], color=color, marker="_", ms=8, solid_capstyle="butt") #, alpha=0.3)
 
     # refreshes the figure according to new changes done
     def change_plot(self, plot_data_collection, user_generated_curves=False):
@@ -131,10 +185,10 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             self._clear_plot()
             return
 
-        if len(plot_data_collection) > 10:
+        if len(plot_data_collection) > 100:
             msg = QMessageBox(self)
             msg.setIcon(QMessageBox.Information)
-            msg.setText("Your selection intends to plot more that 10 curves, do you really want to continue?")
+            msg.setText("Your selection intends to plot more that 100 curves, do you really want to continue?")
             msg.setWindowTitle("Info")
             msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
             result = msg.exec()
@@ -144,11 +198,12 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
         self.ax.clear()
         self.ax.grid(True)
-        self.ax.set_prop_cycle(cycler('color', ['r', 'b', 'y', 'k', 'c', 'm', 'g', 'r', 'b', 'y', 'k', 'c', 'm', 'g']) +
-                               cycler('marker', ['x', 'x', 'x', 'x', 'x', 'x', 'x', 'o', 'o', 'o', 'o', 'o', 'o', 'o']))
 
         self.ax.set_xlabel(plot_data_collection[0].label[0])
         self.ax.set_ylabel(plot_data_collection[0].label[1])
+
+        # Sort PlotDataItems
+        plot_data_collection = sorted(plot_data_collection, key=lambda data: data.identifiers[1])
 
         # Now lets create a legend only containing informative
         # content (no duplicates)
@@ -180,6 +235,10 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             # Create legend from variable path and sim data items identifiers
             l = legend[plot_count] #" ".join([i for i in plot_data.identifiers] + plot_data.path)
 
+            if plot_data.color == " ":
+                (plot_data.color, plot_data.marker) = self.set_color(plot_data.identifiers[1])
+                plot_data.linestyle = self.set_linestyle(plot_data.path[1])
+
             # Convert list of pairs of strings to two sorted lists of floats
             # Check if plot_data value has a confidence interval
             # Confidence intervals are stored in tuples with three entries
@@ -191,7 +250,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
                     [xs, ys] = list(zip(*sorted_value_pairs))
 
                     # plot the current plot data
-                    curve = self.ax.plot(xs, ys, label=l)
+                    curve = self.ax.plot(xs, ys, label=l, color=plot_data.color, marker=plot_data.marker, linestyle=plot_data.linestyle)
 
                     plot_count += 1
                 else:
@@ -210,20 +269,23 @@ class PlotWidget(QWidget, Ui_PlotWidget):
                     anchor_index = 1 if not user_generated_curves else 0
 
                     if self.ci_mode == 'average':
-                        curve = self.ax.plot(xs, ys, label=l)
+                        curve = self.ax.plot(xs, ys, label=l, color=plot_data.color, marker=plot_data.marker, linestyle=plot_data.linestyle)
                     elif self.ci_mode == 'best':
                         if plot_data.identifiers[anchor_index] == self.anchor_identifier:
-                            curve = self.ax.plot(xs, ys_low, label=l)
+                            curve = self.ax.plot(xs, ys_low, label=l, color=plot_data.color, marker=plot_data.marker, linestyle=plot_data.linestyle)
                         else:
-                            curve = self.ax.plot(xs, ys_up, label=l)
+                            curve = self.ax.plot(xs, ys_up, label=l, color=plot_data.color, marker=plot_data.marker, linestyle=plot_data.linestyle)
                     elif self.ci_mode == 'worst':
                         if plot_data.identifiers[anchor_index] == self.anchor_identifier:
-                            curve = self.ax.plot(xs, ys_up, label=l)
+                            curve = self.ax.plot(xs, ys_up, label=l, color=plot_data.color, marker=plot_data.marker, linestyle=plot_data.linestyle)
                         else:
-                            curve = self.ax.plot(xs, ys_low, label=l)
+                            curve = self.ax.plot(xs, ys_low, label=l, color=plot_data.color, marker=plot_data.marker, linestyle=plot_data.linestyle)
 
                     # plot the ci as polygon around the current curve
-                    poly_ci = self.ax.fill(xs_ci, ys_ci, c=curve[0].get_c(), ec=curve[0].get_c(), alpha=0.3)
+                    if self.ci_visible:
+                        poly_ci = self.ax.fill(xs_ci, ys_ci, c=curve[0].get_c(), ec=curve[0].get_c(), alpha=0.3)
+                    else:
+                        self.plot_confidence_interval(self.ax, xs, ys, zs, plot_data.color)
 
                     plot_count += 1
             except:
@@ -248,13 +310,6 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.ax.yaxis.set_ticks(np.arange(start, end, tick_precision))
 
         self.plotAreaWidget.canvas.draw()
-
-    def export_plot_tikz(self):
-        filename, extension = QFileDialog.getSaveFileName(self, 'Save Plot as Tikzpicture', '.', 'Latex (*.tex)')
-        if filename != '':      
-            if '.tex' not in filename:
-                filename += '.tex'          
-            tikz_save(filename,self.plotAreaWidget.fig)
 
     # this function enables zoom with mousewheel
     # see also: http://stackoverflow.com/questions/11551049/matplotlib-plot-zooming-with-scroll-wheel

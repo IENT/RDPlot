@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8]
+        python-version: ["3.9", "3.10", "3.11"]
 
     steps:
     - uses: actions/checkout@v2
@@ -35,6 +35,10 @@ jobs:
         sudo apt-get install libxcb-keysyms1
         sudo apt-get install libxcb-image0
         sudo apt-get install xvfb
+
+        sudo apt update
+        sudo apt install -y qtwayland5 libxkbcommon0 libxkbcommon-x11-0
+        export QT_QPA_PLATFORM=wayland
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
@@ -60,14 +64,14 @@ jobs:
         COVERALLS_FLAG_NAME: ${{ matrix.test-name }}
         COVERALLS_PARALLEL: true
   coveralls:
-   name: Coveralls
-   needs: build
-   runs-on: ubuntu-latest
-   container: python:3-slim
-   steps:
-     - name: Finished
-       run: |
-         pip3 install --upgrade coveralls
-         coveralls --service=github --finish
-       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    name: Coveralls
+    needs: build
+    runs-on: ubuntu-latest
+    container: python:3-slim
+    steps:
+      - name: Finished
+        run: |
+          pip3 install --upgrade coveralls
+          coveralls --service=github --finish
+        env:
+         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

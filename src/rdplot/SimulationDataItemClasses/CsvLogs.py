@@ -33,17 +33,36 @@ class CSVLog(AbstractSimulationDataItem):
         header = re.split(r'[,;]',header.lower())
         header = list(filter(None, header))
         sequence_idx = header.index("sequence")
-        qp_idx = header.index("qp")
+
+        try:
+            qp_idx = header.index("qp")
+        except ValueError:
+            try:
+                qp_idx = header.index("rate point")
+            except ValueError:
+                qp_idx = header.index("bitrate")
 
         # split also the line
         line = re.split(r'[,;]',line)
-        line = list(filter(None, line))
+        line = list(line)
+        # line = list(filter(None, line))
 
         # I want to allow for all header fields looking like the bitrate
         # Therefore, it is a little bit more complicated here
-        tmp = list(map(lambda x: 'rate' in x, header))
-        rate_idx = tmp.index(1)
-        rate = float(line[rate_idx])
+        rate_idx = -1
+        try:
+            rate_idx = header.index("bitrate")
+        except ValueError:
+            pass
+
+        if rate_idx == -1:
+            tmp = list(map(lambda x: 'rate' in x, header))
+            rate_idx = tmp.index(1)
+
+        try:
+            rate = float(line[rate_idx])
+        except ValueError:
+            rate = float('nan')
 
         self.sequence = line[sequence_idx]
         self.qp = line[qp_idx]
@@ -72,14 +91,24 @@ class CSVLog(AbstractSimulationDataItem):
                         ci_idx = j
                         break
 
-                if ci_idx == -1:
-                    # Read only the data (no CI available)
-                    data[header[i]] = [(rate, float(line[i]))]
-                    continue
-                else:
-                    # Read the data and CI in one tuple
-                    data[header[i]] = [(rate, float(line[i]), float(line[ci_idx]))]
-                    continue
+                try:  # Prevent errors from missing last data item
+                    if ci_idx == -1:
+                        # Read only the data (no CI available)
+                        try:
+                            data[header[i]] = [(rate, float(line[i]))]
+                        except ValueError:
+                            data[header[i]] = [(rate, float('nan'))]
+                        continue
+                    else:
+                        # Read the data and CI in one tuple
+                        try:
+                            data[header[i]] = [(rate, float(line[i]), float(line[ci_idx]))]
+                        except ValueError:
+                            data[header[i]] = [(rate, float('nan'), float('nan'))]
+
+                        continue
+                except Exception as e:
+                    pass
 
         self.summary_data = data
 

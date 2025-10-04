@@ -1,6 +1,5 @@
 from os import path
 from os.path import sep, isfile, isdir
-from os import listdir
 import csv
 import cProfile, pstats
 
@@ -105,10 +104,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.save_bd_table
         )
 
-        self.actionExport_Figure_as_Tikzpicture.triggered.connect(
-            self.plotPreview.export_plot_tikz
-        )
-
         self.actionExport_TableWidget.triggered.connect(
             self.export_table_to_csv
         )
@@ -146,6 +141,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         # set up bd plot checkbox
         self.checkBox_bdplot.stateChanged.connect(self.update_bd_plot)
+        self.checkBox_plot_ci.stateChanged.connect(self.update_plot_ci_setting)
 
         self.curveWidget.hide()
         self.curveListModel = OrderedDictModel()
@@ -400,10 +396,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             selectionmodel.clearSelection()
 
     # updates the plot if the plot variable is changed
-    def update_plot(self):
+    def update_plot(self, force=False):
         # user-generated curves and curves loaded from files are not supposed to be mixed
         user_generated_curves = False
-        if self.sender() == self._variable_tree_selection_model or self.sender() == self.curveListSelectionModel:
+        if self.sender() == self._variable_tree_selection_model or self.sender() == self.curveListSelectionModel or force:
             self.check_labels()
             data_collection = self.get_plot_data_collection_from_selected_variables()
             data_collection_user_generated = []
@@ -677,6 +673,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         # update the plot
         self.plotPreview.change_plot(data_collection_user_generated, True)
+
+    def update_plot_ci_setting(self):
+        if self.checkBox_plot_ci.isChecked():
+            self.plotPreview.ci_visible = True
+        else:
+            self.plotPreview.ci_visible = False
+        self.update_plot(force=True)
 
     def update_bd_plot(self):
         data_collection = self.get_plot_data_collection_from_selected_variables()
