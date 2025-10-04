@@ -94,6 +94,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.color_list = []
         self.linestyle_list = [
             ("psnr y", self.linestyle_cycle[0]), ("psnr u", self.linestyle_cycle[1]), ("psnr v", self.linestyle_cycle[2]),
+            ("wpsnr y", self.linestyle_cycle[0]), ("wpsnr u", self.linestyle_cycle[1]), ("wpsnr v", self.linestyle_cycle[2]),
             ("ssim y", self.linestyle_cycle[0]), ("ssim u", self.linestyle_cycle[1]), ("ssim v", self.linestyle_cycle[2]),    
             ("vmaf y", self.linestyle_cycle[0]), ("vmaf u", self.linestyle_cycle[1]), ("vmaf v", self.linestyle_cycle[2]),   
             ("mos",    self.linestyle_cycle[0]),     

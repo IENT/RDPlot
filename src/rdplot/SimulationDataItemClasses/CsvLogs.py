@@ -37,7 +37,10 @@ class CSVLog(AbstractSimulationDataItem):
         try:
             qp_idx = header.index("qp")
         except ValueError:
-            qp_idx = header.index("bitrate")
+            try:
+                qp_idx = header.index("rate point")
+            except ValueError:
+                qp_idx = header.index("bitrate")
 
         # split also the line
         line = re.split(r'[,;]',line)
@@ -46,8 +49,16 @@ class CSVLog(AbstractSimulationDataItem):
 
         # I want to allow for all header fields looking like the bitrate
         # Therefore, it is a little bit more complicated here
-        tmp = list(map(lambda x: 'rate' in x, header))
-        rate_idx = tmp.index(1)
+        rate_idx = -1
+        try:
+            rate_idx = header.index("bitrate")
+        except ValueError:
+            pass
+
+        if rate_idx == -1:
+            tmp = list(map(lambda x: 'rate' in x, header))
+            rate_idx = tmp.index(1)
+
         try:
             rate = float(line[rate_idx])
         except ValueError:
