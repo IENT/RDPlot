@@ -259,7 +259,6 @@ class EncLogHM(AbstractEncLog):
             vals = [float(val) for val in vals]  # convert to numbers
 
             name_val_dict = dict(zip(names, vals))  # pack both together in a dict
-            # print(summary_type)
 
             name_rate = 'Bitrate'
             if summary_type == 'SUMMARY':

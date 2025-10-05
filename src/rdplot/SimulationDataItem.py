@@ -25,7 +25,7 @@ from copy import copy
 from os import listdir
 from os.path import join, abspath, isfile, isdir, basename, splitext
 from PyQt5.QtCore import *
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QComboBox, QPushButton, QDialogButtonBox, QLabel, QCheckBox, QGroupBox, QMessageBox, QApplication
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QComboBox, QDialogButtonBox, QLabel, QCheckBox
 import re
 
 
@@ -457,7 +457,7 @@ class SimulationDataItemFactory(QObject):
             except SimulationDataItemError as error:
                 pass
                 # We definitely cannot accept thousands of exceptions on the command line
-                # print((AbstractEncLog
+                # print((
                 #    "Could not create simulation data item from file '{}'"
                 #    " due to {}"
                 # ).format(path, error))
@@ -522,7 +522,7 @@ class SimulationDataItemFactory(QObject):
                     continue
                 item_list.append(CSVLog(config, header, line))
             return item_list
-        except:
+        except Exception as e:
             raise SimulationDataItemError()
 
     # Magic Methods

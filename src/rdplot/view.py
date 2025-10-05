@@ -67,9 +67,14 @@ class ParserWorkThread(QThread):
             try:
                 sim_data_items = self._factory.create_item_list_from_path(path)
                 print("Parsed '{}' ".format(path))
-            except SimulationDataItemError:
+            except SimulationDataItemError as error:
                 self.newParsedData.emit([])
                 self.path_list.clear()
+
+                # print((
+                #    "Could not create simulation data item from file '{}'"
+                #    " due to {}"
+                # ).format(path, error))
                 return
 
             self.newParsedData.emit(sim_data_items)
@@ -117,9 +122,14 @@ class ParserWorkNoThread(QObject):
             try:
                 sim_data_items = self._factory.create_item_list_from_path(path)
                 print("Parsed '{}' ".format(path))
-            except SimulationDataItemError:
+            except SimulationDataItemError as error:
                 self.newParsedData.emit([])
                 self.path_list.clear()
+
+                # print((
+                #    "Could not create simulation data item from file '{}'"
+                #    " due to {}"
+                # ).format(path, error))
                 return
 
             self.newParsedData.emit(sim_data_items)

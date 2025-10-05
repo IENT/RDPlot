@@ -20,7 +20,7 @@
 import xmltodict
 from abc import abstractmethod
 from xml.parsers.expat import ExpatError
-from os.path import normpath, basename, sep, dirname
+from os.path import normpath, dirname
 
 from rdplot.SimulationDataItem import (AbstractSimulationDataItem, SimulationDataItemError)
 
