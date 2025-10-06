@@ -123,16 +123,20 @@ def get_install_requires():
         install_requires=['cycler', 'matplotlib', 'numpy', 
                       'py', 'pyparsing', 'pyqt5', 'pytest',
                       'python-dateutil', 'pytz', 'six', 
-                      'scipy', 'tabulate', 'mpldatacursor',
+                      'scipy', 
+                      'tabulate', 'mpldatacursor',
                       'xmltodict', 'jsonpickle', 
-                      'tikzplotlib', 'Pillow'],
+#                      'tikzplotlib', 
+                      'Pillow'],
     else:
-        install_requires=['cycler', 'matplotlib==3.4.2', 'numpy',
+        install_requires=['cycler', 'matplotlib', 'numpy',
                       'py', 'pyparsing', 'pyqt5', 'pytest',
                       'python-dateutil', 'pytz', 'six', 
-                      'scipy', 'tabulate', 'mpldatacursor',
+                      'scipy', 
+                      'tabulate', 'mpldatacursor',
                       'xmltodict', 'jsonpickle', 
-                      'tikzplotlib', 'Pillow'],
+#                      'tikzplotlib', 
+                      'Pillow'],
     return install_requires
 
 setup(
@@ -176,8 +180,7 @@ setup(
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8'
+        'Programming Language :: Python :: 3.9',
     ],
 
     # What does your project relate to?
