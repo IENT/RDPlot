@@ -91,7 +91,7 @@ When you are inside a virtual environment, python ignores all system packages an
 
 You can find more info on virtual environments at https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/.
 
-venv is included in python since version 3.3. If your python version is older consider upgrading, or install venv using::
+venv is included in python since version 3.3. Please make sure to use a supported python version. You can find the supported python versions in the actions tab by clicking on the desired commit name that you want to use or by looking the currently supported and tested versions in '.github/workflows/build_test_rdplot.yml'. If your python version does not fulfil the requirements consider upgrading, or install venv using::
 
     sudo pip install virtualenv
 
