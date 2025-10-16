@@ -155,7 +155,6 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         for i in range(len(x)):
             top = y[i] + ci[i]
             bottom = y[i] - ci[i]
-            print(x[i], top, bottom)
             ax.plot([x[i], x[i]], [top, bottom], color=color, marker="_", ms=8, solid_capstyle="butt") #, alpha=0.3)
 
     # refreshes the figure according to new changes done
@@ -229,6 +228,25 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             for plot_data in plot_data_collection:
                 legend.append(plot_data.identifiers[0])
 
+        # Get min and max for reference plotting
+        minr = 1e20
+        maxr = -minr
+        for plot_data in plot_data_collection:
+            if not plot_data.has_ci:
+                values = ((float(x), float(y)) for (x, y) in plot_data.values)
+                sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
+                [xs, ys] = list(zip(*sorted_value_pairs))
+            else:
+                # A confidence interval is included in the data
+                values = ((float(x), float(y), float(z)) for (x, y, z) in plot_data.values)
+                sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
+                [xs, ys, zs] = list(zip(*sorted_value_pairs))
+            if np.isnan(min(xs)) or np.isnan(max(xs)):
+                continue
+            minr = min(min(xs), minr)
+            maxr = max(max(xs), maxr)
+
+
         # plot all the lines which are missing yet
         plot_count = 0
         for plot_data in plot_data_collection:
@@ -249,6 +267,10 @@ class PlotWidget(QWidget, Ui_PlotWidget):
                     sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
                     [xs, ys] = list(zip(*sorted_value_pairs))
 
+                    if len(xs) == 1 and np.isnan(xs[0]):
+                        xs = [minr, maxr]
+                        ys = [ys[0], ys[0]]
+
                     # plot the current plot data
                     curve = self.ax.plot(xs, ys, label=l, color=plot_data.color, marker=plot_data.marker, linestyle=plot_data.linestyle)
 
@@ -258,6 +280,11 @@ class PlotWidget(QWidget, Ui_PlotWidget):
                     values = ((float(x), float(y), float(z)) for (x, y, z) in plot_data.values)
                     sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
                     [xs, ys, zs] = list(zip(*sorted_value_pairs))
+
+                    if len(xs) == 1 and np.isnan(xs[0]):
+                        xs = [minr, maxr]
+                        ys = [ys[0], ys[0]]
+                        zs = [zs[0], zs[0]]
 
                     # calculate the lower and upper boundaries of the CI
                     ys_low = np.subtract(ys, zs)
@@ -288,8 +315,8 @@ class PlotWidget(QWidget, Ui_PlotWidget):
                         self.plot_confidence_interval(self.ax, xs, ys, zs, plot_data.color)
 
                     plot_count += 1
-            except:
-                sys.stderr.write("Too many values for confidence interval. Please only add one value.")
+            except Exception as e:
+                print(e)
 
         # Set the legend
         if not(legend == ['']):
@@ -308,7 +335,6 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         end  = math.ceil(end / tick_precision) * tick_precision
 
         self.ax.yaxis.set_ticks(np.arange(start, end, tick_precision))
-
         self.plotAreaWidget.canvas.draw()
 
     # this function enables zoom with mousewheel
