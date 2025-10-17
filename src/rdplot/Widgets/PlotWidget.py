@@ -95,11 +95,13 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             Reset the linestyles and color cycle for plotting
         '''
         self.color_cycle = ['r', 'b', 'y', 'k', 'c', 'm', 'g', 'r', 'b', 'y', 'k', 'c', 'm', 'g']
-        self.marker_cycle = ['x', 'x', 'x', 'x', 'x', 'x', 'x', 'o', 'o', 'o', 'o', 'o', 'o', 'o']
+        self.marker_cycle = ['x', 'o', 'v', '2', 's', 'P', '*', 'D', 'h']
         self.linestyle_cycle = ["-", "--", ":", "-."]
         self.plot_index = 0
+        self.marker_index = 0
         self.plot_linestyle_index = 0
         self.color_list = []
+        self.marker_list = []
         self.linestyle_list = [
             ("psnr y", self.linestyle_cycle[0]), ("psnr u", self.linestyle_cycle[1]), ("psnr v", self.linestyle_cycle[2]),
             ("wpsnr y", self.linestyle_cycle[0]), ("wpsnr u", self.linestyle_cycle[1]), ("wpsnr v", self.linestyle_cycle[2]),
@@ -126,20 +128,35 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
         return legend
 
-    
-    def set_color(self, name):
+    def set_color(self, name, sequence):
+        color = None
         for color_item in self.color_list:
             if color_item[0] == name: 
-                return (color_item[1], color_item[2]) 
+                color = color_item[1]
+
+        marker = None
+        for marker_item in self.marker_list:
+            if marker_item[0] == sequence: 
+                marker = marker_item[1]
         
-        color = self.color_cycle[self.plot_index]
-        marker = self.marker_cycle[self.plot_index]
+        if color is None:
+            color = self.color_cycle[self.plot_index]
 
-        self.plot_index += 1
-        if(self.plot_index >= len(self.color_cycle)):
-            self.plot_index = 0
+            self.plot_index += 1
+            if(self.plot_index >= len(self.color_cycle)):
+                self.plot_index = 0
+            
+            self.color_list.append([name, color])
 
-        self.color_list.append([name, color, marker])
+        if marker is None:
+            marker = self.marker_cycle[self.marker_index]
+
+            self.marker_index += 1
+            if(self.marker_index >= len(self.marker_cycle)):
+                self.marker_index = 0
+
+            self.marker_list.append([sequence, marker])
+
         return (color, marker)
 
     def set_linestyle(self, path):
@@ -270,7 +287,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             l = legend[plot_count] #" ".join([i for i in plot_data.identifiers] + plot_data.path)
 
             if plot_data.color == " ":
-                (plot_data.color, plot_data.marker) = self.set_color(plot_data.identifiers[1])
+                (plot_data.color, plot_data.marker) = self.set_color(plot_data.identifiers[1], plot_data.identifiers[0])
                 plot_data.linestyle = self.set_linestyle(plot_data.path[1])
 
             # Convert list of pairs of strings to two sorted lists of floats

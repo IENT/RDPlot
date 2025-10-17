@@ -264,13 +264,6 @@ padding: 4px;
       <widget class="QComboBox" name="combo_rate_psnr"/>
      </item>
      <item>
-      <widget class="QCheckBox" name="checkBox_plot_ci">
-       <property name="text">
-        <string>Plot CI as area</string>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QCheckBox" name="checkBox_bdplot">
        <property name="text">
         <string>Plot Bjontegaard</string>
