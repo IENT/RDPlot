@@ -129,7 +129,7 @@ def get_install_requires():
 #                      'tikzplotlib', 
                       'Pillow'],
     else:
-        install_requires=['cycler', 'matplotlib==3.4.2', 'numpy==1.26.4',
+        install_requires=['cycler', 'matplotlib', 'numpy',
                       'py', 'pyparsing', 'pyqt5', 'pytest',
                       'python-dateutil', 'pytz', 'six', 
                       'scipy', 
