@@ -172,7 +172,10 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         """
 
         try:
-            self.label_2.setText(plot_data_collection[0].identifiers[0])
+            if(len(plot_data_collection) == 1):
+                self.label_2.setText(plot_data_collection[0].identifiers[0])
+            else:
+                self.label_2.setText("Plot Area")
         except Exception:
             self.label_2.setText("Plot Area")
 
