@@ -86,12 +86,22 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.anchor_identifier = ''
         self.ci_mode = 'average'
 
+        self.reset_plot_color_cycle()
+
+        self.ci_visible = False
+
+    def reset_plot_color_cycle(self):
+        '''
+            Reset the linestyles and color cycle for plotting
+        '''
         self.color_cycle = ['r', 'b', 'y', 'k', 'c', 'm', 'g', 'r', 'b', 'y', 'k', 'c', 'm', 'g']
-        self.marker_cycle = ['x', 'x', 'x', 'x', 'x', 'x', 'x', 'o', 'o', 'o', 'o', 'o', 'o', 'o']
+        self.marker_cycle = ['x', 'o', 'v', '2', 's', 'P', '*', 'D', 'h']
         self.linestyle_cycle = ["-", "--", ":", "-."]
         self.plot_index = 0
+        self.marker_index = 0
         self.plot_linestyle_index = 0
         self.color_list = []
+        self.marker_list = []
         self.linestyle_list = [
             ("psnr y", self.linestyle_cycle[0]), ("psnr u", self.linestyle_cycle[1]), ("psnr v", self.linestyle_cycle[2]),
             ("wpsnr y", self.linestyle_cycle[0]), ("wpsnr u", self.linestyle_cycle[1]), ("wpsnr v", self.linestyle_cycle[2]),
@@ -99,9 +109,6 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             ("vmaf y", self.linestyle_cycle[0]), ("vmaf u", self.linestyle_cycle[1]), ("vmaf v", self.linestyle_cycle[2]),   
             ("mos",    self.linestyle_cycle[0]),     
         ]
-
-        self.ci_visible = False
-
 
     def create_legend(self, plot_data_collection):
         tmp_legend = []
@@ -121,20 +128,35 @@ class PlotWidget(QWidget, Ui_PlotWidget):
 
         return legend
 
-    
-    def set_color(self, name):
+    def set_color(self, name, sequence):
+        color = None
         for color_item in self.color_list:
             if color_item[0] == name: 
-                return (color_item[1], color_item[2]) 
+                color = color_item[1]
+
+        marker = None
+        for marker_item in self.marker_list:
+            if marker_item[0] == sequence: 
+                marker = marker_item[1]
         
-        color = self.color_cycle[self.plot_index]
-        marker = self.marker_cycle[self.plot_index]
+        if color is None:
+            color = self.color_cycle[self.plot_index]
 
-        self.plot_index += 1
-        if(self.plot_index >= len(self.color_cycle)):
-            self.plot_index = 0
+            self.plot_index += 1
+            if(self.plot_index >= len(self.color_cycle)):
+                self.plot_index = 0
+            
+            self.color_list.append([name, color])
 
-        self.color_list.append([name, color, marker])
+        if marker is None:
+            marker = self.marker_cycle[self.marker_index]
+
+            self.marker_index += 1
+            if(self.marker_index >= len(self.marker_cycle)):
+                self.marker_index = 0
+
+            self.marker_list.append([sequence, marker])
+
         return (color, marker)
 
     def set_linestyle(self, path):
@@ -155,7 +177,6 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         for i in range(len(x)):
             top = y[i] + ci[i]
             bottom = y[i] - ci[i]
-            print(x[i], top, bottom)
             ax.plot([x[i], x[i]], [top, bottom], color=color, marker="_", ms=8, solid_capstyle="butt") #, alpha=0.3)
 
     # refreshes the figure according to new changes done
@@ -166,6 +187,14 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             objects, which should be plotted.
             temporal data
         """
+
+        try:
+            if(len(plot_data_collection) == 1):
+                self.label_2.setText(plot_data_collection[0].identifiers[0])
+            else:
+                self.label_2.setText("Plot Area")
+        except Exception:
+            self.label_2.setText("Plot Area")
 
         # Set the anchor identifier for the first time
         # if no identifier has been set so far (similar
@@ -229,6 +258,28 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             for plot_data in plot_data_collection:
                 legend.append(plot_data.identifiers[0])
 
+        # Get min and max for reference plotting
+        minr = 1e100
+        maxr = -minr
+        miny = 1e100
+        maxy = -miny
+        for plot_data in plot_data_collection:
+            if not plot_data.has_ci:
+                values = ((float(x), float(y)) for (x, y) in plot_data.values)
+                sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
+                [xs, ys] = list(zip(*sorted_value_pairs))
+            else:
+                # A confidence interval is included in the data
+                values = ((float(x), float(y), float(z)) for (x, y, z) in plot_data.values)
+                sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
+                [xs, ys, zs] = list(zip(*sorted_value_pairs))
+            if np.isnan(min(xs)) or np.isnan(max(xs)):
+                continue
+            minr = min(min(xs), minr)
+            maxr = max(max(xs), maxr)
+            miny = min(min(ys), miny)
+            maxy = max(max(ys), maxy)
+
         # plot all the lines which are missing yet
         plot_count = 0
         for plot_data in plot_data_collection:
@@ -236,7 +287,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             l = legend[plot_count] #" ".join([i for i in plot_data.identifiers] + plot_data.path)
 
             if plot_data.color == " ":
-                (plot_data.color, plot_data.marker) = self.set_color(plot_data.identifiers[1])
+                (plot_data.color, plot_data.marker) = self.set_color(plot_data.identifiers[1], plot_data.identifiers[0])
                 plot_data.linestyle = self.set_linestyle(plot_data.path[1])
 
             # Convert list of pairs of strings to two sorted lists of floats
@@ -249,6 +300,10 @@ class PlotWidget(QWidget, Ui_PlotWidget):
                     sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
                     [xs, ys] = list(zip(*sorted_value_pairs))
 
+                    if len(xs) == 1 and np.isnan(xs[0]):
+                        xs = [minr, maxr]
+                        ys = [ys[0], ys[0]]
+
                     # plot the current plot data
                     curve = self.ax.plot(xs, ys, label=l, color=plot_data.color, marker=plot_data.marker, linestyle=plot_data.linestyle)
 
@@ -258,6 +313,11 @@ class PlotWidget(QWidget, Ui_PlotWidget):
                     values = ((float(x), float(y), float(z)) for (x, y, z) in plot_data.values)
                     sorted_value_pairs = sorted(values, key=lambda pair: pair[0])
                     [xs, ys, zs] = list(zip(*sorted_value_pairs))
+
+                    if len(xs) == 1 and np.isnan(xs[0]):
+                        xs = [minr, maxr]
+                        ys = [ys[0], ys[0]]
+                        zs = [zs[0], zs[0]]
 
                     # calculate the lower and upper boundaries of the CI
                     ys_low = np.subtract(ys, zs)
@@ -288,13 +348,31 @@ class PlotWidget(QWidget, Ui_PlotWidget):
                         self.plot_confidence_interval(self.ax, xs, ys, zs, plot_data.color)
 
                     plot_count += 1
-            except:
-                sys.stderr.write("Too many values for confidence interval. Please only add one value.")
+            except Exception as e:
+                print(e)
 
         # Set the legend
         if not(legend == ['']):
             self.ax.legend(loc='lower right')
         DataCursor(self.ax.get_lines())
+
+        # Specific to MOS plotting
+        try:
+            if plot_data_collection[0].label[1].lower() == "mos":
+                if miny >= 1 and maxy <= 5:  # 5-grade scale
+                    self.ax.set_ylim(1, 5)
+                elif miny >= 0 and maxy <= 10:  # 11-grade scale
+                    self.ax.set_ylim(0, 10)
+                elif miny >= 0 and maxy <= 100:  # 101-grade scale
+                    self.ax.set_ylim(0, 100)
+                elif miny >= -1 and maxy <= 1:  # the other one :D
+                    self.ax.set_ylim(-1, 1)
+                elif miny >= -2 and maxy <= 2:  # the other one :D
+                    self.ax.set_ylim(-2, 2)
+                elif miny >= -3 and maxy <= 3:  # the other one :D
+                    self.ax.set_ylim(-3, 3)
+        except Exception as e:
+            print(e)
 
         start, end = self.ax.get_ylim()
         data_range = end - start

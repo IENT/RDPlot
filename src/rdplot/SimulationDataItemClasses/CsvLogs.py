@@ -32,7 +32,15 @@ class CSVLog(AbstractSimulationDataItem):
         header = header.replace("\n", "")
         header = re.split(r'[,;]',header.lower())
         header = list(filter(None, header))
-        sequence_idx = header.index("sequence")
+
+        try:
+            sequence_idx = header.index("sequence")
+        except Exception: # Sequence not found. Search for partial string
+            sequence_idx = 0
+            for i, token in enumerate(header):
+                if "sequence" in token:
+                    sequence_idx = i
+                    break
 
         try:
             qp_idx = header.index("qp")

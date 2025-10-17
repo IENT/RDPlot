@@ -19,7 +19,6 @@
 ##################################################################################################
 from collections import deque
 from os.path import sep
-from os import environ
 import numpy as np
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QPushButton
@@ -794,7 +793,6 @@ class SimDataItemTreeModel(OrderedDictTreeModel):
                 if hasattr(sim_data_item, 'qp') and not QP_added:
                     self.dialog.chosen_par.addItems(['QP'])
                     QP_added = True
-                # print(sim_data_item.summary_data['encoder_config'])
             value_filter = ['.yuv', '.bin', '.hevc', '.jem']
             key_filter = []
             for sim_class in all_log_configs.keys():
