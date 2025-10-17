@@ -246,6 +246,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self._selection_model.selectionChanged.connect(self.change_list)
         self._variable_tree_selection_model.selectionChanged.connect(self.update_plot)
         if len(self.selectedSimulationDataItemListModel.values()) == 0:
+            self.plotPreview.reset_plot_color_cycle()
             self.update_plot()
 
     def change_list(self, q_selected, q_deselected):
@@ -396,7 +397,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             selectionmodel.clearSelection()
 
     # updates the plot if the plot variable is changed
-    def update_plot(self, force=False):
+    def update_plot(self, force=True):
         # user-generated curves and curves loaded from files are not supposed to be mixed
         user_generated_curves = False
         if self.sender() == self._variable_tree_selection_model or self.sender() == self.curveListSelectionModel or force:

@@ -86,6 +86,14 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         self.anchor_identifier = ''
         self.ci_mode = 'average'
 
+        self.reset_plot_color_cycle()
+
+        self.ci_visible = False
+
+    def reset_plot_color_cycle(self):
+        '''
+            Reset the linestyles and color cycle for plotting
+        '''
         self.color_cycle = ['r', 'b', 'y', 'k', 'c', 'm', 'g', 'r', 'b', 'y', 'k', 'c', 'm', 'g']
         self.marker_cycle = ['x', 'x', 'x', 'x', 'x', 'x', 'x', 'o', 'o', 'o', 'o', 'o', 'o', 'o']
         self.linestyle_cycle = ["-", "--", ":", "-."]
@@ -99,9 +107,6 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             ("vmaf y", self.linestyle_cycle[0]), ("vmaf u", self.linestyle_cycle[1]), ("vmaf v", self.linestyle_cycle[2]),   
             ("mos",    self.linestyle_cycle[0]),     
         ]
-
-        self.ci_visible = False
-
 
     def create_legend(self, plot_data_collection):
         tmp_legend = []
@@ -166,6 +171,11 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             temporal data
         """
 
+        try:
+            self.label_2.setText(plot_data_collection[0].identifiers[0])
+        except Exception:
+            self.label_2.setText("Plot Area")
+
         # Set the anchor identifier for the first time
         # if no identifier has been set so far (similar
         # to the selection in BdTableModel update method)
@@ -229,8 +239,10 @@ class PlotWidget(QWidget, Ui_PlotWidget):
                 legend.append(plot_data.identifiers[0])
 
         # Get min and max for reference plotting
-        minr = 1e20
+        minr = 1e100
         maxr = -minr
+        miny = 1e100
+        maxy = -miny
         for plot_data in plot_data_collection:
             if not plot_data.has_ci:
                 values = ((float(x), float(y)) for (x, y) in plot_data.values)
@@ -245,7 +257,8 @@ class PlotWidget(QWidget, Ui_PlotWidget):
                 continue
             minr = min(min(xs), minr)
             maxr = max(max(xs), maxr)
-
+            miny = min(min(ys), miny)
+            maxy = max(max(ys), maxy)
 
         # plot all the lines which are missing yet
         plot_count = 0
@@ -323,6 +336,24 @@ class PlotWidget(QWidget, Ui_PlotWidget):
             self.ax.legend(loc='lower right')
         DataCursor(self.ax.get_lines())
 
+        # Specific to MOS plotting
+        try:
+            if plot_data_collection[0].label[1].lower() == "mos":
+                if miny >= 1 and maxy <= 5:  # 5-grade scale
+                    self.ax.set_ylim(1, 5)
+                elif miny >= 0 and maxy <= 10:  # 11-grade scale
+                    self.ax.set_ylim(0, 10)
+                elif miny >= 0 and maxy <= 100:  # 101-grade scale
+                    self.ax.set_ylim(0, 100)
+                elif miny >= -1 and maxy <= 1:  # the other one :D
+                    self.ax.set_ylim(-1, 1)
+                elif miny >= -2 and maxy <= 2:  # the other one :D
+                    self.ax.set_ylim(-2, 2)
+                elif miny >= -3 and maxy <= 3:  # the other one :D
+                    self.ax.set_ylim(-3, 3)
+        except Exception as e:
+            print(e)
+
         start, end = self.ax.get_ylim()
         data_range = end - start
         # get ticks with decimal precision
@@ -335,6 +366,7 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         end  = math.ceil(end / tick_precision) * tick_precision
 
         self.ax.yaxis.set_ticks(np.arange(start, end, tick_precision))
+
         self.plotAreaWidget.canvas.draw()
 
     # this function enables zoom with mousewheel
