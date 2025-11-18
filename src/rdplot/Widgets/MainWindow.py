@@ -20,7 +20,6 @@ Ui_name = pkg_resources.resource_filename('rdplot', 'ui' + sep + 'mainWindow.ui'
 Ui_MainWindow, QMainWindow = loadUiType(Ui_name)
 
 here = pkg_resources.resource_filename('rdplot','')
-#here = path.abspath(path.dirname(__file__) + '/../')
 
 def do_cprofile(func):
     def profiled_func(*args, **kwargs):
