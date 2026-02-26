@@ -125,7 +125,7 @@ def get_install_requires():
                       'python-dateutil', 'pytz', 'six', 
                       'scipy', 
                       'tabulate', 'mpldatacursor',
-                      'xmltodict', 'jsonpickle', 
+                      'xmltodict', 'jsonpickle', 'git',
 #                      'tikzplotlib', 
                       'Pillow'],
     else:
@@ -133,7 +133,7 @@ def get_install_requires():
                       'py', 'pyparsing', 'pyqt5', 'pytest',
                       'python-dateutil', 'pytz', 'six', 
                       'scipy', 
-                      'tabulate', 'mpldatacursor',
+                      'tabulate', 'mpldatacursor','git',
                       'xmltodict', 'jsonpickle', 
 #                      'tikzplotlib', 
                       'Pillow'],
