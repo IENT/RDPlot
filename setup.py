@@ -216,8 +216,8 @@ setup(
 
     url='https://github.com/IENT/RDPlot',
 
-    author='Jens Schneider, Johannes Sauer, Christoph Weyer, Alex Schmidt',
-    author_email='schneider@ient.rwth-aachen.de',
+    author='Jens Schneider, Johannes Sauer, Christoph Weyer, Alex Schmidt, Tim Claßen, Dominik Mehlem',
+    author_email='classen@lfb.rwth-aachen.de',
 
     license='GPL-v3',
 
