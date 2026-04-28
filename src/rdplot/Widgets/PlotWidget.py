@@ -189,8 +189,11 @@ class PlotWidget(QWidget, Ui_PlotWidget):
         """
 
         try:
-            if(len(plot_data_collection) == 1):
-                self.label_2.setText(plot_data_collection[0].identifiers[0])
+            sequence_name_list = [plot_data_collection[i].identifiers[0] for i in range(len(plot_data_collection))]
+            sequence_name_list = set(sequence_name_list)
+
+            if(len(sequence_name_list) == 1):
+                self.label_2.setText(sequence_name_list[0].identifiers[0])
             else:
                 self.label_2.setText("Plot Area")
         except Exception:
