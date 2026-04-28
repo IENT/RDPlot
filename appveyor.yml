@@ -6,7 +6,7 @@ branches:
   only:
     - master
     - development
-    - plot_color_consistent
+    - dev
 
 environment:
   matrix:

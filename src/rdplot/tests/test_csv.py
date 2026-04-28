@@ -5,7 +5,7 @@ from PyQt5 import QtWidgets
 from os import path
 import sys
 
-# path to test module (this file)
+# path to test module (this file) 
 TEST_DIR = path.dirname(path.abspath(__file__))
 
 # Path to the folder containing simulation data sub classes. The classes
